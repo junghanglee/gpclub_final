@@ -1,4 +1,4 @@
-﻿import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+﻿import { createContext, type ReactNode, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export type LocalizedText = { vi: string; en: string };
@@ -62,7 +62,10 @@ export type HomeAdminContent = {
 
 export const DEFAULT_HOME_CONTENT: HomeAdminContent = {
   hero: {
-    kicker: { vi: "CHƯƠNG TRÌNH ĐỐI TÁC GPCLUB VIETNAM", en: "GPCLUB VIETNAM PARTNER PROGRAM" },
+    kicker: {
+      vi: "CHƯƠNG TRÌNH ĐỐI TÁC GPCLUB VIETNAM",
+      en: "GPCLUB VIETNAM PARTNER PROGRAM",
+    },
     title: {
       vi: "Đưa thương hiệu K-Beauty đã được kiểm chứng đến thị trường Việt Nam.",
       en: "Bring proven K-Beauty brands to Vietnam's fastest-moving shelves.",
@@ -74,11 +77,17 @@ export const DEFAULT_HOME_CONTENT: HomeAdminContent = {
     primaryCta: { vi: "Trở thành đối tác", en: "Become a partner" },
     secondaryCta: { vi: "Danh mục sản phẩm", en: "View Product Catalog" },
     imageUrl: "",
-    imageAlt: { vi: "K-Beauty bởi GPCLUB Vietnam", en: "K-Beauty by GPCLUB Vietnam" },
+    imageAlt: {
+      vi: "K-Beauty bởi GPCLUB Vietnam",
+      en: "K-Beauty by GPCLUB Vietnam",
+    },
   },
   stats: {
     masksValue: "3B+",
-    masksLabel: { vi: "Sản phẩm đã bán toàn cầu", en: "Product units sold globally" },
+    masksLabel: {
+      vi: "Sản phẩm đã bán toàn cầu",
+      en: "Product units sold globally",
+    },
     countriesValue: "30+",
     countriesLabel: { vi: "Quốc gia phân phối", en: "Countries served" },
     vietnamValue: "2022",
@@ -90,7 +99,10 @@ export const DEFAULT_HOME_CONTENT: HomeAdminContent = {
       vi: "Không chỉ nhập hàng. Cùng xây kênh bán thắng lợi.",
       en: "Not just supply. Build a winning sell-through channel.",
     },
-    highlight: { vi: "Cùng xây kênh bán thắng lợi.", en: "winning sell-through channel." },
+    highlight: {
+      vi: "Cùng xây kênh bán thắng lợi.",
+      en: "winning sell-through channel.",
+    },
     body: {
       vi: "GPCLUB Vietnam giúp đối tác xây dựng động cơ bán hàng bằng niềm tin thương hiệu, marketing bản địa hóa và hỗ trợ ra mắt thực tế.",
       en: "GPCLUB Vietnam helps partners build a sell-through engine with brand trust, localized marketing and practical launch support.",
@@ -98,7 +110,10 @@ export const DEFAULT_HOME_CONTENT: HomeAdminContent = {
   },
   trust: {
     kicker: { vi: "Vì sao đối tác tin tưởng", en: "Why partners trust us" },
-    title: { vi: "Ba nền tảng cho tăng trưởng B2B.", en: "Three foundations for B2B growth." },
+    title: {
+      vi: "Ba nền tảng cho tăng trưởng B2B.",
+      en: "Three foundations for B2B growth.",
+    },
   },
   pillars: [
     {
@@ -113,7 +128,10 @@ export const DEFAULT_HOME_CONTENT: HomeAdminContent = {
     {
       num: "02",
       eng: { vi: "Phù hợp địa phương", en: "Local Fit" },
-      title: { vi: "Phù hợp khí hậu Việt Nam", en: "Fit for Vietnam's climate" },
+      title: {
+        vi: "Phù hợp khí hậu Việt Nam",
+        en: "Fit for Vietnam's climate",
+      },
       text: {
         vi: "Sản phẩm chủ lực được chọn theo thời tiết ẩm, lối sống năng động và hành vi làm đẹp địa phương.",
         en: "Hero products and formulas selected for humid weather, active lifestyles and local beauty behavior.",
@@ -196,13 +214,20 @@ export function mergeHomeContent(value: unknown): HomeAdminContent {
   return deepMerge(DEFAULT_HOME_CONTENT, value);
 }
 
-const Ctx = createContext<HomeAdminContent>(DEFAULT_HOME_CONTENT);
+type HomeContentContextValue = { content: HomeAdminContent; loading: boolean };
+
+const Ctx = createContext<HomeContentContextValue>({
+  content: DEFAULT_HOME_CONTENT,
+  loading: true,
+});
 
 export function HomeContentProvider({ children }: { children: ReactNode }) {
   const [content, setContent] = useState<HomeAdminContent>(DEFAULT_HOME_CONTENT);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
+    setLoading(true);
     (async () => {
       const { data } = await supabase
         .from("home_content")
@@ -210,13 +235,14 @@ export function HomeContentProvider({ children }: { children: ReactNode }) {
         .eq("key", "home")
         .maybeSingle();
       if (!cancelled) setContent(mergeHomeContent(data?.value));
+      if (!cancelled) setLoading(false);
     })();
     return () => {
       cancelled = true;
     };
   }, []);
 
-  return <Ctx.Provider value={content}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={{ content, loading }}>{children}</Ctx.Provider>;
 }
 
 export const useHomeContent = () => useContext(Ctx);

@@ -368,7 +368,7 @@ const b2bText = {
 
 function B2BPage() {
   const { lang } = useI18n();
-  const page = usePageContent("b2b");
+  const { content: page, loading: pageLoading } = usePageContent("b2b");
   const pick = (copy: LocalText) => copy[lang];
   const t = b2bText[lang];
   const [step, setStep] = useState(0);
@@ -494,6 +494,10 @@ function B2BPage() {
   }
 
   const progress = ((step + 1) / steps.length) * 100;
+
+  if (pageLoading) {
+    return <main className="min-h-[60vh] bg-background" />;
+  }
 
   return (
     <>

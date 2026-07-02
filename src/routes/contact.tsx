@@ -1,32 +1,37 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
 import {
-  Mail,
-  Phone,
-  MapPin,
-  MessageCircle,
+  Building2,
   Clock,
   ExternalLink,
-  Building2,
+  Mail,
+  MapPin,
+  MessageCircle,
+  Phone,
   Send,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
+import { z } from "zod";
+import gippyContactHero from "@/assets/gippy-contact-hero.png";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { useCompanyInfo, buildZaloLink, buildWhatsappLink } from "@/lib/site-settings";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { z } from "zod";
 import { useI18n } from "@/lib/i18n";
 import { usePageContent } from "@/lib/page-content";
-import gippyContactHero from "@/assets/gippy-contact-hero.png";
+import {
+  buildWhatsappLink,
+  buildZaloLink,
+  useCompanyInfo,
+  useCompanyInfoLoading,
+} from "@/lib/site-settings";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
@@ -38,7 +43,10 @@ export const Route = createFileRoute("/contact")({
           "Reach GPCLUB Vietnam via Zalo, WhatsApp, email or phone. Headquartered in Ho Chi Minh City.",
       },
       { property: "og:title", content: "Contact GPCLUB Vietnam" },
-      { property: "og:description", content: "Connect via Zalo, WhatsApp, email." },
+      {
+        property: "og:description",
+        content: "Connect via Zalo, WhatsApp, email.",
+      },
     ],
   }),
   component: ContactPage,
@@ -185,8 +193,9 @@ const inquirySchema = z.object({
 
 function ContactPage() {
   const { lang } = useI18n();
-  const page = usePageContent("contact");
+  const { content: page, loading: pageLoading } = usePageContent("contact");
   const COMPANY = useCompanyInfo();
+  const companyLoading = useCompanyInfoLoading();
   const t = contactText[lang];
   const zaloLink = () => buildZaloLink(COMPANY.zaloPhone);
   const whatsappLink = () => buildWhatsappLink(COMPANY.whatsappPhone);
@@ -247,7 +256,13 @@ function ContactPage() {
   }, [faqLang, faqs, t.faqs]);
 
   // Inquiry form state
-  const [form, setForm] = useState({ name: "", email: "", phone: "", subject: "", message: "" });
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    subject: "",
+    message: "",
+  });
   const [submitting, setSubmitting] = useState(false);
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -260,6 +275,10 @@ function ContactPage() {
     toast.success(t.thanks);
     setForm({ name: "", email: "", phone: "", subject: "", message: "" });
   };
+
+  if (pageLoading || companyLoading) {
+    return <main className="min-h-[60vh] bg-background" />;
+  }
 
   return (
     <>

@@ -43,9 +43,13 @@ function ProductDetailPage() {
   const { productId } = Route.useParams();
   const { lang } = useI18n();
   const t = text[lang];
-  const { rows } = useCatalogProducts();
+  const { rows, loading } = useCatalogProducts();
   const product = rows.find((p) => p.id === productId);
   const [inquiryOpen, setInquiryOpen] = useState(false);
+
+  if (loading) {
+    return <main className="min-h-[60vh] bg-background" />;
+  }
 
   if (!product) {
     return (

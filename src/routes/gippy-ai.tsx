@@ -65,8 +65,13 @@ const SUGGESTIONS: {
 
 function GippyAIPage() {
   const { lang } = useI18n();
-  const page = usePageContent("gippy-ai");
+  const { content: page, loading: pageLoading } = usePageContent("gippy-ai");
   const pick = (text: { vi: string; en: string }) => text[lang];
+
+  if (pageLoading) {
+    return <main className="min-h-[60vh] bg-background" />;
+  }
+
   return (
     <main className="min-h-[calc(100vh-5rem)] bg-gradient-to-b from-background via-background to-secondary/30">
       <GippyHeroSection page={page} />
@@ -122,7 +127,7 @@ function GippyAIPage() {
 
 /* ---------- pieces ---------- */
 
-function GippyHeroSection({ page }: { page: ReturnType<typeof usePageContent> }) {
+function GippyHeroSection({ page }: { page: ReturnType<typeof usePageContent>["content"] }) {
   const { lang } = useI18n();
   return (
     <section className="relative isolate overflow-hidden border-b border-border/60 bg-gradient-luxe">

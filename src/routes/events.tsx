@@ -1,12 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { CalendarDays, ExternalLink, PackageOpen, PlayCircle, Sparkles } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { Button } from "@/components/ui/button";
+import gippyEventHero from "@/assets/gippy-event-hero.png";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { usePageContent } from "@/lib/page-content";
-import gippyEventHero from "@/assets/gippy-event-hero.png";
 
 export const Route = createFileRoute("/events")({
   head: () => ({ meta: [{ title: "Event — GPCLUB Vietnam" }] }),
@@ -75,7 +75,7 @@ function MediaPreview({ item }: { item: EventRow }) {
 
 function EventsPage() {
   const { lang } = useI18n();
-  const page = usePageContent("events");
+  const { content: page, loading: pageLoading } = usePageContent("events");
   const [rows, setRows] = useState<EventRow[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -102,6 +102,10 @@ function EventsPage() {
   const eventRows = useMemo(() => rows.filter((r) => r.post_type !== "new_product"), [rows]);
   const featured = useMemo(() => eventRows.find((r) => r.featured) ?? eventRows[0], [eventRows]);
   const rest = useMemo(() => eventRows.filter((r) => r.id !== featured?.id), [eventRows, featured]);
+
+  if (pageLoading) {
+    return <main className="min-h-[60vh] bg-background" />;
+  }
 
   return (
     <main className="overflow-hidden bg-background">
