@@ -95,10 +95,16 @@ export function estimateTokenCount(input: string) {
   return Math.ceil(normalized.replace(/\s+/g, " ").length / 4);
 }
 
-export function chunkText(input: string, options: { maxChars?: number; overlapChars?: number } = {}): ChatbotChunk[] {
+export function chunkText(
+  input: string,
+  options: { maxChars?: number; overlapChars?: number } = {},
+): ChatbotChunk[] {
   const maxChars = options.maxChars ?? 1100;
   const overlapChars = options.overlapChars ?? 160;
-  const clean = input.replace(/\r\n/g, "\n").replace(/[ \t]+/g, " ").trim();
+  const clean = input
+    .replace(/\r\n/g, "\n")
+    .replace(/[ \t]+/g, " ")
+    .trim();
   if (!clean) return [];
 
   const paragraphs = clean
@@ -159,7 +165,9 @@ export function scoreText(query: string, text: string) {
   for (const keyword of keywords) {
     if (!haystack.includes(keyword)) continue;
     const weight = keyword.length > 4 ? 2 : 1;
-    const exactWord = new RegExp(`(^|\\s)${keyword.replace(/[.*+?^${}()|[\\]\\]/g, "\\$&")}(\\s|$)`).test(haystack);
+    const exactWord = new RegExp(
+      `(^|\\s)${keyword.replace(/[.*+?^${}()|[\\]\\]/g, "\\$&")}(\\s|$)`,
+    ).test(haystack);
     score += exactWord ? weight * 1.5 : weight;
   }
 
@@ -173,14 +181,14 @@ export function scoreText(query: string, text: string) {
   return score / Math.max(keywords.length, 1);
 }
 
-export function rankMatches<T extends { content: string; title?: string | null; tags?: string[] | null }>(
-  query: string,
-  rows: T[],
-  limit = 5,
-) {
+export function rankMatches<
+  T extends { content: string; title?: string | null; tags?: string[] | null },
+>(query: string, rows: T[], limit = 5) {
   return rows
     .map((row) => {
-      const source = [row.title, row.content, Array.isArray(row.tags) ? row.tags.join(" ") : ""].filter(Boolean).join(" ");
+      const source = [row.title, row.content, Array.isArray(row.tags) ? row.tags.join(" ") : ""]
+        .filter(Boolean)
+        .join(" ");
       return { row, score: scoreText(query, source) };
     })
     .filter((item) => item.score > 0)

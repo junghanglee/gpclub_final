@@ -1,9 +1,9 @@
 import { Link } from "@tanstack/react-router";
 import { Download, Menu } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
 import gpclubLogo from "@/assets/gpclub-logo-dark.png";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { LanguageToggle, useI18n } from "@/lib/i18n";
 
 const mainNav = [
@@ -104,7 +104,7 @@ export function Header() {
             <Link
               key={n.to}
               to={n.to}
-              activeProps={{ "data-active": "true", className: "text-primary" } as any}
+              activeProps={{ className: "text-primary" }}
               className="nav-link text-[13px] font-bold uppercase tracking-[0.14em] text-foreground transition-colors hover:text-primary"
             >
               {t(n.key)}

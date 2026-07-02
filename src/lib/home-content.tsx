@@ -63,8 +63,14 @@ export type HomeAdminContent = {
 export const DEFAULT_HOME_CONTENT: HomeAdminContent = {
   hero: {
     kicker: { vi: "CHƯƠNG TRÌNH ĐỐI TÁC GPCLUB VIETNAM", en: "GPCLUB VIETNAM PARTNER PROGRAM" },
-    title: { vi: "Đưa thương hiệu K-Beauty đã được kiểm chứng đến thị trường Việt Nam.", en: "Bring proven K-Beauty brands to Vietnam's fastest-moving shelves." },
-    subtitle: { vi: "Nguồn hàng chính hãng, chiến dịch bản địa hóa và đội ngũ đồng hành thực tế cho nhà phân phối, bán lẻ và đối tác làm đẹp.", en: "Official supply, localized campaigns and hands-on support for distributors, retailers and beauty builders." },
+    title: {
+      vi: "Đưa thương hiệu K-Beauty đã được kiểm chứng đến thị trường Việt Nam.",
+      en: "Bring proven K-Beauty brands to Vietnam's fastest-moving shelves.",
+    },
+    subtitle: {
+      vi: "Nguồn hàng chính hãng, chiến dịch bản địa hóa và đội ngũ đồng hành thực tế cho nhà phân phối, bán lẻ và đối tác làm đẹp.",
+      en: "Official supply, localized campaigns and hands-on support for distributors, retailers and beauty builders.",
+    },
     primaryCta: { vi: "Trở thành đối tác", en: "Become a partner" },
     secondaryCta: { vi: "Danh mục sản phẩm", en: "View Product Catalog" },
     imageUrl: "",
@@ -80,38 +86,95 @@ export const DEFAULT_HOME_CONTENT: HomeAdminContent = {
   },
   partnerHook: {
     kicker: { vi: "Lợi thế đối tác", en: "Partner Hook" },
-    title: { vi: "Không chỉ nhập hàng. Cùng xây kênh bán thắng lợi.", en: "Not just supply. Build a winning sell-through channel." },
+    title: {
+      vi: "Không chỉ nhập hàng. Cùng xây kênh bán thắng lợi.",
+      en: "Not just supply. Build a winning sell-through channel.",
+    },
     highlight: { vi: "Cùng xây kênh bán thắng lợi.", en: "winning sell-through channel." },
-    body: { vi: "GPCLUB Vietnam giúp đối tác xây dựng động cơ bán hàng bằng niềm tin thương hiệu, marketing bản địa hóa và hỗ trợ ra mắt thực tế.", en: "GPCLUB Vietnam helps partners build a sell-through engine with brand trust, localized marketing and practical launch support." },
+    body: {
+      vi: "GPCLUB Vietnam giúp đối tác xây dựng động cơ bán hàng bằng niềm tin thương hiệu, marketing bản địa hóa và hỗ trợ ra mắt thực tế.",
+      en: "GPCLUB Vietnam helps partners build a sell-through engine with brand trust, localized marketing and practical launch support.",
+    },
   },
   trust: {
     kicker: { vi: "Vì sao đối tác tin tưởng", en: "Why partners trust us" },
     title: { vi: "Ba nền tảng cho tăng trưởng B2B.", en: "Three foundations for B2B growth." },
   },
   pillars: [
-    { num: "01", eng: { vi: "Niềm tin chính hãng", en: "Official Trust" }, title: { vi: "Chính hãng và minh bạch", en: "Official and transparent" }, text: { vi: "Nguồn nhập khẩu được ủy quyền, truy xuất lô hàng và tài liệu giúp bảo vệ uy tín kênh bán.", en: "Authorized import paths, batch traceability and documentation that protects your channel reputation." } },
-    { num: "02", eng: { vi: "Phù hợp địa phương", en: "Local Fit" }, title: { vi: "Phù hợp khí hậu Việt Nam", en: "Fit for Vietnam's climate" }, text: { vi: "Sản phẩm chủ lực được chọn theo thời tiết ẩm, lối sống năng động và hành vi làm đẹp địa phương.", en: "Hero products and formulas selected for humid weather, active lifestyles and local beauty behavior." } },
-    { num: "03", eng: { vi: "Nguồn cung mở rộng", en: "Scalable Supply" }, title: { vi: "Sẵn sàng mở rộng", en: "Ready to scale" }, text: { vi: "Danh mục và mô hình cung ứng phù hợp nhà bán lẻ, nhà phân phối, chuỗi và đối tác OEM/ODM.", en: "A portfolio and supply model designed for retailers, distributors, chains and OEM/ODM builders." } },
+    {
+      num: "01",
+      eng: { vi: "Niềm tin chính hãng", en: "Official Trust" },
+      title: { vi: "Chính hãng và minh bạch", en: "Official and transparent" },
+      text: {
+        vi: "Nguồn nhập khẩu được ủy quyền, truy xuất lô hàng và tài liệu giúp bảo vệ uy tín kênh bán.",
+        en: "Authorized import paths, batch traceability and documentation that protects your channel reputation.",
+      },
+    },
+    {
+      num: "02",
+      eng: { vi: "Phù hợp địa phương", en: "Local Fit" },
+      title: { vi: "Phù hợp khí hậu Việt Nam", en: "Fit for Vietnam's climate" },
+      text: {
+        vi: "Sản phẩm chủ lực được chọn theo thời tiết ẩm, lối sống năng động và hành vi làm đẹp địa phương.",
+        en: "Hero products and formulas selected for humid weather, active lifestyles and local beauty behavior.",
+      },
+    },
+    {
+      num: "03",
+      eng: { vi: "Nguồn cung mở rộng", en: "Scalable Supply" },
+      title: { vi: "Sẵn sàng mở rộng", en: "Ready to scale" },
+      text: {
+        vi: "Danh mục và mô hình cung ứng phù hợp nhà bán lẻ, nhà phân phối, chuỗi và đối tác OEM/ODM.",
+        en: "A portfolio and supply model designed for retailers, distributors, chains and OEM/ODM builders.",
+      },
+    },
   ],
   process: {
     kicker: { vi: "Quy trình ra mắt", en: "Launch process" },
-    title: { vi: "Từ trao đổi đến ra mắt trong một quy trình rõ ràng.", en: "From first inquiry to launch through a clear process." },
-    body: { vi: "Lộ trình hợp tác được cấu trúc để đội ngũ của bạn đánh giá cơ hội nhanh và triển khai tự tin.", en: "The partnership path is structured so your team can evaluate opportunity quickly and execute with confidence." },
+    title: {
+      vi: "Từ trao đổi đến ra mắt trong một quy trình rõ ràng.",
+      en: "From first inquiry to launch through a clear process.",
+    },
+    body: {
+      vi: "Lộ trình hợp tác được cấu trúc để đội ngũ của bạn đánh giá cơ hội nhanh và triển khai tự tin.",
+      en: "The partnership path is structured so your team can evaluate opportunity quickly and execute with confidence.",
+    },
   },
   images: {
     kicker: { vi: "Không gian hình ảnh", en: "Image placeholders" },
-    title: { vi: "Không gian cho hình ảnh chiến dịch sắp cung cấp.", en: "Spaces ready for upcoming campaign visuals." },
-    body: { vi: "Các khu vực placeholder đã sẵn sàng cho key visual thương hiệu, minh chứng đối tác, trưng bày bán lẻ và hình ảnh ra mắt sản phẩm.", en: "Placeholder areas are ready for future brand key visuals, partner proof, retail displays and product launch imagery." },
-    labels: { vi: ["Hình ảnh chiến dịch", "Ảnh trưng bày bán lẻ", "Minh chứng đối tác"], en: ["Brand campaign key visual", "Retail shelf / display photo", "Partner success proof"] },
+    title: {
+      vi: "Không gian cho hình ảnh chiến dịch sắp cung cấp.",
+      en: "Spaces ready for upcoming campaign visuals.",
+    },
+    body: {
+      vi: "Các khu vực placeholder đã sẵn sàng cho key visual thương hiệu, minh chứng đối tác, trưng bày bán lẻ và hình ảnh ra mắt sản phẩm.",
+      en: "Placeholder areas are ready for future brand key visuals, partner proof, retail displays and product launch imagery.",
+    },
+    labels: {
+      vi: ["Hình ảnh chiến dịch", "Ảnh trưng bày bán lẻ", "Minh chứng đối tác"],
+      en: ["Brand campaign key visual", "Retail shelf / display photo", "Partner success proof"],
+    },
     cta: { vi: "Sản phẩm", en: "Products" },
     urls: ["", "", ""],
-    alts: { vi: ["Hình ảnh chiến dịch", "Ảnh trưng bày bán lẻ", "Minh chứng đối tác"], en: ["Brand campaign key visual", "Retail shelf / display photo", "Partner success proof"] },
+    alts: {
+      vi: ["Hình ảnh chiến dịch", "Ảnh trưng bày bán lẻ", "Minh chứng đối tác"],
+      en: ["Brand campaign key visual", "Retail shelf / display photo", "Partner success proof"],
+    },
   },
   cta: {
     kicker: { vi: "Hợp tác", en: "Partnership" },
-    title: { vi: "Sẵn sàng trở thành đối tác GPCLUB Vietnam?", en: "Ready to become a GPCLUB Vietnam partner?" },
-    highlight: { vi: "Cùng xây dựng câu chuyện tăng trưởng làm đẹp.", en: "Let's build a beauty growth story together." },
-    body: { vi: "Chia sẻ kênh bán và mục tiêu kinh doanh. Đội ngũ của chúng tôi sẽ chuẩn bị đề xuất hợp tác thực tế.", en: "Share your target channel and business goals. Our team will prepare a practical partner proposal." },
+    title: {
+      vi: "Sẵn sàng trở thành đối tác GPCLUB Vietnam?",
+      en: "Ready to become a GPCLUB Vietnam partner?",
+    },
+    highlight: {
+      vi: "Cùng xây dựng câu chuyện tăng trưởng làm đẹp.",
+      en: "Let's build a beauty growth story together.",
+    },
+    body: {
+      vi: "Chia sẻ kênh bán và mục tiêu kinh doanh. Đội ngũ của chúng tôi sẽ chuẩn bị đề xuất hợp tác thực tế.",
+      en: "Share your target channel and business goals. Our team will prepare a practical partner proposal.",
+    },
     button: { vi: "Gửi yêu cầu B2B", en: "Start B2B inquiry" },
   },
 };
@@ -124,7 +187,8 @@ function deepMerge<T>(base: T, extra: unknown): T {
   if (!isObj(base)) return (extra === undefined || extra === null ? base : extra) as T;
   const out: Record<string, unknown> = { ...base };
   const src = isObj(extra) ? extra : {};
-  for (const key of Object.keys(base)) out[key] = deepMerge((base as Record<string, unknown>)[key], src[key]);
+  for (const key of Object.keys(base))
+    out[key] = deepMerge((base as Record<string, unknown>)[key], src[key]);
   return out as T;
 }
 
@@ -140,14 +204,19 @@ export function HomeContentProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data } = await supabase.from("home_content").select("value").eq("key", "home").maybeSingle();
+      const { data } = await supabase
+        .from("home_content")
+        .select("value")
+        .eq("key", "home")
+        .maybeSingle();
       if (!cancelled) setContent(mergeHomeContent(data?.value));
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return <Ctx.Provider value={content}>{children}</Ctx.Provider>;
 }
 
 export const useHomeContent = () => useContext(Ctx);
-

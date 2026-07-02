@@ -1,25 +1,25 @@
-import { useEffect, useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import {
-  Sparkles,
-  X,
-  Send,
-  MessageCircle,
+  Briefcase,
   Droplets,
   Heart,
-  UserCircle2,
-  Briefcase,
+  MessageCircle,
   RefreshCcw,
+  Send,
+  Sparkles,
+  UserCircle2,
+  X,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
-import { useCompanyInfo, buildZaloLink, buildWhatsappLink } from "@/lib/site-settings";
-import { askChatbotClient } from "@/lib/chatbot";
-import gippyFront from "@/assets/gippy-front.png";
-import gippyChatImg from "@/assets/gippy-chat.png";
+import { useEffect, useRef, useState } from "react";
 import gippyCelebrate from "@/assets/gippy-celebrate.png";
-import { products, type Product, type SkinType } from "@/data/products";
+import gippyChatImg from "@/assets/gippy-chat.png";
+import gippyFront from "@/assets/gippy-front.png";
+import { Button } from "@/components/ui/button";
+import { type Product, products, type SkinType } from "@/data/products";
+import { supabase } from "@/integrations/supabase/client";
+import { askChatbotClient } from "@/lib/chatbot";
 import { onGippyOpen } from "@/lib/gippy-bus";
+import { buildWhatsappLink, buildZaloLink, useCompanyInfo } from "@/lib/site-settings";
 
 type GippyState = "greet" | "talking" | "done";
 const POSES: Record<GippyState, string> = {
@@ -61,15 +61,14 @@ const CONCERNS = ["Hydration", "Brightening", "Anti-aging", "Pores", "Fragrance"
 const uid = () => Math.random().toString(36).slice(2, 9);
 
 function pickBySkin(t: SkinType) {
-  return products
-    .filter((p) => p.skinTypes.includes(t) || p.skinTypes.includes("All"))
-    .slice(0, 3);
+  return products.filter((p) => p.skinTypes.includes(t) || p.skinTypes.includes("All")).slice(0, 3);
 }
 function pickByConcern(c: string) {
   return products
-    .filter((p) =>
-      p.concerns.some((x) => x.toLowerCase().includes(c.toLowerCase())) ||
-      p.tagline.toLowerCase().includes(c.toLowerCase()),
+    .filter(
+      (p) =>
+        p.concerns.some((x) => x.toLowerCase().includes(c.toLowerCase())) ||
+        p.tagline.toLowerCase().includes(c.toLowerCase()),
     )
     .slice(0, 3);
 }
@@ -104,9 +103,15 @@ export function GippyChat() {
 
   // Auto-pose: typing → talking, last gippy reply with products/cta → done, else greet
   useEffect(() => {
-    if (typing) { setPose("talking"); return; }
+    if (typing) {
+      setPose("talking");
+      return;
+    }
     const last = [...messages].reverse().find((m) => m.role === "gippy");
-    if (!last) { setPose("greet"); return; }
+    if (!last) {
+      setPose("greet");
+      return;
+    }
     if (last.products?.length || last.cta) setPose("done");
     else setPose("greet");
   }, [typing, messages]);
@@ -115,7 +120,7 @@ export function GippyChat() {
     id: uid(),
     role: "gippy",
     content:
-      "Hi there! I'm **Gippy** 💧✨\nYour GPCLUB partner product advisor. How can I help your sales channel today?",
+      "Hi there! I'm **Gippy**.\nYour GPCLUB partner product advisor. How can I help your sales channel today?",
   });
 
   useEffect(() => {
@@ -139,7 +144,9 @@ export function GippyChat() {
     let mounted = true;
     supabase
       .from("chatbot_tree_nodes")
-      .select("id,scenario_key,parent_id,sort_order,label_ko,label_en,label_vi,answer_ko,answer_en,answer_vi,action_type,linked_document_id,enabled")
+      .select(
+        "id,scenario_key,parent_id,sort_order,label_ko,label_en,label_vi,answer_ko,answer_en,answer_vi,action_type,linked_document_id,enabled",
+      )
       .eq("enabled", true)
       .order("scenario_key", { ascending: true })
       .order("sort_order", { ascending: true })
@@ -150,7 +157,9 @@ export function GippyChat() {
         }
         if (mounted) setTreeNodes((data ?? []) as TreeNode[]);
       });
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const handleOpen = () => {
@@ -190,7 +199,8 @@ export function GippyChat() {
       () => ({
         id: uid(),
         role: "gippy",
-        content: "Want more tailored partner guidance? Tell me your sales channel, target category, or connect with our Vietnam team right away 🇻🇳",
+        content:
+          "Want more tailored partner guidance? Tell me your sales channel, target category, or connect with our Vietnam team right away 🇻🇳",
         cta: "managers",
       }),
       400,
@@ -212,19 +222,26 @@ export function GippyChat() {
     }));
   };
 
-  const labelForTreeNode = (node: TreeNode) => node.label_en || node.label_vi || node.label_ko || "Option";
-  const answerForTreeNode = (node: TreeNode) => node.answer_en || node.answer_vi || node.answer_ko || "Please choose the next option.";
-  const rootNodes = treeNodes.filter((node) => node.scenario_key === "default" && (node.parent_id ?? null) === null);
-  const rawVisibleTreeNodes = treeNodes.filter((node) => node.scenario_key === "default" && (node.parent_id ?? null) === treeParentId);
-  const findRoot = (text: string) => rootNodes.find((node) => labelForTreeNode(node).toLowerCase().includes(text));
+  const labelForTreeNode = (node: TreeNode) =>
+    node.label_en || node.label_vi || node.label_ko || "Option";
+  const answerForTreeNode = (node: TreeNode) =>
+    node.answer_en || node.answer_vi || node.answer_ko || "Please choose the next option.";
+  const rootNodes = treeNodes.filter(
+    (node) => node.scenario_key === "default" && (node.parent_id ?? null) === null,
+  );
+  const rawVisibleTreeNodes = treeNodes.filter(
+    (node) => node.scenario_key === "default" && (node.parent_id ?? null) === treeParentId,
+  );
+  const findRoot = (text: string) =>
+    rootNodes.find((node) => labelForTreeNode(node).toLowerCase().includes(text));
   const visibleTreeNodes = treeParentId
     ? rawVisibleTreeNodes.slice(0, 4)
-    : [
+    : ([
         findRoot("brand"),
         findRoot("skin"),
         findRoot("makeup"),
         findRoot("b2b") || findRoot("contact"),
-      ].filter(Boolean) as TreeNode[];
+      ].filter(Boolean) as TreeNode[]);
 
   const pickTreeNode = async (node: TreeNode) => {
     const label = labelForTreeNode(node);
@@ -232,7 +249,9 @@ export function GippyChat() {
     setTreePath(nextPath);
     pushUser(label);
 
-    const children = treeNodes.filter((child) => child.scenario_key === node.scenario_key && child.parent_id === node.id);
+    const children = treeNodes.filter(
+      (child) => child.scenario_key === node.scenario_key && child.parent_id === node.id,
+    );
     const answer = answerForTreeNode(node);
 
     await reply(() => ({
@@ -247,7 +266,12 @@ export function GippyChat() {
       setMode("menu");
       setChatUiMode("tree");
     } else if (node.action_type === "document" && node.linked_document_id) {
-      const { reply: aiReply } = await ask({ message: label, history: [], chatUiMode: "tree", selectedTreePath: nextPath });
+      const { reply: aiReply } = await ask({
+        message: label,
+        history: [],
+        chatUiMode: "tree",
+        selectedTreePath: nextPath,
+      });
       await reply(() => ({ id: uid(), role: "gippy", content: aiReply }), 300);
     } else {
       setMode("recommend");
@@ -291,7 +315,12 @@ export function GippyChat() {
 
     setTyping(true);
     try {
-      const { reply } = await ask({ message: q, history, chatUiMode, selectedTreePath: treePath });
+      const { reply } = await ask({
+        message: q,
+        history,
+        chatUiMode,
+        selectedTreePath: treePath,
+      });
       setTyping(false);
       setMessages((m) => [
         ...m,
@@ -308,7 +337,12 @@ export function GippyChat() {
       setTyping(false);
       setMessages((m) => [
         ...m,
-        { id: uid(), role: "gippy", content: "Sorry, I couldn't reach the AI right now. Please try again or chat with our team via Zalo." },
+        {
+          id: uid(),
+          role: "gippy",
+          content:
+            "Sorry, I couldn't reach the AI right now. Please try again or chat with our team via Zalo.",
+        },
       ]);
     }
   };
@@ -335,7 +369,10 @@ export function GippyChat() {
             initial={{ scale: 0.6, rotate: -20, opacity: 0 }}
             animate={{ scale: 1, rotate: 0, opacity: 1, y: [0, -3, 0] }}
             exit={{ scale: 0.6, opacity: 0 }}
-            transition={{ y: { duration: 2.4, repeat: Infinity, ease: "easeInOut" }, default: { type: "spring", damping: 14 } }}
+            transition={{
+              y: { duration: 2.4, repeat: Infinity, ease: "easeInOut" },
+              default: { type: "spring", damping: 14 },
+            }}
           />
         </AnimatePresence>
         <span className="hidden text-sm font-medium sm:inline">Ask Gippy</span>
@@ -361,7 +398,12 @@ export function GippyChat() {
                     key={i}
                     className="absolute left-1/2 top-1/2 h-1.5 w-1.5 rounded-full bg-gold"
                     initial={{ x: 0, y: 0, opacity: 1, scale: 1 }}
-                    animate={{ x: Math.cos(angle) * 50, y: Math.sin(angle) * 50, opacity: 0, scale: 0.4 }}
+                    animate={{
+                      x: Math.cos(angle) * 50,
+                      y: Math.sin(angle) * 50,
+                      opacity: 0,
+                      scale: 0.4,
+                    }}
                     transition={{ duration: 0.8, ease: "easeOut" }}
                   />
                 );
@@ -433,7 +475,10 @@ export function GippyChat() {
               </div>
 
               {/* Messages */}
-              <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto bg-gradient-luxe px-4 py-4">
+              <div
+                ref={scrollRef}
+                className="flex-1 space-y-3 overflow-y-auto bg-gradient-luxe px-4 py-4"
+              >
                 {messages.map((m) => (
                   <MessageBubble key={m.id} msg={m} />
                 ))}
@@ -442,11 +487,16 @@ export function GippyChat() {
 
                 {!typing && mode === "menu" && messages.length <= 1 && (
                   <div className="grid gap-2 rounded-2xl border border-border/60 bg-card/90 p-3 shadow-sm">
-                    <div className="text-xs font-semibold text-foreground">Ask freely first, or use a short guide</div>
+                    <div className="text-xs font-semibold text-foreground">
+                      Ask freely first, or use a short guide
+                    </div>
                     <div className="grid grid-cols-2 gap-2">
                       <button
                         type="button"
-                        onClick={() => { setChatUiMode("natural"); setMode("recommend"); }}
+                        onClick={() => {
+                          setChatUiMode("natural");
+                          setMode("recommend");
+                        }}
                         className={`rounded-2xl border px-3 py-2 text-left text-xs transition ${chatUiMode === "natural" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/60"}`}
                       >
                         <span className="block font-semibold">AI 자유채팅</span>
@@ -454,101 +504,119 @@ export function GippyChat() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => { setChatUiMode("tree"); setMode("menu"); }}
+                        onClick={() => {
+                          setChatUiMode("tree");
+                          setMode("menu");
+                        }}
                         className={`rounded-2xl border px-3 py-2 text-left text-xs transition ${chatUiMode === "tree" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/60"}`}
                       >
                         <span className="block font-semibold">Guided 상담</span>
                         <span className="block opacity-80">Simple buttons</span>
                       </button>
                     </div>
-                    <div className="text-[10px] text-muted-foreground">Natural AI is the default. Guided mode shows only grouped choices.</div>
+                    <div className="text-[10px] text-muted-foreground">
+                      Natural AI is the default. Guided mode shows only grouped choices.
+                    </div>
                   </div>
                 )}
 
                 {/* Admin-managed tree replies */}
-                {!typing && chatUiMode === "tree" && mode === "menu" && visibleTreeNodes.length > 0 && (
-                  <div className="grid gap-2 pt-2">
-                    {treeParentId && (
-                      <button
-                        type="button"
-                        onClick={backTree}
-                        className="rounded-2xl border border-border/60 bg-card/90 px-3 py-2 text-left text-xs text-muted-foreground transition hover:border-primary/60"
-                      >
-                        ← Back
-                      </button>
-                    )}
-                    {visibleTreeNodes.map((node) => (
-                      <QuickAction
-                        key={node.id}
-                        icon={<MessageCircle className="h-4 w-4" />}
-                        label={labelForTreeNode(node)}
-                        sub={node.action_type === "document" ? "Knowledge document" : node.action_type === "contact" ? "Connect with team" : "Guided answer"}
-                        onClick={() => pickTreeNode(node)}
-                      />
-                    ))}
-                  </div>
-                )}
+                {!typing &&
+                  chatUiMode === "tree" &&
+                  mode === "menu" &&
+                  visibleTreeNodes.length > 0 && (
+                    <div className="grid gap-2 pt-2">
+                      {treeParentId && (
+                        <button
+                          type="button"
+                          onClick={backTree}
+                          className="rounded-2xl border border-border/60 bg-card/90 px-3 py-2 text-left text-xs text-muted-foreground transition hover:border-primary/60"
+                        >
+                          ← Back
+                        </button>
+                      )}
+                      {visibleTreeNodes.map((node) => (
+                        <QuickAction
+                          key={node.id}
+                          icon={<MessageCircle className="h-4 w-4" />}
+                          label={labelForTreeNode(node)}
+                          sub={
+                            node.action_type === "document"
+                              ? "Knowledge document"
+                              : node.action_type === "contact"
+                                ? "Connect with team"
+                                : "Guided answer"
+                          }
+                          onClick={() => pickTreeNode(node)}
+                        />
+                      ))}
+                    </div>
+                  )}
 
                 {/* Built-in fallback quick replies */}
-                {!typing && chatUiMode === "tree" && mode === "menu" && messages.length <= 1 && visibleTreeNodes.length === 0 && (
-                  <div className="grid gap-2 pt-2">
-                    <QuickAction
-                      icon={<Droplets className="h-4 w-4" />}
-                      label="Skin type diagnosis"
-                      sub="Dry · Oily · Combo · Sensitive"
-                      onClick={async () => {
-                        await reply(() => ({
-                          id: uid(),
-                          role: "gippy",
-                          content: "Which sales channel are you planning for? ✨",
-                        }));
-                        setMode("skin");
-                      }}
-                    />
-                    <QuickAction
-                      icon={<Heart className="h-4 w-4" />}
-                      label="Recommend by concern"
-                      sub="Hydration · Brightening · Aging…"
-                      onClick={async () => {
-                        await reply(() => ({
-                          id: uid(),
-                          role: "gippy",
-                          content: "Which product category or business need should we focus on?",
-                        }));
-                        setMode("concern");
-                      }}
-                    />
-                    <QuickAction
-                      icon={<Briefcase className="h-4 w-4" />}
-                      label="B2B / Dealer inquiry"
-                      sub="Become an authorized partner"
-                      onClick={async () => {
-                        await reply(() => ({
-                          id: uid(),
-                          role: "gippy",
-                          content:
-                            "Thanks for your interest in our B2B partnership! 🤝 Submit an application or chat with a manager.",
-                          cta: "b2b",
-                        }));
-                        setMode("b2b");
-                      }}
-                    />
-                    <QuickAction
-                      icon={<UserCircle2 className="h-4 w-4" />}
-                      label="Chat with a local manager"
-                      sub="Zalo / WhatsApp"
-                      onClick={async () => {
-                        await reply(() => ({
-                          id: uid(),
-                          role: "gippy",
-                          content: "Connecting you with our Vietnam team 🇻🇳",
-                          cta: "managers",
-                        }));
-                        setMode("manager");
-                      }}
-                    />
-                  </div>
-                )}
+                {!typing &&
+                  chatUiMode === "tree" &&
+                  mode === "menu" &&
+                  messages.length <= 1 &&
+                  visibleTreeNodes.length === 0 && (
+                    <div className="grid gap-2 pt-2">
+                      <QuickAction
+                        icon={<Droplets className="h-4 w-4" />}
+                        label="Skin type diagnosis"
+                        sub="Dry · Oily · Combo · Sensitive"
+                        onClick={async () => {
+                          await reply(() => ({
+                            id: uid(),
+                            role: "gippy",
+                            content: "Which sales channel are you planning for?",
+                          }));
+                          setMode("skin");
+                        }}
+                      />
+                      <QuickAction
+                        icon={<Heart className="h-4 w-4" />}
+                        label="Recommend by concern"
+                        sub="Hydration · Brightening · Aging…"
+                        onClick={async () => {
+                          await reply(() => ({
+                            id: uid(),
+                            role: "gippy",
+                            content: "Which product category or business need should we focus on?",
+                          }));
+                          setMode("concern");
+                        }}
+                      />
+                      <QuickAction
+                        icon={<Briefcase className="h-4 w-4" />}
+                        label="B2B / Dealer inquiry"
+                        sub="Become an authorized partner"
+                        onClick={async () => {
+                          await reply(() => ({
+                            id: uid(),
+                            role: "gippy",
+                            content:
+                              "Thanks for your interest in our B2B partnership! 🤝 Submit an application or chat with a manager.",
+                            cta: "b2b",
+                          }));
+                          setMode("b2b");
+                        }}
+                      />
+                      <QuickAction
+                        icon={<UserCircle2 className="h-4 w-4" />}
+                        label="Chat with a local manager"
+                        sub="Zalo / WhatsApp"
+                        onClick={async () => {
+                          await reply(() => ({
+                            id: uid(),
+                            role: "gippy",
+                            content: "Connecting you with our Vietnam team 🇻🇳",
+                            cta: "managers",
+                          }));
+                          setMode("manager");
+                        }}
+                      />
+                    </div>
+                  )}
 
                 {!typing && mode === "skin" && (
                   <div className="flex flex-wrap gap-2 pt-1">
@@ -583,7 +651,11 @@ export function GippyChat() {
                   <input
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    placeholder={chatUiMode === "tree" ? "Select a partner guide above or ask freely…" : "Ask Gippy about products, wholesale, or partnership…"}
+                    placeholder={
+                      chatUiMode === "tree"
+                        ? "Select a partner guide above or ask freely…"
+                        : "Ask Gippy about products, wholesale, or partnership…"
+                    }
                     maxLength={300}
                     className="flex-1 rounded-full border border-border/60 bg-background px-4 py-2.5 text-sm outline-none transition focus:border-primary/50"
                   />
@@ -593,7 +665,8 @@ export function GippyChat() {
                 </form>
                 <div className="mt-2 flex items-center justify-center gap-2 text-[10px] text-muted-foreground">
                   <Sparkles className="h-3 w-3 text-gold" />
-                  Powered by shared GPCLUB knowledge · {chatUiMode === "tree" ? "Guided" : "Natural AI"}
+                  Powered by shared GPCLUB knowledge ·{" "}
+                  {chatUiMode === "tree" ? "Guided" : "Natural AI"}
                 </div>
               </div>
             </motion.div>
@@ -617,18 +690,15 @@ function MessageBubble({ msg }: { msg: Msg }) {
       {!isUser && (
         <img src={gippyFront} alt="" className="mt-auto h-8 w-8 shrink-0 self-end drop-shadow" />
       )}
-      <div
-        className={`flex max-w-[85%] flex-col gap-2 ${isUser ? "items-end" : "items-start"}`}
-      >
-        {msg.content && (
-          isUser ? (
+      <div className={`flex max-w-[85%] flex-col gap-2 ${isUser ? "items-end" : "items-start"}`}>
+        {msg.content &&
+          (isUser ? (
             <div className="whitespace-pre-wrap rounded-2xl rounded-br-sm bg-primary px-4 py-2.5 text-sm text-primary-foreground">
               {msg.content}
             </div>
           ) : (
             <TypewriterBubble text={msg.content} />
-          )
-        )}
+          ))}
         {msg.products && msg.products.length > 0 && (
           <div className="grid w-full gap-2">
             {msg.products.map((p) => (
@@ -637,7 +707,12 @@ function MessageBubble({ msg }: { msg: Msg }) {
                 className="flex items-center gap-3 rounded-2xl border border-border/60 bg-card p-2 shadow-sm"
               >
                 <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-muted">
-                  <img src={p.image} alt={p.name} className="h-full w-full object-cover" loading="lazy" />
+                  <img
+                    src={p.image}
+                    alt={p.name}
+                    className="h-full w-full object-cover"
+                    loading="lazy"
+                  />
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="text-[10px] font-semibold uppercase tracking-widest text-gold">

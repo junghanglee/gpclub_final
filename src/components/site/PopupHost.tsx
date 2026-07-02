@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { supabase } from "@/integrations/supabase/client";
 
 type Popup = {
   id: string;
@@ -35,12 +35,13 @@ export function PopupHost() {
         .order("priority", { ascending: false })
         .order("created_at", { ascending: false });
       if (cancelled || error || !data) return;
-      const eligible = data.find((p: any) => {
+      const popups = (data ?? []) as Popup[];
+      const eligible = popups.find((p) => {
         if (typeof window !== "undefined" && localStorage.getItem(DISMISS_KEY(p.id))) return false;
         return true;
       });
       if (eligible) {
-        setPopup(eligible as Popup);
+        setPopup(eligible);
         setOpen(true);
       }
     })();
@@ -69,10 +70,14 @@ export function PopupHost() {
             <DialogTitle className="font-display text-2xl">{popup.title}</DialogTitle>
           </DialogHeader>
           {popup.content && (
-            <p className="mt-3 whitespace-pre-line text-sm text-muted-foreground">{popup.content}</p>
+            <p className="mt-3 whitespace-pre-line text-sm text-muted-foreground">
+              {popup.content}
+            </p>
           )}
           <div className="mt-5 flex justify-end gap-2">
-            <Button variant="ghost" onClick={dismiss}>Close</Button>
+            <Button variant="ghost" onClick={dismiss}>
+              Close
+            </Button>
             {popup.cta_url && popup.cta_label && (
               <Button asChild className="rounded-full">
                 <a href={popup.cta_url} target="_blank" rel="noreferrer" onClick={dismiss}>

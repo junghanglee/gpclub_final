@@ -28,7 +28,8 @@ function normalizeCatalog(value: Partial<ProductCatalog>): ProductCatalog {
     title: String(value.title || "GPCLUB Vietnam Product Catalog"),
     subtitle: String(value.subtitle || "Curated K-Beauty portfolio for B2B partners"),
     description: String(value.description || ""),
-    template: value.template === "compact" || value.template === "lineup" ? value.template : "premium",
+    template:
+      value.template === "compact" || value.template === "lineup" ? value.template : "premium",
     product_ids: Array.isArray(value.product_ids) ? value.product_ids.map(String) : [],
     is_representative: Boolean(value.is_representative),
     created_at: String(value.created_at || now),
@@ -55,7 +56,8 @@ export async function fetchProductCatalogs() {
 export async function saveProductCatalogs(catalogs: ProductCatalog[]) {
   const normalized = catalogs.map((catalog, index) => ({
     ...normalizeCatalog(catalog),
-    is_representative: catalog.is_representative && catalogs.findIndex((item) => item.is_representative) === index,
+    is_representative:
+      catalog.is_representative && catalogs.findIndex((item) => item.is_representative) === index,
   }));
   const { error } = await supabase
     .from("home_content")

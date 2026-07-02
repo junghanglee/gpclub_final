@@ -126,7 +126,9 @@ export function B2BInquiryDialog({
               <Send className="h-3.5 w-3.5" /> B2B Inquiry
             </div>
             <DialogTitle className="text-2xl font-black leading-tight md:text-3xl">
-              {done ? "Inquiry received" : title || "Register B2B inquiry without leaving this page"}
+              {done
+                ? "Inquiry received"
+                : title || "Register B2B inquiry without leaving this page"}
             </DialogTitle>
             <DialogDescription className="text-sm leading-relaxed text-foreground/70">
               {description ||
@@ -143,17 +145,28 @@ export function B2BInquiryDialog({
               <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-primary text-primary-foreground">
                 <CheckCircle2 className="h-8 w-8" />
               </div>
-              <h3 className="mt-5 text-xl font-black">Thank you. Your inquiry has been submitted.</h3>
+              <h3 className="mt-5 text-xl font-black">
+                Thank you. Your inquiry has been submitted.
+              </h3>
               <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-muted-foreground">
-                GPCLUB Vietnam will review your company information and business request. A partnership consultant will reply within 24 hours by email.
+                GPCLUB Vietnam will review your company information and business request. A
+                partnership consultant will reply within 24 hours by email.
               </p>
               <div className="mt-5 grid gap-2 rounded-2xl bg-background p-4 text-left text-sm">
                 <div className="font-bold text-foreground">What happens next?</div>
                 <div className="text-muted-foreground">1. Channel and business fit review</div>
-                <div className="text-muted-foreground">2. Wholesale / reseller discussion by email</div>
-                <div className="text-muted-foreground">3. Follow-up proposal or consultation schedule</div>
+                <div className="text-muted-foreground">
+                  2. Wholesale / reseller discussion by email
+                </div>
+                <div className="text-muted-foreground">
+                  3. Follow-up proposal or consultation schedule
+                </div>
               </div>
-              <Button type="button" onClick={() => onOpenChange(false)} className="mt-6 rounded-full px-7">
+              <Button
+                type="button"
+                onClick={() => onOpenChange(false)}
+                className="mt-6 rounded-full px-7"
+              >
                 Continue browsing
               </Button>
             </div>
@@ -163,12 +176,18 @@ export function B2BInquiryDialog({
             {product ? (
               <div className="flex gap-4 rounded-3xl border bg-card p-4">
                 {product.imageUrl ? (
-                  <img src={product.imageUrl} alt={product.productName} className="h-20 w-20 rounded-2xl object-cover" />
+                  <img
+                    src={product.imageUrl}
+                    alt={product.productName}
+                    className="h-20 w-20 rounded-2xl object-cover"
+                  />
                 ) : null}
                 <div className="min-w-0">
                   <div className="flex flex-wrap gap-2">
                     <Badge variant="secondary">{product.brandName}</Badge>
-                    {product.productType ? <Badge variant="outline">{product.productType}</Badge> : null}
+                    {product.productType ? (
+                      <Badge variant="outline">{product.productType}</Badge>
+                    ) : null}
                   </div>
                   <div className="mt-2 line-clamp-2 text-sm font-bold">{product.productName}</div>
                   <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
@@ -226,20 +245,31 @@ export function B2BInquiryDialog({
             <label className="flex items-start gap-3 rounded-2xl border bg-muted/20 p-4 text-sm leading-6">
               <Checkbox
                 checked={form.consent}
-                onCheckedChange={(checked) => setForm((prev) => ({ ...prev, consent: checked === true }))}
+                onCheckedChange={(checked) =>
+                  setForm((prev) => ({ ...prev, consent: checked === true }))
+                }
                 className="mt-1"
               />
               <span className="text-muted-foreground">
-                I consent to GPCLUB Vietnam collecting and using my name, email and company information to review and respond to this B2B inquiry.
+                I consent to GPCLUB Vietnam collecting and using my name, email and company
+                information to review and respond to this B2B inquiry.
               </span>
             </label>
 
             <div className="rounded-2xl bg-primary/5 p-4 text-sm leading-6 text-muted-foreground">
-              <strong className="text-foreground">Customer guidance:</strong> After submission, the GPCLUB Vietnam partnership team will contact you by email within 24 hours with product consultation, wholesale/reseller guidance, or next-step questions.
+              <strong className="text-foreground">Customer guidance:</strong> After submission, the
+              GPCLUB Vietnam partnership team will contact you by email within 24 hours with product
+              consultation, wholesale/reseller guidance, or next-step questions.
             </div>
 
-            <Button type="button" onClick={submitInquiry} disabled={submitting} className="h-12 w-full rounded-full text-sm font-bold">
-              {submitting ? "Sending inquiry..." : "Submit B2B inquiry"} <Send className="ml-2 h-4 w-4" />
+            <Button
+              type="button"
+              onClick={submitInquiry}
+              disabled={submitting}
+              className="h-12 w-full rounded-full text-sm font-bold"
+            >
+              {submitting ? "Sending inquiry..." : "Submit B2B inquiry"}{" "}
+              <Send className="ml-2 h-4 w-4" />
             </Button>
           </div>
         )}

@@ -1,6 +1,10 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { COMPANY as DEFAULTS, ZALO_PHONE as DEFAULT_ZALO, WHATSAPP_PHONE as DEFAULT_WA } from "@/lib/contact";
+import {
+  COMPANY as DEFAULTS,
+  ZALO_PHONE as DEFAULT_ZALO,
+  WHATSAPP_PHONE as DEFAULT_WA,
+} from "@/lib/contact";
 
 export type CompanyInfo = {
   legalName: string;
@@ -72,7 +76,9 @@ export function SiteSettingsProvider({ children }: { children: ReactNode }) {
       if (cancelled) return;
       setInfo(merge((data?.value as Stored) ?? null));
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return <Ctx.Provider value={info}>{children}</Ctx.Provider>;
