@@ -54,5 +54,5 @@ snippet.txt
 *.sw?
 
 # Large generated source data kept out of Git
-data/
+/data/
 docs/generated/
