@@ -58,3 +58,12 @@ snippet.txt
 # the Vercel build fail because src/data/* was untracked + missing on disk).
 /data/
 docs/generated/
+
+# Local agent tooling state — memory DBs hold session secrets (Supabase
+# PAT, service_role keys, access tokens) captured from working sessions,
+# so they must never be tracked or pushed. Only non-secret state (.beads
+# issue history, .zcode/state session-summary text) is committed.
+.opencode/memory.db
+.opencode/memory.db-shm
+.opencode/memory.db-wal
+.zcode/memory.db
