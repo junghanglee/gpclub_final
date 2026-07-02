@@ -18,7 +18,15 @@ import { askChatbotClient } from "@/lib/chatbot";
 import gippyFront from "@/assets/gippy-front.png";
 import gippyChatImg from "@/assets/gippy-chat.png";
 import gippyCelebrate from "@/assets/gippy-celebrate.png";
-import { products, type Product, type SkinType } from "@/data/products";
+import {
+  useCatalogProducts,
+  getCoverImage,
+  pickBySkin,
+  pickByConcern,
+  pickByQuery,
+  type CatalogProduct,
+  type SkinType,
+} from "@/lib/catalog-products";
 import { onGippyOpen } from "@/lib/gippy-bus";
 
 type GippyState = "greet" | "talking" | "done";
@@ -35,7 +43,7 @@ interface Msg {
   id: string;
   role: "user" | "gippy";
   content?: string;
-  products?: Product[];
+  products?: CatalogProduct[];
   cta?: "managers" | "b2b";
 }
 
@@ -60,35 +68,9 @@ const CONCERNS = ["Hydration", "Brightening", "Anti-aging", "Pores", "Fragrance"
 
 const uid = () => Math.random().toString(36).slice(2, 9);
 
-function pickBySkin(t: SkinType) {
-  return products
-    .filter((p) => p.skinTypes.includes(t) || p.skinTypes.includes("All"))
-    .slice(0, 3);
-}
-function pickByConcern(c: string) {
-  return products
-    .filter((p) =>
-      p.concerns.some((x) => x.toLowerCase().includes(c.toLowerCase())) ||
-      p.tagline.toLowerCase().includes(c.toLowerCase()),
-    )
-    .slice(0, 3);
-}
-function pickByQuery(q: string) {
-  const lc = q.toLowerCase();
-  return products
-    .filter(
-      (p) =>
-        p.name.toLowerCase().includes(lc) ||
-        p.brand.toLowerCase().includes(lc) ||
-        p.category.toLowerCase().includes(lc) ||
-        p.concerns.some((c) => lc.includes(c.toLowerCase())) ||
-        lc.includes(p.brand.toLowerCase()),
-    )
-    .slice(0, 3);
-}
-
 export function GippyChat() {
   const ask = askChatbotClient;
+  const { rows: catalogProducts } = useCatalogProducts();
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<Mode>("menu");
   const [chatUiMode, setChatUiMode] = useState<ChatUiMode>("natural");
@@ -179,7 +161,7 @@ export function GippyChat() {
 
   const pickSkin = async (t: SkinType) => {
     pushUser(`My skin type: ${t}`);
-    const recs = pickBySkin(t);
+    const recs = pickBySkin(catalogProducts, t);
     await reply(() => ({
       id: uid(),
       role: "gippy",
@@ -200,7 +182,7 @@ export function GippyChat() {
 
   const pickConcern = async (c: string) => {
     pushUser(`Concern: ${c}`);
-    const recs = pickByConcern(c);
+    const recs = pickByConcern(catalogProducts, c);
     await reply(() => ({
       id: uid(),
       role: "gippy",
@@ -278,7 +260,7 @@ export function GippyChat() {
       lc.includes("partner");
 
     // Local product matches always shown when found
-    const recs = pickByQuery(q);
+    const recs = pickByQuery(catalogProducts, q);
 
     // Build short history for AI from prior text messages
     const history = messages
@@ -637,14 +619,14 @@ function MessageBubble({ msg }: { msg: Msg }) {
                 className="flex items-center gap-3 rounded-2xl border border-border/60 bg-card p-2 shadow-sm"
               >
                 <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-muted">
-                  <img src={p.image} alt={p.name} className="h-full w-full object-cover" loading="lazy" />
+                  <img src={getCoverImage(p)} alt={p.product_name} className="h-full w-full object-cover" loading="lazy" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="text-[10px] font-semibold uppercase tracking-widest text-gold">
-                    {p.brand} · {p.category}
+                    {p.brand_name} · {p.product_type}
                   </div>
-                  <div className="line-clamp-1 text-sm font-medium">{p.name}</div>
-                  <div className="line-clamp-1 text-[11px] text-muted-foreground">{p.tagline}</div>
+                  <div className="line-clamp-1 text-sm font-medium">{p.product_name}</div>
+                  <div className="line-clamp-1 text-[11px] text-muted-foreground">{p.short_intro}</div>
                 </div>
               </div>
             ))}

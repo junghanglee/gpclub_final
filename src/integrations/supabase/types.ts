@@ -24,12 +24,15 @@ export type Database = {
           product_type: string;
           published: boolean;
           short_intro: string;
+          skin_types: string[];
+          concerns: string[];
           sort_order: number;
           updated_at: string;
         };
         Insert: {
           brand_name?: string;
           conditions?: Json;
+          concerns?: string[];
           cover_image_url?: string | null;
           created_at?: string;
           detail_html?: string | null;
@@ -42,12 +45,14 @@ export type Database = {
           product_type?: string;
           published?: boolean;
           short_intro?: string;
+          skin_types?: string[];
           sort_order?: number;
           updated_at?: string;
         };
         Update: {
           brand_name?: string;
           conditions?: Json;
+          concerns?: string[];
           cover_image_url?: string | null;
           created_at?: string;
           detail_html?: string | null;
@@ -60,6 +65,7 @@ export type Database = {
           product_type?: string;
           published?: boolean;
           short_intro?: string;
+          skin_types?: string[];
           sort_order?: number;
           updated_at?: string;
         };

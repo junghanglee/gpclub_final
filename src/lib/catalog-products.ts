@@ -20,6 +20,8 @@ export type CatalogProduct = {
   is_new: boolean;
   is_popular: boolean;
   is_featured: boolean;
+  skin_types: string[];
+  concerns: string[];
   created_at?: string;
   updated_at?: string;
 };
@@ -62,7 +64,13 @@ export async function fetchPublishedCatalogProducts() {
     .order("created_at", { ascending: false });
 
   if (error) throw error;
-  return (data || []) as CatalogProduct[];
+  // Normalize fallbacks for skin_types/concerns so rows created before the
+  // migration never surface `undefined` to the Gippy chat recommender.
+  return (data || []).map((row) => ({
+    ...(row as CatalogProduct),
+    skin_types: Array.isArray((row as CatalogProduct).skin_types) ? (row as CatalogProduct).skin_types : [],
+    concerns: Array.isArray((row as CatalogProduct).concerns) ? (row as CatalogProduct).concerns : [],
+  }));
 }
 
 export function useCatalogProducts() {
@@ -97,4 +105,46 @@ export function useCatalogProducts() {
 
 export function getCoverImage(p: CatalogProduct) {
   return p.cover_image_url || p.media.find((m) => m.type === "image")?.url || "";
+}
+
+/**
+ * Product recommendation helpers for the Gippy AI consultant.
+ * All filter against the Supabase-backed catalog (admin_products) instead of
+ * the deleted local `@/data/products` module. Each helper returns at most 3
+ * matches so chat bubbles stay small and memory-bounded.
+ */
+export type SkinType = "Dry" | "Oily" | "Combination" | "Sensitive" | "All";
+
+export function pickBySkin(rows: CatalogProduct[], t: SkinType, limit = 3) {
+  return rows
+    .filter((p) => {
+      const types = p.skin_types ?? [];
+      return types.includes(t) || types.includes("All");
+    })
+    .slice(0, limit);
+}
+
+export function pickByConcern(rows: CatalogProduct[], c: string, limit = 3) {
+  const lc = c.toLowerCase();
+  return rows
+    .filter((p) => {
+      const concerns = (p.concerns ?? []).some((x) => x.toLowerCase().includes(lc));
+      const tagline = (p.short_intro ?? "").toLowerCase().includes(lc);
+      return concerns || tagline;
+    })
+    .slice(0, limit);
+}
+
+export function pickByQuery(rows: CatalogProduct[], q: string, limit = 3) {
+  const lc = q.toLowerCase();
+  return rows
+    .filter((p) => {
+      const haystack = productSearchText(p).toLowerCase();
+      return (
+        haystack.includes(lc) ||
+        (p.concerns ?? []).some((c) => lc.includes(c.toLowerCase())) ||
+        lc.includes((p.brand_name ?? "").toLowerCase())
+      );
+    })
+    .slice(0, limit);
 }

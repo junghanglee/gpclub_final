@@ -2,11 +2,19 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { ArrowRight, ArrowLeft, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { BRAND_DETAILS, BRAND_KEYS, type BrandDetail } from "@/data/brand-details";
+import {
+  BRAND_KEYS,
+  DEFAULT_BRAND_DETAILS,
+  fetchBrandDetails,
+  iconForKey,
+  useBrandDetails,
+  type BrandDetail,
+} from "@/lib/brand-details";
 
 export const Route = createFileRoute("/brand/$brandKey")({
-  loader: ({ params }) => {
-    const data = BRAND_DETAILS[params.brandKey];
+  loader: async ({ params }) => {
+    const details = await fetchBrandDetails();
+    const data = details[params.brandKey] ?? DEFAULT_BRAND_DETAILS[params.brandKey];
     if (!data) throw notFound();
     return { data };
   },
@@ -38,7 +46,8 @@ export const Route = createFileRoute("/brand/$brandKey")({
 
 function BrandDetailPage() {
   const { data } = Route.useLoaderData() as { data: BrandDetail };
-  const otherKeys = BRAND_KEYS.filter((k) => k !== data.key);
+  const { details } = useBrandDetails();
+  const otherKeys = Object.keys(details).filter((k) => k !== data.key);
 
   return (
     <>
@@ -153,16 +162,19 @@ function BrandDetailPage() {
             </h2>
           </div>
           <div className="mt-12 grid gap-px overflow-hidden border border-border bg-border md:grid-cols-3">
-            {data.features.map((f) => (
-              <div key={f.title} className="flex flex-col gap-4 bg-background p-8">
-                <span className="grid h-11 w-11 place-items-center rounded-full bg-primary/10 text-primary">
-                  <f.icon className="h-5 w-5" />
-                </span>
-                <div className="text-[10px] font-bold uppercase tracking-[0.28em] text-primary">{f.sub}</div>
-                <div className="font-display text-xl font-black tracking-tight">{f.title}</div>
-                <p className="text-[14px] leading-relaxed text-foreground/70">{f.text}</p>
-              </div>
-            ))}
+            {data.features.map((f) => {
+              const Icon = iconForKey(f.iconKey);
+              return (
+                <div key={f.title} className="flex flex-col gap-4 bg-background p-8">
+                  <span className="grid h-11 w-11 place-items-center rounded-full bg-primary/10 text-primary">
+                    <Icon className="h-5 w-5" />
+                  </span>
+                  <div className="text-[10px] font-bold uppercase tracking-[0.28em] text-primary">{f.sub}</div>
+                  <div className="font-display text-xl font-black tracking-tight">{f.title}</div>
+                  <p className="text-[14px] leading-relaxed text-foreground/70">{f.text}</p>
+                </div>
+              );
+            })}
           </div>
           <div className="mt-8 flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.22em] text-foreground/55">
             <CheckCircle2 className="h-4 w-4 text-primary" /> Verified by GPCLUB Vietnam R&D
@@ -179,7 +191,8 @@ function BrandDetailPage() {
           </h3>
           <div className="mt-8 grid gap-px overflow-hidden border border-border bg-border md:grid-cols-2">
             {otherKeys.map((k) => {
-              const b = BRAND_DETAILS[k];
+              const b = details[k];
+              if (!b) return null;
               return (
                 <Link
                   key={k}
