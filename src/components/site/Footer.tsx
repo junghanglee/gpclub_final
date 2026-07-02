@@ -39,7 +39,9 @@ export function Footer() {
               <dd>{COMPANY.taxCode}</dd>
             </div>
             <div className="flex gap-2">
-              <dt className="min-w-[110px] font-semibold text-foreground">{t("footer.representative")}</dt>
+              <dt className="min-w-[110px] font-semibold text-foreground">
+                {t("footer.representative")}
+              </dt>
               <dd>{COMPANY.representative}</dd>
             </div>
             <div className="flex items-start gap-2">
@@ -56,10 +58,26 @@ export function Footer() {
             {t("footer.explore")}
           </div>
           <ul className="mt-4 space-y-3 text-sm text-muted-foreground">
-            <li><Link to="/brand" className="hover:text-primary">{lang === "vi" ? "Hồ sơ thương hiệu" : "Brand Profiles"}</Link></li>
-            <li><Link to="/products" className="hover:text-primary">{lang === "vi" ? "Sản phẩm" : "Products"}</Link></li>
-            <li><Link to="/b2b" className="hover:text-primary">{lang === "vi" ? "Yêu cầu B2B" : "B2B Inquiry"}</Link></li>
-            <li><Link to="/contact" className="hover:text-primary">{lang === "vi" ? "Liên hệ" : "Contact"}</Link></li>
+            <li>
+              <Link to="/brand" className="hover:text-primary">
+                {lang === "vi" ? "Hồ sơ thương hiệu" : "Brand Profiles"}
+              </Link>
+            </li>
+            <li>
+              <Link to="/products" className="hover:text-primary">
+                {lang === "vi" ? "Sản phẩm" : "Products"}
+              </Link>
+            </li>
+            <li>
+              <Link to="/b2b" className="hover:text-primary">
+                {lang === "vi" ? "Yêu cầu B2B" : "B2B Inquiry"}
+              </Link>
+            </li>
+            <li>
+              <Link to="/contact" className="hover:text-primary">
+                {lang === "vi" ? "Liên hệ" : "Contact"}
+              </Link>
+            </li>
           </ul>
         </div>
 
@@ -69,22 +87,38 @@ export function Footer() {
           </div>
           <ul className="mt-4 space-y-3 text-sm text-muted-foreground">
             <li>
-              <a href={zaloLink()} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 hover:text-primary">
+              <a
+                href={zaloLink()}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-2 hover:text-primary"
+              >
                 <MessageCircle className="h-4 w-4" /> Zalo
               </a>
             </li>
             <li>
-              <a href={whatsappLink()} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 hover:text-primary">
+              <a
+                href={whatsappLink()}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-2 hover:text-primary"
+              >
                 <MessageCircle className="h-4 w-4" /> WhatsApp
               </a>
             </li>
             <li>
-              <a href={`mailto:${COMPANY.email}`} className="inline-flex items-center gap-2 hover:text-primary">
+              <a
+                href={`mailto:${COMPANY.email}`}
+                className="inline-flex items-center gap-2 hover:text-primary"
+              >
                 <Mail className="h-4 w-4" /> {COMPANY.email}
               </a>
             </li>
             <li>
-              <a href={`tel:${COMPANY.phoneTel}`} className="inline-flex items-center gap-2 hover:text-primary">
+              <a
+                href={`tel:${COMPANY.phoneTel}`}
+                className="inline-flex items-center gap-2 hover:text-primary"
+              >
                 <Phone className="h-4 w-4" /> {COMPANY.phone}
               </a>
             </li>
@@ -112,7 +146,10 @@ export function Footer() {
 
       <div className="border-t border-border">
         <div className="mx-auto flex max-w-[1400px] flex-col items-center justify-between gap-2 px-4 py-6 text-[11px] uppercase tracking-[0.18em] text-muted-foreground sm:flex-row sm:px-6 lg:px-10">
-          <div>© {new Date().getFullYear()} GPCLUB Vietnam. {lang === "vi" ? "Đã đăng ký bản quyền." : "All rights reserved."}</div>
+          <div>
+            © {new Date().getFullYear()} GPCLUB Vietnam.{" "}
+            {lang === "vi" ? "Đã đăng ký bản quyền." : "All rights reserved."}
+          </div>
           <div>JMsolution - Jmella - Trois Touch</div>
         </div>
       </div>
@@ -144,17 +181,33 @@ function SocialBlock({
 }) {
   return (
     <div className="flex flex-col gap-3">
-      <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-foreground">{brand}</div>
+      <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-foreground">
+        {brand}
+      </div>
       <div className="flex flex-wrap items-center gap-2">
-        <SocialBtn href={facebook} label="Facebook"><Facebook className="h-4 w-4" /></SocialBtn>
-        <SocialBtn href={instagram} label="Instagram"><Instagram className="h-4 w-4" /></SocialBtn>
-        <SocialBtn href={tiktok} label="TikTok"><Music2 className="h-4 w-4" /></SocialBtn>
+        <SocialBtn href={facebook} label="Facebook">
+          <Facebook className="h-4 w-4" />
+        </SocialBtn>
+        <SocialBtn href={instagram} label="Instagram">
+          <Instagram className="h-4 w-4" />
+        </SocialBtn>
+        <SocialBtn href={tiktok} label="TikTok">
+          <Music2 className="h-4 w-4" />
+        </SocialBtn>
       </div>
     </div>
   );
 }
 
-function SocialBtn({ href, label, children }: { href: string; label: string; children: React.ReactNode }) {
+function SocialBtn({
+  href,
+  label,
+  children,
+}: {
+  href: string;
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
     <a
       href={href}

@@ -1,11 +1,14 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { ArrowRight, ArrowLeft, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { BRAND_DETAILS, BRAND_KEYS, type BrandDetail } from "@/data/brand-details";
+import { BRAND_DETAILS, BRAND_KEYS, type BrandDetail, type BrandKey } from "@/data/brand-details";
+
+const isBrandKey = (value: string): value is BrandKey => BRAND_KEYS.includes(value as BrandKey);
 
 export const Route = createFileRoute("/brand/$brandKey")({
   loader: ({ params }) => {
+    if (!isBrandKey(params.brandKey)) throw notFound();
     const data = BRAND_DETAILS[params.brandKey];
     if (!data) throw notFound();
     return { data };
@@ -44,7 +47,10 @@ function BrandDetailPage() {
     <>
       {/* HERO */}
       <section className="relative isolate overflow-hidden bg-gradient-luxe">
-        <div aria-hidden className="pointer-events-none absolute -top-40 right-[-10%] h-[500px] w-[500px] rounded-full bg-primary/10 blur-3xl" />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -top-40 right-[-10%] h-[500px] w-[500px] rounded-full bg-primary/10 blur-3xl"
+        />
         <div className="relative mx-auto grid max-w-[1400px] grid-cols-1 items-center gap-12 px-4 py-20 sm:px-6 md:py-28 lg:grid-cols-12 lg:px-10">
           <div className="lg:col-span-6">
             <Link
@@ -66,10 +72,21 @@ function BrandDetailPage() {
               {data.story}
             </p>
             <div className="mt-10 flex flex-wrap gap-3">
-              <Button asChild size="lg" className="h-12 rounded-none bg-foreground px-7 text-sm font-bold uppercase tracking-[0.18em] text-background hover:bg-primary">
-                <Link to="/b2b">파트너십 문의 <ArrowRight className="ml-2 h-4 w-4" /></Link>
+              <Button
+                asChild
+                size="lg"
+                className="h-12 rounded-none bg-foreground px-7 text-sm font-bold uppercase tracking-[0.18em] text-background hover:bg-primary"
+              >
+                <Link to="/b2b">
+                  파트너십 문의 <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
               </Button>
-              <Button asChild size="lg" variant="outline" className="h-12 rounded-none border-foreground px-7 text-sm font-bold uppercase tracking-[0.18em] text-foreground hover:border-primary hover:bg-primary hover:text-primary-foreground">
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="h-12 rounded-none border-foreground px-7 text-sm font-bold uppercase tracking-[0.18em] text-foreground hover:border-primary hover:bg-primary hover:text-primary-foreground"
+              >
                 <Link to="/contact">제품 카탈로그 요청</Link>
               </Button>
             </div>
@@ -96,7 +113,9 @@ function BrandDetailPage() {
       <section className="border-t border-border bg-background py-20 md:py-28">
         <div className="mx-auto grid max-w-[1200px] items-start gap-12 px-4 sm:px-6 md:grid-cols-12 lg:px-10">
           <div className="md:col-span-4">
-            <div className="text-[11px] font-bold uppercase tracking-[0.32em] text-primary">HERITAGE</div>
+            <div className="text-[11px] font-bold uppercase tracking-[0.32em] text-primary">
+              HERITAGE
+            </div>
             <h2 className="mt-4 font-display text-3xl font-black tracking-tight md:text-4xl">
               브랜드의 흔적
             </h2>
@@ -112,12 +131,17 @@ function BrandDetailPage() {
         <div className="mx-auto max-w-[1300px] px-4 sm:px-6 lg:px-10">
           <div className="flex flex-wrap items-end justify-between gap-6">
             <div className="max-w-xl">
-              <div className="text-[11px] font-bold uppercase tracking-[0.32em] text-primary">SIGNATURE LINEUP</div>
+              <div className="text-[11px] font-bold uppercase tracking-[0.32em] text-primary">
+                SIGNATURE LINEUP
+              </div>
               <h2 className="mt-4 font-display text-3xl font-black tracking-tight md:text-5xl">
                 대표 시그니처 컬렉션
               </h2>
             </div>
-            <Link to="/products" className="text-[12px] font-bold uppercase tracking-[0.22em] text-foreground/65 hover:text-primary">
+            <Link
+              to="/products"
+              className="text-[12px] font-bold uppercase tracking-[0.22em] text-foreground/65 hover:text-primary"
+            >
               전체 라인업 보기 →
             </Link>
           </div>
@@ -131,10 +155,17 @@ function BrandDetailPage() {
                 transition={{ duration: 0.45, delay: (i % 3) * 0.06 }}
                 className="group flex flex-col gap-3 bg-background p-7 transition hover:bg-accent/30"
               >
-                <div className="text-[10px] font-bold uppercase tracking-[0.28em] text-primary">{p.line}</div>
-                <div className="font-display text-[15px] font-bold leading-snug text-foreground">{p.name}</div>
+                <div className="text-[10px] font-bold uppercase tracking-[0.28em] text-primary">
+                  {p.line}
+                </div>
+                <div className="font-display text-[15px] font-bold leading-snug text-foreground">
+                  {p.name}
+                </div>
                 <p className="text-[13px] text-foreground/65">{p.note}</p>
-                <Link to="/b2b" className="mt-auto inline-flex items-center gap-1 pt-2 text-[11px] font-bold uppercase tracking-[0.22em] text-foreground/55 transition group-hover:text-primary">
+                <Link
+                  to="/b2b"
+                  className="mt-auto inline-flex items-center gap-1 pt-2 text-[11px] font-bold uppercase tracking-[0.22em] text-foreground/55 transition group-hover:text-primary"
+                >
                   B2B 가격 문의 <ArrowRight className="h-3 w-3" />
                 </Link>
               </motion.article>
@@ -147,7 +178,9 @@ function BrandDetailPage() {
       <section className="border-t border-border bg-background py-20 md:py-28">
         <div className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-10">
           <div className="max-w-xl">
-            <div className="text-[11px] font-bold uppercase tracking-[0.32em] text-primary">TECHNOLOGY & CARE</div>
+            <div className="text-[11px] font-bold uppercase tracking-[0.32em] text-primary">
+              TECHNOLOGY & CARE
+            </div>
             <h2 className="mt-4 font-display text-3xl font-black leading-tight tracking-tight md:text-5xl">
               브랜드를 떠받치는 기술
             </h2>
@@ -158,7 +191,9 @@ function BrandDetailPage() {
                 <span className="grid h-11 w-11 place-items-center rounded-full bg-primary/10 text-primary">
                   <f.icon className="h-5 w-5" />
                 </span>
-                <div className="text-[10px] font-bold uppercase tracking-[0.28em] text-primary">{f.sub}</div>
+                <div className="text-[10px] font-bold uppercase tracking-[0.28em] text-primary">
+                  {f.sub}
+                </div>
                 <div className="font-display text-xl font-black tracking-tight">{f.title}</div>
                 <p className="text-[14px] leading-relaxed text-foreground/70">{f.text}</p>
               </div>
@@ -173,7 +208,9 @@ function BrandDetailPage() {
       {/* OTHER BRANDS */}
       <section className="border-t border-border bg-secondary/30 py-20">
         <div className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-10">
-          <div className="text-[11px] font-bold uppercase tracking-[0.32em] text-primary">OTHER BRANDS</div>
+          <div className="text-[11px] font-bold uppercase tracking-[0.32em] text-primary">
+            OTHER BRANDS
+          </div>
           <h3 className="mt-3 font-display text-2xl font-black tracking-tight md:text-3xl">
             다른 브랜드도 둘러보세요
           </h3>
@@ -188,8 +225,12 @@ function BrandDetailPage() {
                   className="group flex items-end justify-between bg-background p-8 transition hover:bg-accent/30"
                 >
                   <div>
-                    <div className="text-[10px] font-bold uppercase tracking-[0.28em] text-primary">{b.sub}</div>
-                    <div className="mt-1 font-display text-2xl font-black tracking-tight">{b.name}</div>
+                    <div className="text-[10px] font-bold uppercase tracking-[0.28em] text-primary">
+                      {b.sub}
+                    </div>
+                    <div className="mt-1 font-display text-2xl font-black tracking-tight">
+                      {b.name}
+                    </div>
                     <p className="mt-2 max-w-md text-[13px] text-foreground/65">{b.tagline}</p>
                   </div>
                   <ArrowRight className="h-5 w-5 text-foreground/40 transition group-hover:translate-x-1 group-hover:text-primary" />

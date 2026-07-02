@@ -1,28 +1,51 @@
 ﻿import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import type { Database } from "@/integrations/supabase/types";
 import {
-  DEFAULT_HOME_CONTENT,
-  mergeHomeContent,
-  type HomeAdminContent,
-  type LocalizedText,
-} from "@/lib/home-content";
+  BarChart3,
+  Bot,
+  CalendarDays,
+  Download,
+  Eye,
+  FileText,
+  HelpCircle,
+  Home,
+  Inbox,
+  LogOut,
+  Megaphone,
+  PackageOpen,
+  Pencil,
+  Plus,
+  RefreshCw,
+  Settings,
+  Star,
+  Trash2,
+  Users,
+} from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import {
-  DEFAULT_PAGE_CONTENT,
-  PAGE_CONTENT_OPTIONS,
-  mergePageContent,
-  pageContentStorageKey,
-  type PageContentKey,
-  type PageEditableContent,
-} from "@/lib/page-content";
-import { Button } from "@/components/ui/button";
+  ProductDetailEditor,
+  type ProductDetailEditorHandle,
+} from "@/components/admin/product-detail-editor";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -31,60 +54,52 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { supabase } from "@/integrations/supabase/client";
+import type { Database, Json } from "@/integrations/supabase/types";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  LogOut,
-  RefreshCw,
-  Plus,
-  Trash2,
-  Pencil,
-  BarChart3,
-  Users,
-  HelpCircle,
-  Megaphone,
-  Settings,
-  Bot,
-  Inbox,
-  CalendarDays,
-  Home,
-  PackageOpen,
-  FileText,
-  Download,
-  Star,
-  Eye,
-} from "lucide-react";
-import { toast } from "sonner";
-import { chunkText } from "@/lib/chatbot-training";
-import {
+  type CatalogProduct,
   canonicalBrandName,
   getCoverImage,
   normalizeBrandText,
   normalizedSearchText,
-  type CatalogProduct,
   type ProductCondition,
   type ProductMedia,
 } from "@/lib/catalog-products";
+import { chunkText } from "@/lib/chatbot-training";
+import {
+  DEFAULT_HOME_CONTENT,
+  type HomeAdminContent,
+  type LocalizedText,
+  mergeHomeContent,
+} from "@/lib/home-content";
+import {
+  DEFAULT_PAGE_CONTENT,
+  mergePageContent,
+  PAGE_CONTENT_OPTIONS,
+  type PageContentKey,
+  type PageEditableContent,
+  pageContentStorageKey,
+} from "@/lib/page-content";
 import {
   createCatalogId,
   fetchProductCatalogs,
-  saveProductCatalogs,
   type ProductCatalog,
+  saveProductCatalogs,
 } from "@/lib/product-catalogs";
+import { sanitizeProductDetailHtml } from "@/lib/product-detail-html";
 
 type AdminLang = "en" | "vi" | "ko";
+
+type Tables = Database["public"]["Tables"];
+type B2BInquiryRow = Tables["b2b_inquiries"]["Row"];
+type B2BInquiryUpdate = Tables["b2b_inquiries"]["Update"];
+type FaqRow = Tables["faqs"]["Row"];
+type EventRow = Tables["events"]["Row"];
+type HomeContentInsert = Tables["home_content"]["Insert"];
+type PopupRow = Tables["popups"]["Row"];
+type SiteSettingsValue = Record<string, string>;
 
 type TriText = Record<AdminLang, string>;
 
@@ -114,7 +129,11 @@ const ADMIN_I18N = {
     ko: "GPCLUB 관리 센터",
   },
   language: { en: "Language", vi: "Ngôn ngữ", ko: "언어" },
-  accessDenied: { en: "Access denied", vi: "Từ chối truy cập", ko: "접근 권한 없음" },
+  accessDenied: {
+    en: "Access denied",
+    vi: "Từ chối truy cập",
+    ko: "접근 권한 없음",
+  },
   accessDeniedDesc: {
     en: "Your account doesn't have admin privileges. Contact a workspace owner to request access.",
     vi: "Tài khoản của bạn không có quyền quản trị. Vui lòng liên hệ chủ sở hữu không gian làm việc để yêu cầu quyền truy cập.",
@@ -122,9 +141,21 @@ const ADMIN_I18N = {
   },
   overview: { en: "Overview", vi: "Tổng quan", ko: "개요" },
   dashboard: { en: "Dashboard", vi: "Bảng điều khiển", ko: "대시보드" },
-  productManagement: { en: "Product Management", vi: "Quản lý sản phẩm", ko: "상품관리" },
-  customerManagement: { en: "Customers / Inquiries", vi: "Khách hàng / Liên hệ", ko: "고객/문의" },
-  contentManagement: { en: "Content Management", vi: "Quản lý nội dung", ko: "콘텐츠관리" },
+  productManagement: {
+    en: "Product Management",
+    vi: "Quản lý sản phẩm",
+    ko: "상품관리",
+  },
+  customerManagement: {
+    en: "Customers / Inquiries",
+    vi: "Khách hàng / Liên hệ",
+    ko: "고객/문의",
+  },
+  contentManagement: {
+    en: "Content Management",
+    vi: "Quản lý nội dung",
+    ko: "콘텐츠관리",
+  },
   settings: { en: "Settings", vi: "Cài đặt", ko: "설정" },
   home: { en: "Content Edit", vi: "Chỉnh sửa nội dung", ko: "콘텐츠수정" },
   dealers: { en: "B2B Applications", vi: "Đơn đăng ký B2B", ko: "B2B 신청" },
@@ -133,36 +164,112 @@ const ADMIN_I18N = {
   popups: { en: "Popups", vi: "Popup", ko: "팝업" },
   events: { en: "Events", vi: "Sự kiện", ko: "이벤트" },
   products: { en: "Products", vi: "Products", ko: "제품" },
-  catalogManagement: { en: "Catalog Management", vi: "Quản lý catalog", ko: "카탈로그 관리" },
-  productCatalogs: { en: "Product Catalogs", vi: "Catalog sản phẩm", ko: "상품 카탈로그" },
+  catalogManagement: {
+    en: "Catalog Management",
+    vi: "Quản lý catalog",
+    ko: "카탈로그 관리",
+  },
+  productCatalogs: {
+    en: "Product Catalogs",
+    vi: "Catalog sản phẩm",
+    ko: "상품 카탈로그",
+  },
   newCatalog: { en: "New catalog", vi: "Tạo catalog", ko: "카탈로그 신규생성" },
-  representativeCatalog: { en: "Representative", vi: "Catalog đại diện", ko: "대표카탈로그" },
-  setRepresentative: { en: "Set representative", vi: "Chọn đại diện", ko: "대표로 선택" },
+  representativeCatalog: {
+    en: "Representative",
+    vi: "Catalog đại diện",
+    ko: "대표카탈로그",
+  },
+  setRepresentative: {
+    en: "Set representative",
+    vi: "Chọn đại diện",
+    ko: "대표로 선택",
+  },
   downloadPdf: { en: "Download PDF", vi: "Tải PDF", ko: "PDF 다운로드" },
   preview: { en: "Preview", vi: "Xem trước", ko: "미리보기" },
   catalogTitle: { en: "Catalog title", vi: "Tên catalog", ko: "카탈로그명" },
   catalogSubtitle: { en: "Subtitle", vi: "Phụ đề", ko: "부제목" },
   catalogDescription: { en: "Description", vi: "Mô tả", ko: "설명" },
-  catalogTemplate: { en: "Catalog template", vi: "Mẫu catalog", ko: "카탈로그 템플릿" },
-  selectedProducts: { en: "Selected products", vi: "Sản phẩm đã chọn", ko: "선택 상품" },
-  searchProducts: { en: "Search products", vi: "Tìm sản phẩm", ko: "상품 검색" },
+  catalogTemplate: {
+    en: "Catalog template",
+    vi: "Mẫu catalog",
+    ko: "카탈로그 템플릿",
+  },
+  selectedProducts: {
+    en: "Selected products",
+    vi: "Sản phẩm đã chọn",
+    ko: "선택 상품",
+  },
+  searchProducts: {
+    en: "Search products",
+    vi: "Tìm sản phẩm",
+    ko: "상품 검색",
+  },
   allBrands: { en: "All brands", vi: "Tất cả thương hiệu", ko: "전체 브랜드" },
   allTypes: { en: "All types", vi: "Tất cả loại", ko: "전체 유형" },
   selectAll: { en: "Select all", vi: "Chọn tất cả", ko: "전체선택" },
-  selectFiltered: { en: "Select filtered", vi: "Chọn kết quả lọc", ko: "현재 필터 전체선택" },
+  selectFiltered: {
+    en: "Select filtered",
+    vi: "Chọn kết quả lọc",
+    ko: "현재 필터 전체선택",
+  },
   clearSelected: { en: "Clear selected", vi: "Bỏ chọn", ko: "선택해제" },
-  premiumTemplate: { en: "Premium visual", vi: "Hình ảnh cao cấp", ko: "프리미엄 비주얼" },
-  compactTemplate: { en: "Compact bulk list", vi: "Danh sách gọn", ko: "대량상품 압축형" },
-  lineupTemplate: { en: "Lineup grid", vi: "Lưới sản phẩm", ko: "라인업 그리드" },
-  noCatalogs: { en: "No catalogs yet", vi: "Chưa có catalog", ko: "아직 카탈로그가 없습니다" },
-  deleteCatalogConfirm: { en: "Delete this catalog?", vi: "Xóa catalog này?", ko: "이 카탈로그를 삭제할까요?" },
+  premiumTemplate: {
+    en: "Premium visual",
+    vi: "Hình ảnh cao cấp",
+    ko: "프리미엄 비주얼",
+  },
+  compactTemplate: {
+    en: "Compact bulk list",
+    vi: "Danh sách gọn",
+    ko: "대량상품 압축형",
+  },
+  lineupTemplate: {
+    en: "Lineup grid",
+    vi: "Lưới sản phẩm",
+    ko: "라인업 그리드",
+  },
+  noCatalogs: {
+    en: "No catalogs yet",
+    vi: "Chưa có catalog",
+    ko: "아직 카탈로그가 없습니다",
+  },
+  deleteCatalogConfirm: {
+    en: "Delete this catalog?",
+    vi: "Xóa catalog này?",
+    ko: "이 카탈로그를 삭제할까요?",
+  },
   siteInfo: { en: "Site Info", vi: "Thông tin trang web", ko: "사이트 정보" },
-  chatbot: { en: "Chatbot Training", vi: "Huấn luyện chatbot", ko: "챗봇 학습" },
-  dealerApplications: { en: "B2B applications", vi: "Đơn đăng ký B2B", ko: "B2B 신청" },
-  newUnhandled: { en: "New (unhandled)", vi: "Mới (chưa xử lý)", ko: "신규(미처리)" },
-  generalInquiries: { en: "Chatbot records", vi: "Bản ghi chatbot", ko: "챗봇 기록" },
-  publishedFaqs: { en: "Published FAQs", vi: "FAQ đã xuất bản", ko: "게시된 FAQ" },
-  chatbotTraining: { en: "Chatbot training", vi: "Huấn luyện chatbot", ko: "챗봇 학습" },
+  chatbot: {
+    en: "Chatbot Training",
+    vi: "Huấn luyện chatbot",
+    ko: "챗봇 학습",
+  },
+  dealerApplications: {
+    en: "B2B applications",
+    vi: "Đơn đăng ký B2B",
+    ko: "B2B 신청",
+  },
+  newUnhandled: {
+    en: "New (unhandled)",
+    vi: "Mới (chưa xử lý)",
+    ko: "신규(미처리)",
+  },
+  generalInquiries: {
+    en: "Chatbot records",
+    vi: "Bản ghi chatbot",
+    ko: "챗봇 기록",
+  },
+  publishedFaqs: {
+    en: "Published FAQs",
+    vi: "FAQ đã xuất bản",
+    ko: "게시된 FAQ",
+  },
+  chatbotTraining: {
+    en: "Chatbot training",
+    vi: "Huấn luyện chatbot",
+    ko: "챗봇 학습",
+  },
   company: { en: "Company", vi: "Công ty", ko: "회사" },
   contact: { en: "Contact", vi: "Liên hệ", ko: "연락처" },
   city: { en: "City", vi: "Thành phố", ko: "도시" },
@@ -177,13 +284,25 @@ const ADMIN_I18N = {
   saveNote: { en: "Save note", vi: "Lưu ghi chú", ko: "메모 저장" },
   conversation: { en: "Conversation", vi: "Cuộc hội thoại", ko: "대화" },
   customer: { en: "Customer", vi: "Khách hàng", ko: "고객" },
-  chatbotAnswer: { en: "Chatbot answer", vi: "Câu trả lời chatbot", ko: "챗봇 답변" },
+  chatbotAnswer: {
+    en: "Chatbot answer",
+    vi: "Câu trả lời chatbot",
+    ko: "챗봇 답변",
+  },
   dateFilter: { en: "Date filter", vi: "Bộ lọc ngày", ko: "날짜 필터" },
   clearFilter: { en: "Clear filter", vi: "Xóa bộ lọc", ko: "필터 지우기" },
-  userSessions: { en: "User sessions", vi: "Phiên người dùng", ko: "사용자별 대화" },
+  userSessions: {
+    en: "User sessions",
+    vi: "Phiên người dùng",
+    ko: "사용자별 대화",
+  },
   sessionId: { en: "Session ID", vi: "ID phiên", ko: "사용자 세션" },
   messageCount: { en: "Messages", vi: "Tin nhắn", ko: "대화 수" },
-  latestMessage: { en: "Latest message", vi: "Tin nhắn mới nhất", ko: "최근 메시지" },
+  latestMessage: {
+    en: "Latest message",
+    vi: "Tin nhắn mới nhất",
+    ko: "최근 메시지",
+  },
   question: { en: "Question", vi: "Câu hỏi", ko: "질문" },
   answer: { en: "Answer", vi: "Câu trả lời", ko: "답변" },
   category: { en: "Category", vi: "Danh mục", ko: "카테고리" },
@@ -213,8 +332,16 @@ const ADMIN_I18N = {
     ko: "아직 챗봇 기록이 없습니다",
   },
   noFaqs: { en: "No FAQs yet", vi: "Chưa có FAQ", ko: "아직 FAQ가 없습니다" },
-  noPopups: { en: "No popups yet", vi: "Chưa có popup", ko: "아직 팝업이 없습니다" },
-  noEvents: { en: "No events yet", vi: "Chưa có sự kiện", ko: "아직 이벤트가 없습니다" },
+  noPopups: {
+    en: "No popups yet",
+    vi: "Chưa có popup",
+    ko: "아직 팝업이 없습니다",
+  },
+  noEvents: {
+    en: "No events yet",
+    vi: "Chưa có sự kiện",
+    ko: "아직 이벤트가 없습니다",
+  },
   live: { en: "Live", vi: "Đang hiển thị", ko: "라이브" },
   draft: { en: "Draft", vi: "Bản nháp", ko: "초안" },
   off: { en: "Off", vi: "Tắt", ko: "꺼짐" },
@@ -224,25 +351,45 @@ const ADMIN_I18N = {
   normal: { en: "Normal", vi: "Bình thường", ko: "일반" },
   event: { en: "Event", vi: "Sự kiện", ko: "이벤트" },
   newProduct: { en: "New product", vi: "Sản phẩm mới", ko: "신제품" },
-  editProduct: { en: "Edit product", vi: "Chỉnh sửa sản phẩm", ko: "제품 수정" },
+  editProduct: {
+    en: "Edit product",
+    vi: "Chỉnh sửa sản phẩm",
+    ko: "제품 수정",
+  },
   productName: { en: "Product name", vi: "Tên sản phẩm", ko: "제품명" },
   brandName: { en: "Brand name", vi: "Tên thương hiệu", ko: "브랜드명" },
   productType: { en: "Product type", vi: "Loại sản phẩm", ko: "제품유형" },
   shortIntro: { en: "Short intro", vi: "Giới thiệu ngắn", ko: "한줄 소개" },
   detailEditor: {
-    en: "Detail editor (HTML)",
-    vi: "Trình chỉnh sửa chi tiết (HTML)",
-    ko: "상세설명 에디터(HTML)",
+    en: "Detail editor",
+    vi: "Trình chỉnh sửa chi tiết",
+    ko: "상세설명 에디터",
   },
-  coverImage: { en: "Cover image URL", vi: "URL ảnh đại diện", ko: "대표 이미지 URL" },
+  coverImage: {
+    en: "Cover image URL",
+    vi: "URL ảnh đại diện",
+    ko: "대표 이미지 URL",
+  },
   mediaUrls: { en: "Photos / Videos", vi: "Ảnh / Video", ko: "사진 / 동영상" },
-  conditions: { en: "Conditions / prices", vi: "Điều kiện / giá", ko: "조건 / 가격" },
+  conditions: {
+    en: "Conditions / prices",
+    vi: "Điều kiện / giá",
+    ko: "조건 / 가격",
+  },
   showCondition: { en: "Show", vi: "Hiển thị", ko: "노출" },
-  popularProduct: { en: "Popular product", vi: "Sản phẩm phổ biến", ko: "인기제품" },
+  popularProduct: {
+    en: "Popular product",
+    vi: "Sản phẩm phổ biến",
+    ko: "인기제품",
+  },
   featuredProduct: { en: "Featured highlight", vi: "Nổi bật", ko: "강조" },
   addMedia: { en: "Add media", vi: "Thêm media", ko: "미디어 추가" },
   addCondition: { en: "Add condition", vi: "Thêm điều kiện", ko: "조건 추가" },
-  noProducts: { en: "No products yet", vi: "Chưa có sản phẩm", ko: "아직 제품이 없습니다" },
+  noProducts: {
+    en: "No products yet",
+    vi: "Chưa có sản phẩm",
+    ko: "아직 제품이 없습니다",
+  },
   deleteProductConfirm: {
     en: "Delete this product?",
     vi: "Xóa sản phẩm này?",
@@ -250,7 +397,11 @@ const ADMIN_I18N = {
   },
   media: { en: "Media", vi: "Phương tiện", ko: "미디어" },
   type: { en: "Type", vi: "Loại", ko: "유형" },
-  siteInformation: { en: "Site information", vi: "Thông tin trang web", ko: "사이트 정보" },
+  siteInformation: {
+    en: "Site information",
+    vi: "Thông tin trang web",
+    ko: "사이트 정보",
+  },
   saveChanges: { en: "Save changes", vi: "Lưu thay đổi", ko: "변경사항 저장" },
   saving: { en: "Saving...", vi: "Đang lưu...", ko: "저장 중..." },
   enabled: { en: "Enabled", vi: "Đã bật", ko: "활성화" },
@@ -261,13 +412,21 @@ const ADMIN_I18N = {
     vi: "Đặt lại nội dung trang đã chọn về mặc định trong mã?",
     ko: "선택한 페이지 콘텐츠를 코드 기본값으로 초기화할까요?",
   },
-  homeEditor: { en: "Content editor", vi: "Trình chỉnh sửa nội dung", ko: "콘텐츠수정" },
+  homeEditor: {
+    en: "Content editor",
+    vi: "Trình chỉnh sửa nội dung",
+    ko: "콘텐츠수정",
+  },
   homeEditorDesc: {
     en: "Choose a public site menu and edit the VI/EN text applied to that page. HOME includes the full homepage sections.",
     vi: "Chọn menu trên trang công khai và chỉnh sửa nội dung VI/EN áp dụng cho trang đó. HOME bao gồm toàn bộ các khu vực trang chủ.",
     ko: "사용자 사이트 메뉴를 선택해 해당 페이지의 VI/EN 문구를 수정합니다. HOME은 홈페이지 전체 섹션을 포함합니다.",
   },
-  pageToEdit: { en: "Page to edit", vi: "Trang cần chỉnh sửa", ko: "수정할 페이지" },
+  pageToEdit: {
+    en: "Page to edit",
+    vi: "Trang cần chỉnh sửa",
+    ko: "수정할 페이지",
+  },
   saveHome: { en: "Save content", vi: "Lưu nội dung", ko: "콘텐츠 저장" },
   loadingHomeEditor: {
     en: "Loading home editor...",
@@ -281,8 +440,16 @@ const ADMIN_I18N = {
   },
   heroSection: { en: "Hero", vi: "Khu vực hero", ko: "히어로 영역" },
   heroStats: { en: "Hero stats", vi: "Chỉ số hero", ko: "히어로 지표" },
-  partnerHook: { en: "Partner hook", vi: "Thông điệp thu hút đối tác", ko: "파트너 유도 문구" },
-  trustPillars: { en: "Trust & pillars", vi: "Niềm tin & trụ cột", ko: "신뢰 요소" },
+  partnerHook: {
+    en: "Partner hook",
+    vi: "Thông điệp thu hút đối tác",
+    ko: "파트너 유도 문구",
+  },
+  trustPillars: {
+    en: "Trust & pillars",
+    vi: "Niềm tin & trụ cột",
+    ko: "신뢰 요소",
+  },
   processImagesCta: {
     en: "Process / Images / CTA",
     vi: "Quy trình / Hình ảnh / CTA",
@@ -292,23 +459,63 @@ const ADMIN_I18N = {
   subtitle: { en: "Subtitle", vi: "Phụ đề", ko: "부제목" },
   primaryCta: { en: "Primary CTA", vi: "CTA chính", ko: "주요 CTA" },
   secondaryCta: { en: "Secondary CTA", vi: "CTA phụ", ko: "보조 CTA" },
-  heroImageUrl: { en: "Hero image URL", vi: "URL hình hero", ko: "히어로 이미지 URL" },
-  heroImageAlt: { en: "Hero image alt", vi: "Alt hình hero", ko: "히어로 이미지 대체 텍스트" },
+  heroImageUrl: {
+    en: "Hero image URL",
+    vi: "URL hình hero",
+    ko: "히어로 이미지 URL",
+  },
+  heroImageAlt: {
+    en: "Hero image alt",
+    vi: "Alt hình hero",
+    ko: "히어로 이미지 대체 텍스트",
+  },
   masksValue: { en: "Masks value", vi: "Giá trị mặt nạ", ko: "마스크 수치" },
-  countriesValue: { en: "Countries value", vi: "Giá trị quốc gia", ko: "국가 수치" },
-  vietnamValue: { en: "Vietnam value", vi: "Giá trị Việt Nam", ko: "베트남 수치" },
+  countriesValue: {
+    en: "Countries value",
+    vi: "Giá trị quốc gia",
+    ko: "국가 수치",
+  },
+  vietnamValue: {
+    en: "Vietnam value",
+    vi: "Giá trị Việt Nam",
+    ko: "베트남 수치",
+  },
   masksLabel: { en: "Masks label", vi: "Nhãn mặt nạ", ko: "마스크 라벨" },
-  countriesLabel: { en: "Countries label", vi: "Nhãn quốc gia", ko: "국가 라벨" },
+  countriesLabel: {
+    en: "Countries label",
+    vi: "Nhãn quốc gia",
+    ko: "국가 라벨",
+  },
   vietnamLabel: { en: "Vietnam label", vi: "Nhãn Việt Nam", ko: "베트남 라벨" },
   highlight: { en: "Highlight", vi: "Điểm nhấn", ko: "하이라이트" },
-  trustKicker: { en: "Trust kicker", vi: "Dòng nhấn niềm tin", ko: "신뢰 강조 문구" },
+  trustKicker: {
+    en: "Trust kicker",
+    vi: "Dòng nhấn niềm tin",
+    ko: "신뢰 강조 문구",
+  },
   trustTitle: { en: "Trust title", vi: "Tiêu đề niềm tin", ko: "신뢰 제목" },
   smallLabel: { en: "Small", vi: "Nhãn nhỏ", ko: "소형 라벨" },
   text: { en: "Text", vi: "Văn bản", ko: "텍스트" },
-  processKicker: { en: "Process kicker", vi: "Dòng nhấn quy trình", ko: "프로세스 강조 문구" },
-  processTitle: { en: "Process title", vi: "Tiêu đề quy trình", ko: "프로세스 제목" },
-  processBody: { en: "Process body", vi: "Nội dung quy trình", ko: "프로세스 본문" },
-  imageKicker: { en: "Image kicker", vi: "Dòng nhấn hình ảnh", ko: "이미지 강조 문구" },
+  processKicker: {
+    en: "Process kicker",
+    vi: "Dòng nhấn quy trình",
+    ko: "프로세스 강조 문구",
+  },
+  processTitle: {
+    en: "Process title",
+    vi: "Tiêu đề quy trình",
+    ko: "프로세스 제목",
+  },
+  processBody: {
+    en: "Process body",
+    vi: "Nội dung quy trình",
+    ko: "프로세스 본문",
+  },
+  imageKicker: {
+    en: "Image kicker",
+    vi: "Dòng nhấn hình ảnh",
+    ko: "이미지 강조 문구",
+  },
   imageTitle: { en: "Image title", vi: "Tiêu đề hình ảnh", ko: "이미지 제목" },
   imageBody: { en: "Image body", vi: "Nội dung hình ảnh", ko: "이미지 본문" },
   imageCta: { en: "Image CTA", vi: "CTA hình ảnh", ko: "이미지 CTA" },
@@ -319,7 +526,11 @@ const ADMIN_I18N = {
   altEn: { en: "Alt EN", vi: "Alt EN", ko: "EN 대체 텍스트" },
   ctaKicker: { en: "CTA kicker", vi: "Dòng nhấn CTA", ko: "CTA 강조 문구" },
   ctaTitle: { en: "CTA title", vi: "Tiêu đề CTA", ko: "CTA 제목" },
-  ctaHighlight: { en: "CTA highlight", vi: "Điểm nhấn CTA", ko: "CTA 하이라이트" },
+  ctaHighlight: {
+    en: "CTA highlight",
+    vi: "Điểm nhấn CTA",
+    ko: "CTA 하이라이트",
+  },
   ctaBody: { en: "CTA body", vi: "Nội dung CTA", ko: "CTA 본문" },
   ctaButton: { en: "CTA button", vi: "Nút CTA", ko: "CTA 버튼" },
   numberLabel: { en: "No.", vi: "STT", ko: "번호" },
@@ -328,8 +539,16 @@ const ADMIN_I18N = {
   ctaVi: { en: "CTA VI", vi: "CTA VI", ko: "VI CTA" },
   ctaEn: { en: "CTA EN", vi: "CTA EN", ko: "EN CTA" },
   qa: { en: "Q&A", vi: "Q&A", ko: "Q&A" },
-  legalNameEn: { en: "Legal name (EN)", vi: "Tên pháp lý (EN)", ko: "법인명(EN)" },
-  legalNameVi: { en: "Legal name (VI)", vi: "Tên pháp lý (VI)", ko: "법인명(VI)" },
+  legalNameEn: {
+    en: "Legal name (EN)",
+    vi: "Tên pháp lý (EN)",
+    ko: "법인명(EN)",
+  },
+  legalNameVi: {
+    en: "Legal name (VI)",
+    vi: "Tên pháp lý (VI)",
+    ko: "법인명(VI)",
+  },
   taxCode: { en: "Tax code", vi: "Mã số thuế", ko: "세금 코드" },
   representative: { en: "Representative", vi: "Người đại diện", ko: "대표자" },
   address: { en: "Address", vi: "Địa chỉ", ko: "주소" },
@@ -349,20 +568,36 @@ const ADMIN_I18N = {
     ko: "이 신청을 삭제할까요?",
   },
   deleteConfirm: { en: "Delete?", vi: "Xóa?", ko: "삭제할까요?" },
-  deleteFaqConfirm: { en: "Delete FAQ?", vi: "Xóa FAQ?", ko: "FAQ를 삭제할까요?" },
-  deletePopupConfirm: { en: "Delete popup?", vi: "Xóa popup?", ko: "팝업을 삭제할까요?" },
+  deleteFaqConfirm: {
+    en: "Delete FAQ?",
+    vi: "Xóa FAQ?",
+    ko: "FAQ를 삭제할까요?",
+  },
+  deletePopupConfirm: {
+    en: "Delete popup?",
+    vi: "Xóa popup?",
+    ko: "팝업을 삭제할까요?",
+  },
   deleteEventConfirm: {
     en: "Delete this event?",
     vi: "Xóa sự kiện này?",
     ko: "이 이벤트를 삭제할까요?",
   },
-  deleteEntryConfirm: { en: "Delete entry?", vi: "Xóa mục này?", ko: "항목을 삭제할까요?" },
+  deleteEntryConfirm: {
+    en: "Delete entry?",
+    vi: "Xóa mục này?",
+    ko: "항목을 삭제할까요?",
+  },
   questionAnswerRequired: {
     en: "Question and answer required",
     vi: "Cần nhập câu hỏi và câu trả lời",
     ko: "질문과 답변이 필요합니다",
   },
-  titleRequired: { en: "Title required", vi: "Cần nhập tiêu đề", ko: "제목이 필요합니다" },
+  titleRequired: {
+    en: "Title required",
+    vi: "Cần nhập tiêu đề",
+    ko: "제목이 필요합니다",
+  },
   titleViEnRequired: {
     en: "Title VI/EN is required",
     vi: "Cần nhập tiêu đề VI/EN",
@@ -371,7 +606,11 @@ const ADMIN_I18N = {
   submitted: { en: "Submitted", vi: "Đã gửi", ko: "제출됨" },
   position: { en: "Position", vi: "Chức vụ", ko: "직책" },
   channel: { en: "Channel", vi: "Kênh", ko: "채널" },
-  monthlyVolume: { en: "Monthly volume", vi: "Sản lượng hằng tháng", ko: "월간 수량" },
+  monthlyVolume: {
+    en: "Monthly volume",
+    vi: "Sản lượng hằng tháng",
+    ko: "월간 수량",
+  },
   brands: { en: "Brands", vi: "Thương hiệu", ko: "브랜드" },
   phone: { en: "Phone", vi: "Điện thoại", ko: "전화번호" },
   emailReply: { en: "Email reply", vi: "Trả lời qua email", ko: "이메일 답장" },
@@ -411,7 +650,11 @@ const ADMIN_I18N = {
   all: { en: "All", vi: "Tất cả", ko: "전체" },
   product: { en: "Product", vi: "Sản phẩm", ko: "제품" },
   document: { en: "Document", vi: "Tài liệu", ko: "문서" },
-  titleQuestion: { en: "Title / Question", vi: "Tiêu đề / Câu hỏi", ko: "제목 / 질문" },
+  titleQuestion: {
+    en: "Title / Question",
+    vi: "Tiêu đề / Câu hỏi",
+    ko: "제목 / 질문",
+  },
   tags: { en: "Tags", vi: "Thẻ", ko: "태그" },
   noTrainingData: {
     en: "No training data yet",
@@ -420,9 +663,17 @@ const ADMIN_I18N = {
   },
   untitled: { en: "(untitled)", vi: "(chưa có tiêu đề)", ko: "(제목 없음)" },
   editEntry: { en: "Edit entry", vi: "Chỉnh sửa mục", ko: "항목 수정" },
-  newTrainingEntry: { en: "New training entry", vi: "Mục huấn luyện mới", ko: "새 학습 항목" },
+  newTrainingEntry: {
+    en: "New training entry",
+    vi: "Mục huấn luyện mới",
+    ko: "새 학습 항목",
+  },
   qaPair: { en: "Q&A pair", vi: "Cặp hỏi đáp", ko: "Q&A 쌍" },
-  productInfo: { en: "Product info", vi: "Thông tin sản phẩm", ko: "제품 정보" },
+  productInfo: {
+    en: "Product info",
+    vi: "Thông tin sản phẩm",
+    ko: "제품 정보",
+  },
   documentFreeform: {
     en: "Document / freeform",
     vi: "Tài liệu / nội dung tự do",
@@ -438,16 +689,32 @@ const ADMIN_I18N = {
     vi: "Các cặp hỏi đáp, thông tin sản phẩm và tài liệu tự do mà chatbot có thể sử dụng.",
     ko: "챗봇이 사용할 수 있는 Q&A, 제품 정보, 자유 형식 문서를 관리합니다.",
   },
-  trainingEntries: { en: "Training entries", vi: "Mục huấn luyện", ko: "학습 항목" },
-  documentLibrary: { en: "Document library", vi: "Thư viện tài liệu", ko: "문서 라이브러리" },
+  trainingEntries: {
+    en: "Training entries",
+    vi: "Mục huấn luyện",
+    ko: "학습 항목",
+  },
+  documentLibrary: {
+    en: "Document library",
+    vi: "Thư viện tài liệu",
+    ko: "문서 라이브러리",
+  },
   documentLibraryDesc: {
     en: "Register manuals, policies, product sheets, and long documents. They are split into searchable chunks for Gippy AI.",
     vi: "Đăng ký hướng dẫn, chính sách, bảng thông tin sản phẩm và tài liệu dài. Nội dung sẽ được chia thành các đoạn có thể tìm kiếm cho Gippy AI.",
     ko: "매뉴얼, 정책, 제품 자료, 긴 문서를 등록합니다. Gippy AI가 검색할 수 있도록 청크로 분할됩니다.",
   },
   newDocument: { en: "New document", vi: "Tài liệu mới", ko: "새 문서" },
-  editDocument: { en: "Edit document", vi: "Chỉnh sửa tài liệu", ko: "문서 수정" },
-  rawContent: { en: "Document content", vi: "Nội dung tài liệu", ko: "문서 내용" },
+  editDocument: {
+    en: "Edit document",
+    vi: "Chỉnh sửa tài liệu",
+    ko: "문서 수정",
+  },
+  rawContent: {
+    en: "Document content",
+    vi: "Nội dung tài liệu",
+    ko: "문서 내용",
+  },
   rawContentHint: {
     en: "Paste text from PDF, Word, product sheets, manuals, or policy documents.",
     vi: "Dán văn bản từ PDF, Word, bảng thông tin sản phẩm, hướng dẫn hoặc tài liệu chính sách.",
@@ -460,9 +727,21 @@ const ADMIN_I18N = {
   manual: { en: "Manual", vi: "Hướng dẫn", ko: "매뉴얼" },
   other: { en: "Other", vi: "Khác", ko: "기타" },
   chunks: { en: "Chunks", vi: "Đoạn", ko: "청크" },
-  previewChunks: { en: "Preview chunks", vi: "Xem trước các đoạn", ko: "청크 미리보기" },
-  processDocument: { en: "Process document", vi: "Xử lý tài liệu", ko: "문서 처리" },
-  processingComplete: { en: "Document processed", vi: "Đã xử lý tài liệu", ko: "문서 처리 완료" },
+  previewChunks: {
+    en: "Preview chunks",
+    vi: "Xem trước các đoạn",
+    ko: "청크 미리보기",
+  },
+  processDocument: {
+    en: "Process document",
+    vi: "Xử lý tài liệu",
+    ko: "문서 처리",
+  },
+  processingComplete: {
+    en: "Document processed",
+    vi: "Đã xử lý tài liệu",
+    ko: "문서 처리 완료",
+  },
   documentRequired: {
     en: "Title and content are required.",
     vi: "Cần nhập tiêu đề và nội dung.",
@@ -481,7 +760,11 @@ const ADMIN_I18N = {
     vi: "Quản lý cả câu trả lời dạng cây hướng dẫn và câu trả lời AI ngôn ngữ tự nhiên từ cùng một kho kiến thức đã duyệt.",
     ko: "승인된 동일 지식베이스에서 트리형 안내 답변과 자연어 AI 답변을 함께 관리합니다.",
   },
-  treeMode: { en: "Tree guide mode", vi: "Chế độ hướng dẫn dạng cây", ko: "트리 가이드 모드" },
+  treeMode: {
+    en: "Tree guide mode",
+    vi: "Chế độ hướng dẫn dạng cây",
+    ko: "트리 가이드 모드",
+  },
   naturalMode: {
     en: "Natural AI chat mode",
     vi: "Chế độ chat AI tự nhiên",
@@ -502,7 +785,11 @@ const ADMIN_I18N = {
     vi: "Kho kiến thức dùng chung",
     ko: "공유 지식베이스",
   },
-  treeScenario: { en: "Tree scenario", vi: "Kịch bản dạng cây", ko: "트리 시나리오" },
+  treeScenario: {
+    en: "Tree scenario",
+    vi: "Kịch bản dạng cây",
+    ko: "트리 시나리오",
+  },
   scenarioId: { en: "Scenario ID", vi: "ID kịch bản", ko: "시나리오 ID" },
   parentId: { en: "Parent ID", vi: "ID mục cha", ko: "상위 ID" },
   buttonLabel: { en: "Button label", vi: "Nhãn nút", ko: "버튼 라벨" },
@@ -767,8 +1054,16 @@ function StatsTab({ lang }: { lang: AdminLang }) {
   }, []);
 
   const cards = [
-    { label: t("dealerApplications"), value: stats.dealers, accent: "text-gold" },
-    { label: t("newUnhandled"), value: stats.newDealers, accent: "text-primary" },
+    {
+      label: t("dealerApplications"),
+      value: stats.dealers,
+      accent: "text-gold",
+    },
+    {
+      label: t("newUnhandled"),
+      value: stats.newDealers,
+      accent: "text-primary",
+    },
     { label: t("generalInquiries"), value: stats.contacts },
     { label: t("publishedFaqs"), value: stats.faqs },
     { label: t("popups"), value: stats.popups },
@@ -823,7 +1118,9 @@ function TextPair({
           className="mt-1.5"
           value={value.vi}
           rows={multiline ? 3 : undefined}
-          onChange={(e: any) => onChange({ ...value, vi: e.target.value })}
+          onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+            onChange({ ...value, vi: e.target.value })
+          }
         />
       </div>
       <div>
@@ -832,7 +1129,9 @@ function TextPair({
           className="mt-1.5"
           value={value.en}
           rows={multiline ? 3 : undefined}
-          onChange={(e: any) => onChange({ ...value, en: e.target.value })}
+          onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+            onChange({ ...value, en: e.target.value })
+          }
         />
       </div>
     </div>
@@ -939,8 +1238,11 @@ function HomeEditorTab({ lang }: { lang: AdminLang }) {
     setSaving(true);
     const row =
       selectedPage === "home"
-        ? { key: "home", value: form as any }
-        : { key: pageContentStorageKey(selectedPage), value: pageForm as any };
+        ? ({ key: "home", value: form as Json } satisfies HomeContentInsert)
+        : ({
+            key: pageContentStorageKey(selectedPage),
+            value: pageForm as Json,
+          } satisfies HomeContentInsert);
     const { error } = await supabase.from("home_content").upsert(row);
     setSaving(false);
     if (error) return toast.error(error.message);
@@ -1277,7 +1579,10 @@ function HomeEditorTab({ lang }: { lang: AdminLang }) {
                       className="mt-1.5"
                       value={form.images.alts.vi[index] || ""}
                       onChange={(e) => {
-                        const alts = { vi: [...form.images.alts.vi], en: [...form.images.alts.en] };
+                        const alts = {
+                          vi: [...form.images.alts.vi],
+                          en: [...form.images.alts.en],
+                        };
                         alts.vi[index] = e.target.value;
                         patchImages({ alts });
                       }}
@@ -1289,7 +1594,10 @@ function HomeEditorTab({ lang }: { lang: AdminLang }) {
                       className="mt-1.5"
                       value={form.images.alts.en[index] || ""}
                       onChange={(e) => {
-                        const alts = { vi: [...form.images.alts.vi], en: [...form.images.alts.en] };
+                        const alts = {
+                          vi: [...form.images.alts.vi],
+                          en: [...form.images.alts.en],
+                        };
                         alts.en[index] = e.target.value;
                         patchImages({ alts });
                       }}
@@ -1345,9 +1653,9 @@ const DEALER_STATUS_VARIANT: Record<string, "default" | "secondary" | "destructi
 
 function DealersTab({ lang }: { lang: AdminLang }) {
   const t = (key: keyof typeof ADMIN_I18N) => tx(lang, key);
-  const [rows, setRows] = useState<any[]>([]);
+  const [rows, setRows] = useState<B2BInquiryRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selected, setSelected] = useState<any | null>(null);
+  const [selected, setSelected] = useState<B2BInquiryRow | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -1363,15 +1671,12 @@ function DealersTab({ lang }: { lang: AdminLang }) {
     load();
   }, []);
 
-  const updateApplication = async (id: string, patch: Record<string, unknown>) => {
-    const { error } = await supabase
-      .from("b2b_inquiries")
-      .update(patch as any)
-      .eq("id", id);
+  const updateApplication = async (id: string, patch: B2BInquiryUpdate) => {
+    const { error } = await supabase.from("b2b_inquiries").update(patch).eq("id", id);
     if (error) return toast.error(error.message);
     toast.success(t("updated"));
     setRows((xs) => xs.map((x) => (x.id === id ? { ...x, ...patch } : x)));
-    setSelected((x: any | null) => (x?.id === id ? { ...x, ...patch } : x));
+    setSelected((x) => (x?.id === id ? { ...x, ...patch } : x));
   };
 
   const updateStatus = async (id: string, status: string) => {
@@ -1380,7 +1685,9 @@ function DealersTab({ lang }: { lang: AdminLang }) {
 
   const saveNote = async () => {
     if (!selected) return;
-    await updateApplication(selected.id, { admin_note: selected.admin_note ?? "" });
+    await updateApplication(selected.id, {
+      admin_note: selected.admin_note ?? "",
+    });
   };
 
   const remove = async (id: string) => {
@@ -1810,7 +2117,9 @@ function ContactsTab({ lang }: { lang: AdminLang }) {
                           variant="outline"
                           size="sm"
                           onClick={() =>
-                            updateRecord(record.id, { admin_note: record.admin_note ?? "" })
+                            updateRecord(record.id, {
+                              admin_note: record.admin_note ?? "",
+                            })
                           }
                         >
                           {t("saveNote")}
@@ -1866,7 +2175,7 @@ const stripFaqLangPrefix = (category?: string | null) =>
 
 function FaqsTab({ lang }: { lang: AdminLang }) {
   const t = (key: keyof typeof ADMIN_I18N) => tx(lang, key);
-  const [rows, setRows] = useState<any[]>([]);
+  const [rows, setRows] = useState<FaqRow[]>([]);
   const [editing, setEditing] = useState<FAQ | null>(null);
   const [open, setOpen] = useState(false);
   const [faqLang, setFaqLang] = useState<FaqLangFilter>("ko");
@@ -2037,7 +2346,10 @@ function FaqsTab({ lang }: { lang: AdminLang }) {
                     type="number"
                     value={editing.sort_order}
                     onChange={(e) =>
-                      setEditing({ ...editing, sort_order: Number(e.target.value) || 0 })
+                      setEditing({
+                        ...editing,
+                        sort_order: Number(e.target.value) || 0,
+                      })
                     }
                   />
                 </div>
@@ -2123,7 +2435,7 @@ function PopupsTab({ lang }: { lang: AdminLang }) {
         : label === "Expired"
           ? t("expired")
           : t("live");
-  const [rows, setRows] = useState<any[]>([]);
+  const [rows, setRows] = useState<PopupRow[]>([]);
   const [editing, setEditing] = useState<Popup | null>(null);
   const [open, setOpen] = useState(false);
 
@@ -2298,7 +2610,10 @@ function PopupsTab({ lang }: { lang: AdminLang }) {
                     type="datetime-local"
                     value={isoToLocalInput(editing.starts_at)}
                     onChange={(e) =>
-                      setEditing({ ...editing, starts_at: localInputToIso(e.target.value) })
+                      setEditing({
+                        ...editing,
+                        starts_at: localInputToIso(e.target.value),
+                      })
                     }
                   />
                 </div>
@@ -2309,7 +2624,10 @@ function PopupsTab({ lang }: { lang: AdminLang }) {
                     type="datetime-local"
                     value={isoToLocalInput(editing.ends_at)}
                     onChange={(e) =>
-                      setEditing({ ...editing, ends_at: localInputToIso(e.target.value) })
+                      setEditing({
+                        ...editing,
+                        ends_at: localInputToIso(e.target.value),
+                      })
                     }
                   />
                 </div>
@@ -2324,7 +2642,10 @@ function PopupsTab({ lang }: { lang: AdminLang }) {
                   type="number"
                   value={editing.priority ?? 0}
                   onChange={(e) =>
-                    setEditing({ ...editing, priority: Number(e.target.value) || 0 })
+                    setEditing({
+                      ...editing,
+                      priority: Number(e.target.value) || 0,
+                    })
                   }
                 />
               </div>
@@ -2392,7 +2713,7 @@ const emptyEvent: EventItem = {
 
 function EventsTab({ lang }: { lang: AdminLang }) {
   const t = (key: keyof typeof ADMIN_I18N) => tx(lang, key);
-  const [rows, setRows] = useState<any[]>([]);
+  const [rows, setRows] = useState<EventRow[]>([]);
   const [editing, setEditing] = useState<EventItem | null>(null);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -2546,7 +2867,10 @@ function EventsTab({ lang }: { lang: AdminLang }) {
                     size="icon"
                     variant="ghost"
                     onClick={() => {
-                      setEditing({ ...r });
+                      setEditing({
+                        ...r,
+                        post_type: r.post_type === "new_product" ? "new_product" : "event",
+                      });
                       setOpen(true);
                     }}
                   >
@@ -2575,7 +2899,10 @@ function EventsTab({ lang }: { lang: AdminLang }) {
                   <Select
                     value={editing.post_type}
                     onValueChange={(v) =>
-                      setEditing({ ...editing, post_type: v as "event" | "new_product" })
+                      setEditing({
+                        ...editing,
+                        post_type: v as "event" | "new_product",
+                      })
                     }
                   >
                     <SelectTrigger className="mt-1.5">
@@ -2688,7 +3015,10 @@ function EventsTab({ lang }: { lang: AdminLang }) {
                     className="mt-1.5"
                     value={editing.sort_order}
                     onChange={(e) =>
-                      setEditing({ ...editing, sort_order: Number(e.target.value) || 0 })
+                      setEditing({
+                        ...editing,
+                        sort_order: Number(e.target.value) || 0,
+                      })
                     }
                   />
                 </div>
@@ -2751,7 +3081,11 @@ function EventsTab({ lang }: { lang: AdminLang }) {
 
 /* ---------------- Site settings (Contact info) ---------------- */
 
-const CONTACT_FIELDS: { key: string; labelKey: keyof typeof ADMIN_I18N; multiline?: boolean }[] = [
+const CONTACT_FIELDS: {
+  key: string;
+  labelKey: keyof typeof ADMIN_I18N;
+  multiline?: boolean;
+}[] = [
   { key: "legal_name", labelKey: "legalNameEn" },
   { key: "legal_name_vi", labelKey: "legalNameVi" },
   { key: "tax_code", labelKey: "taxCode" },
@@ -2777,7 +3111,7 @@ function SettingsTab({ lang }: { lang: AdminLang }) {
       .eq("key", "contact")
       .maybeSingle();
     if (error && error.code !== "PGRST116") toast.error(error.message);
-    setValues((data?.value as any) ?? {});
+    setValues((data?.value as SiteSettingsValue | null) ?? {});
     setLoading(false);
   };
   useEffect(() => {
@@ -2876,7 +3210,7 @@ type ChatbotChunkRow = {
   chunk_index: number;
   content: string;
   token_count: number;
-  metadata: any;
+  metadata: Json;
   created_at: string;
 };
 
@@ -2895,7 +3229,7 @@ type ChatbotTreeNode = {
   linked_training_id: string | null;
   linked_document_id: string | null;
   enabled: boolean;
-  metadata?: any;
+  metadata?: Json;
   created_at?: string;
   updated_at?: string;
 };
@@ -2933,7 +3267,7 @@ const emptyDocument: ChatbotDocument = {
 
 function ChatbotTab({ lang }: { lang: AdminLang }) {
   const t = (key: keyof typeof ADMIN_I18N) => tx(lang, key);
-  const [rows, setRows] = useState<any[]>([]);
+  const [rows, setRows] = useState<Train[]>([]);
   const [docs, setDocs] = useState<ChatbotDocument[]>([]);
   const [treeNodes, setTreeNodes] = useState<ChatbotTreeNode[]>([]);
   const [chunks, setChunks] = useState<Record<string, ChatbotChunkRow[]>>({});
@@ -2963,7 +3297,7 @@ function ChatbotTab({ lang }: { lang: AdminLang }) {
         .order("sort_order", { ascending: true }),
     ]);
     if (trainingError) toast.error(trainingError.message);
-    else setRows(training ?? []);
+    else setRows((training ?? []).map((row) => ({ ...row, tags: row.tags ?? [] })));
     if (docsError) toast.error(docsError.message);
     else setDocs((documents ?? []) as ChatbotDocument[]);
     if (treeError) toast.error(treeError.message);
@@ -3016,7 +3350,10 @@ function ChatbotTab({ lang }: { lang: AdminLang }) {
       .eq("document_id", documentId)
       .order("chunk_index", { ascending: true });
     if (error) return toast.error(error.message);
-    setChunks((prev) => ({ ...prev, [documentId]: (data ?? []) as ChatbotChunkRow[] }));
+    setChunks((prev) => ({
+      ...prev,
+      [documentId]: (data ?? []) as ChatbotChunkRow[],
+    }));
   };
 
   const processDocument = async (doc: ChatbotDocument) => {
@@ -3031,22 +3368,23 @@ function ChatbotTab({ lang }: { lang: AdminLang }) {
       .single();
     const jobId = job.data?.id;
     try {
-      const newChunks = chunkText(doc.raw_content, { maxChars: 1100, overlapChars: 160 }).map(
-        (chunk, index) => ({
-          document_id: doc.id!,
-          chunk_index: index,
-          content: chunk.content,
-          content_hash: chunk.content_hash,
-          language: doc.language || "mixed",
-          token_count: chunk.token_count,
-          metadata: {
-            ...(chunk.metadata ?? {}),
-            title: doc.title,
-            category: doc.category,
-            tags: doc.tags ?? [],
-          },
-        }),
-      );
+      const newChunks = chunkText(doc.raw_content, {
+        maxChars: 1100,
+        overlapChars: 160,
+      }).map((chunk, index) => ({
+        document_id: doc.id!,
+        chunk_index: index,
+        content: chunk.content,
+        content_hash: chunk.content_hash,
+        language: doc.language || "mixed",
+        token_count: chunk.token_count,
+        metadata: {
+          ...(chunk.metadata ?? {}),
+          title: doc.title,
+          category: doc.category,
+          tags: doc.tags ?? [],
+        },
+      }));
       const del = await supabase.from("chatbot_document_chunks").delete().eq("document_id", doc.id);
       if (del.error) throw del.error;
       if (newChunks.length) {
@@ -3056,7 +3394,10 @@ function ChatbotTab({ lang }: { lang: AdminLang }) {
       if (jobId) {
         await supabase
           .from("chatbot_training_jobs")
-          .update({ status: "completed", finished_at: new Date().toISOString() })
+          .update({
+            status: "completed",
+            finished_at: new Date().toISOString(),
+          })
           .eq("id", jobId);
       }
       toast.success(t("processingComplete"));
@@ -3559,7 +3900,7 @@ function ChatbotTab({ lang }: { lang: AdminLang }) {
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
-                    <Button size="icon" variant="ghost" onClick={() => remove(r.id)}>
+                    <Button size="icon" variant="ghost" onClick={() => r.id && remove(r.id)}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </TableCell>
@@ -3699,7 +4040,12 @@ function ChatbotTab({ lang }: { lang: AdminLang }) {
                 <Input
                   className="mt-1.5"
                   value={docEditing.description ?? ""}
-                  onChange={(e) => setDocEditing({ ...docEditing, description: e.target.value })}
+                  onChange={(e) =>
+                    setDocEditing({
+                      ...docEditing,
+                      description: e.target.value,
+                    })
+                  }
                 />
               </div>
               <div className="grid gap-4 md:grid-cols-4">
@@ -3763,7 +4109,10 @@ function ChatbotTab({ lang }: { lang: AdminLang }) {
                     min={1}
                     value={docEditing.version}
                     onChange={(e) =>
-                      setDocEditing({ ...docEditing, version: Number(e.target.value) || 1 })
+                      setDocEditing({
+                        ...docEditing,
+                        version: Number(e.target.value) || 1,
+                      })
                     }
                   />
                 </div>
@@ -3791,7 +4140,12 @@ function ChatbotTab({ lang }: { lang: AdminLang }) {
                   rows={14}
                   placeholder={t("rawContentHint")}
                   value={docEditing.raw_content ?? ""}
-                  onChange={(e) => setDocEditing({ ...docEditing, raw_content: e.target.value })}
+                  onChange={(e) =>
+                    setDocEditing({
+                      ...docEditing,
+                      raw_content: e.target.value,
+                    })
+                  }
                 />
               </div>
               <div className="flex items-center justify-between rounded-lg border border-border/60 p-3">
@@ -3834,7 +4188,10 @@ function ChatbotTab({ lang }: { lang: AdminLang }) {
                     className="mt-1.5"
                     value={treeEditing.scenario_key}
                     onChange={(e) =>
-                      setTreeEditing({ ...treeEditing, scenario_key: e.target.value })
+                      setTreeEditing({
+                        ...treeEditing,
+                        scenario_key: e.target.value,
+                      })
                     }
                   />
                 </div>
@@ -3845,7 +4202,10 @@ function ChatbotTab({ lang }: { lang: AdminLang }) {
                     placeholder="root"
                     value={treeEditing.parent_id ?? ""}
                     onChange={(e) =>
-                      setTreeEditing({ ...treeEditing, parent_id: e.target.value || null })
+                      setTreeEditing({
+                        ...treeEditing,
+                        parent_id: e.target.value || null,
+                      })
                     }
                   />
                 </div>
@@ -3856,7 +4216,10 @@ function ChatbotTab({ lang }: { lang: AdminLang }) {
                     type="number"
                     value={treeEditing.sort_order}
                     onChange={(e) =>
-                      setTreeEditing({ ...treeEditing, sort_order: Number(e.target.value) || 0 })
+                      setTreeEditing({
+                        ...treeEditing,
+                        sort_order: Number(e.target.value) || 0,
+                      })
                     }
                   />
                 </div>
@@ -3867,7 +4230,12 @@ function ChatbotTab({ lang }: { lang: AdminLang }) {
                   <Input
                     className="mt-1.5"
                     value={treeEditing.label_en ?? ""}
-                    onChange={(e) => setTreeEditing({ ...treeEditing, label_en: e.target.value })}
+                    onChange={(e) =>
+                      setTreeEditing({
+                        ...treeEditing,
+                        label_en: e.target.value,
+                      })
+                    }
                   />
                 </div>
                 <div>
@@ -3875,7 +4243,12 @@ function ChatbotTab({ lang }: { lang: AdminLang }) {
                   <Input
                     className="mt-1.5"
                     value={treeEditing.label_vi ?? ""}
-                    onChange={(e) => setTreeEditing({ ...treeEditing, label_vi: e.target.value })}
+                    onChange={(e) =>
+                      setTreeEditing({
+                        ...treeEditing,
+                        label_vi: e.target.value,
+                      })
+                    }
                   />
                 </div>
                 <div>
@@ -3883,7 +4256,12 @@ function ChatbotTab({ lang }: { lang: AdminLang }) {
                   <Input
                     className="mt-1.5"
                     value={treeEditing.label_ko ?? ""}
-                    onChange={(e) => setTreeEditing({ ...treeEditing, label_ko: e.target.value })}
+                    onChange={(e) =>
+                      setTreeEditing({
+                        ...treeEditing,
+                        label_ko: e.target.value,
+                      })
+                    }
                   />
                 </div>
               </div>
@@ -3894,7 +4272,12 @@ function ChatbotTab({ lang }: { lang: AdminLang }) {
                     className="mt-1.5"
                     rows={5}
                     value={treeEditing.answer_en ?? ""}
-                    onChange={(e) => setTreeEditing({ ...treeEditing, answer_en: e.target.value })}
+                    onChange={(e) =>
+                      setTreeEditing({
+                        ...treeEditing,
+                        answer_en: e.target.value,
+                      })
+                    }
                   />
                 </div>
                 <div>
@@ -3903,7 +4286,12 @@ function ChatbotTab({ lang }: { lang: AdminLang }) {
                     className="mt-1.5"
                     rows={5}
                     value={treeEditing.answer_vi ?? ""}
-                    onChange={(e) => setTreeEditing({ ...treeEditing, answer_vi: e.target.value })}
+                    onChange={(e) =>
+                      setTreeEditing({
+                        ...treeEditing,
+                        answer_vi: e.target.value,
+                      })
+                    }
                   />
                 </div>
                 <div>
@@ -3912,7 +4300,12 @@ function ChatbotTab({ lang }: { lang: AdminLang }) {
                     className="mt-1.5"
                     rows={5}
                     value={treeEditing.answer_ko ?? ""}
-                    onChange={(e) => setTreeEditing({ ...treeEditing, answer_ko: e.target.value })}
+                    onChange={(e) =>
+                      setTreeEditing({
+                        ...treeEditing,
+                        answer_ko: e.target.value,
+                      })
+                    }
                   />
                 </div>
               </div>
@@ -4070,19 +4463,35 @@ function ProductCatalogsAdminTab({ lang }: { lang: AdminLang }) {
     [products],
   );
 
-  const brands = useMemo(() => ["All", ...Array.from(new Set(products.map((product) => product.brand_name).filter(Boolean)))], [products]);
-  const productTypes = useMemo(() => ["All", ...Array.from(new Set(products.map((product) => product.product_type).filter(Boolean)))], [products]);
+  const brands = useMemo(
+    () => [
+      "All",
+      ...Array.from(new Set(products.map((product) => product.brand_name).filter(Boolean))),
+    ],
+    [products],
+  );
+  const productTypes = useMemo(
+    () => [
+      "All",
+      ...Array.from(new Set(products.map((product) => product.product_type).filter(Boolean))),
+    ],
+    [products],
+  );
   const filteredProducts = useMemo(() => {
     const query = normalizedSearchText(productSearch);
     return products.filter((product) => {
       const brandMatch = brandFilter === "All" || product.brand_name === brandFilter;
       const typeMatch = typeFilter === "All" || product.product_type === typeFilter;
-      const searchMatch = !query || normalizedSearchText([
-        product.brand_name,
-        product.product_name,
-        product.product_type,
-        product.short_intro,
-      ].join(" ")).includes(query);
+      const searchMatch =
+        !query ||
+        normalizedSearchText(
+          [
+            product.brand_name,
+            product.product_name,
+            product.product_type,
+            product.short_intro,
+          ].join(" "),
+        ).includes(query);
       return brandMatch && typeMatch && searchMatch;
     });
   }, [brandFilter, productSearch, productTypes, products, typeFilter]);
@@ -4131,9 +4540,14 @@ function ProductCatalogsAdminTab({ lang }: { lang: AdminLang }) {
       ? rows.map((row) => (row.id === payload.id ? payload : row))
       : [payload, ...rows];
     try {
-      await saveProductCatalogs(payload.is_representative
-        ? nextRows.map((row) => ({ ...row, is_representative: row.id === payload.id }))
-        : nextRows);
+      await saveProductCatalogs(
+        payload.is_representative
+          ? nextRows.map((row) => ({
+              ...row,
+              is_representative: row.id === payload.id,
+            }))
+          : nextRows,
+      );
     } catch (error) {
       toast.error(error instanceof Error ? error.message : String(error));
       return;
@@ -4146,7 +4560,12 @@ function ProductCatalogsAdminTab({ lang }: { lang: AdminLang }) {
 
   const setRepresentative = async (row: ProductCatalog) => {
     try {
-      await saveProductCatalogs(rows.map((item) => ({ ...item, is_representative: item.id === row.id })));
+      await saveProductCatalogs(
+        rows.map((item) => ({
+          ...item,
+          is_representative: item.id === row.id,
+        })),
+      );
       toast.success(t("representativeCatalog"));
       await load();
     } catch (error) {
@@ -4165,7 +4584,8 @@ function ProductCatalogsAdminTab({ lang }: { lang: AdminLang }) {
     }
   };
 
-  const openCatalog = (id: string) => window.open(`/catalog/${id}`, "_blank", "noopener,noreferrer");
+  const openCatalog = (id: string) =>
+    window.open(`/catalog/${id}`, "_blank", "noopener,noreferrer");
 
   const templateLabel = (template: ProductCatalog["template"]) => {
     if (template === "compact") return t("compactTemplate");
@@ -4239,10 +4659,20 @@ function ProductCatalogsAdminTab({ lang }: { lang: AdminLang }) {
                     )}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" onClick={() => openCatalog(row.id)} title={t("preview")}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => openCatalog(row.id)}
+                      title={t("preview")}
+                    >
                       <Eye className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => openCatalog(row.id)} title={t("downloadPdf")}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => openCatalog(row.id)}
+                      title={t("downloadPdf")}
+                    >
                       <Download className="h-4 w-4" />
                     </Button>
                     <Button
@@ -4276,20 +4706,40 @@ function ProductCatalogsAdminTab({ lang }: { lang: AdminLang }) {
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
                   <Label>{t("catalogTitle")}</Label>
-                  <Input className="mt-1.5" value={editing.title} onChange={(e) => setEditing({ ...editing, title: e.target.value })} />
+                  <Input
+                    className="mt-1.5"
+                    value={editing.title}
+                    onChange={(e) => setEditing({ ...editing, title: e.target.value })}
+                  />
                 </div>
                 <div>
                   <Label>{t("catalogSubtitle")}</Label>
-                  <Input className="mt-1.5" value={editing.subtitle} onChange={(e) => setEditing({ ...editing, subtitle: e.target.value })} />
+                  <Input
+                    className="mt-1.5"
+                    value={editing.subtitle}
+                    onChange={(e) => setEditing({ ...editing, subtitle: e.target.value })}
+                  />
                 </div>
               </div>
               <div>
                 <Label>{t("catalogDescription")}</Label>
-                <Textarea className="mt-1.5" value={editing.description} onChange={(e) => setEditing({ ...editing, description: e.target.value })} />
+                <Textarea
+                  className="mt-1.5"
+                  value={editing.description}
+                  onChange={(e) => setEditing({ ...editing, description: e.target.value })}
+                />
               </div>
               <div>
                 <Label>{t("catalogTemplate")}</Label>
-                <Select value={editing.template} onValueChange={(value) => setEditing({ ...editing, template: value as ProductCatalog["template"] })}>
+                <Select
+                  value={editing.template}
+                  onValueChange={(value) =>
+                    setEditing({
+                      ...editing,
+                      template: value as ProductCatalog["template"],
+                    })
+                  }
+                >
                   <SelectTrigger className="mt-1.5">
                     <SelectValue />
                   </SelectTrigger>
@@ -4303,64 +4753,126 @@ function ProductCatalogsAdminTab({ lang }: { lang: AdminLang }) {
               <div className="flex items-center justify-between rounded-2xl border border-border p-4">
                 <div>
                   <Label>{t("representativeCatalog")}</Label>
-                  <p className="mt-1 text-xs text-muted-foreground">Main hero catalog download button will use this catalog.</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Main hero catalog download button will use this catalog.
+                  </p>
                 </div>
-                <Switch checked={editing.is_representative} onCheckedChange={(v) => setEditing({ ...editing, is_representative: v })} />
+                <Switch
+                  checked={editing.is_representative}
+                  onCheckedChange={(v) => setEditing({ ...editing, is_representative: v })}
+                />
               </div>
               <div className="rounded-2xl border border-border p-4">
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <Label>{t("selectedProducts")}</Label>
-                    <p className="mt-1 text-xs text-muted-foreground">Filter products, then bulk-select the current result.</p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Filter products, then bulk-select the current result.
+                    </p>
                   </div>
-                  <Badge variant="secondary">{editing.product_ids.length} / {products.length}</Badge>
+                  <Badge variant="secondary">
+                    {editing.product_ids.length} / {products.length}
+                  </Badge>
                 </div>
                 <div className="mb-4 grid gap-3 md:grid-cols-[1fr_180px_180px]">
-                  <Input value={productSearch} onChange={(e) => setProductSearch(e.target.value)} placeholder={t("searchProducts")} />
+                  <Input
+                    value={productSearch}
+                    onChange={(e) => setProductSearch(e.target.value)}
+                    placeholder={t("searchProducts")}
+                  />
                   <Select value={brandFilter} onValueChange={setBrandFilter}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
-                      {brands.map((brand) => <SelectItem key={brand} value={brand}>{brand === "All" ? t("allBrands") : brand}</SelectItem>)}
+                      {brands.map((brand) => (
+                        <SelectItem key={brand} value={brand}>
+                          {brand === "All" ? t("allBrands") : brand}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <Select value={typeFilter} onValueChange={setTypeFilter}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
-                      {productTypes.map((type) => <SelectItem key={type} value={type}>{type === "All" ? t("allTypes") : type}</SelectItem>)}
+                      {productTypes.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {type === "All" ? t("allTypes") : type}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="mb-4 flex flex-wrap gap-2">
-                  <Button type="button" size="sm" variant="outline" onClick={() => setSelectedProducts(products.map((product) => product.id))}>{t("selectAll")}</Button>
-                  <Button type="button" size="sm" variant="outline" onClick={() => setSelectedProducts(filteredProducts.map((product) => product.id))}>{t("selectFiltered")}</Button>
-                  <Button type="button" size="sm" variant="outline" onClick={() => setSelectedProducts([])}>{t("clearSelected")}</Button>
-                  <Badge variant="outline" className="px-3">{filteredProducts.length} shown</Badge>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setSelectedProducts(products.map((product) => product.id))}
+                  >
+                    {t("selectAll")}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() =>
+                      setSelectedProducts(filteredProducts.map((product) => product.id))
+                    }
+                  >
+                    {t("selectFiltered")}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setSelectedProducts([])}
+                  >
+                    {t("clearSelected")}
+                  </Button>
+                  <Badge variant="outline" className="px-3">
+                    {filteredProducts.length} shown
+                  </Badge>
                 </div>
                 <div className="grid max-h-[460px] gap-2 overflow-y-auto pr-1 md:grid-cols-2">
                   {filteredProducts.map((product) => {
                     const image = getCoverImage(product);
                     return (
-                    <label key={product.id} className="flex cursor-pointer items-start gap-3 rounded-xl border border-border/70 p-3 transition hover:bg-muted/40">
-                      <input
-                        type="checkbox"
-                        className="mt-1 h-4 w-4 accent-primary"
-                        checked={editing.product_ids.includes(product.id)}
-                        onChange={(e) => toggleProduct(product.id, e.target.checked)}
-                      />
-                      <span className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-muted">
-                        {image ? <img src={image} alt="" className="h-full w-full object-cover" /> : null}
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block text-xs font-bold uppercase tracking-[0.18em] text-primary">{product.brand_name}</span>
-                        <span className="mt-1 block font-semibold">{product.product_name}</span>
-                        <span className="mt-1 block text-xs text-muted-foreground">{product.product_type}</span>
-                      </span>
-                    </label>
-                  );})}
+                      <label
+                        key={product.id}
+                        className="flex cursor-pointer items-start gap-3 rounded-xl border border-border/70 p-3 transition hover:bg-muted/40"
+                      >
+                        <input
+                          type="checkbox"
+                          className="mt-1 h-4 w-4 accent-primary"
+                          checked={editing.product_ids.includes(product.id)}
+                          onChange={(e) => toggleProduct(product.id, e.target.checked)}
+                        />
+                        <span className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-muted">
+                          {image ? (
+                            <img src={image} alt="" className="h-full w-full object-cover" />
+                          ) : null}
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-xs font-bold uppercase tracking-[0.18em] text-primary">
+                            {product.brand_name}
+                          </span>
+                          <span className="mt-1 block font-semibold">{product.product_name}</span>
+                          <span className="mt-1 block text-xs text-muted-foreground">
+                            {product.product_type}
+                          </span>
+                        </span>
+                      </label>
+                    );
+                  })}
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setOpen(false)}>{t("cancel")}</Button>
+                <Button variant="outline" onClick={() => setOpen(false)}>
+                  {t("cancel")}
+                </Button>
                 <Button onClick={save}>{t("save")}</Button>
               </DialogFooter>
             </div>
@@ -4398,6 +4910,7 @@ function ProductsAdminTab({ lang }: { lang: AdminLang }) {
   const [editing, setEditing] = useState<CatalogProduct | null>(null);
   const [search, setSearch] = useState("");
   const [brandFilter, setBrandFilter] = useState("All");
+  const detailEditorRef = useRef<ProductDetailEditorHandle>(null);
 
   const load = async () => {
     setLoading(true);
@@ -4422,12 +4935,13 @@ function ProductsAdminTab({ lang }: { lang: AdminLang }) {
 
   const save = async () => {
     if (!editing) return;
+    const detailHtml = detailEditorRef.current?.commit() ?? editing.detail_html;
     const payload = {
       brand_name: canonicalBrandName(editing.brand_name),
       product_name: editing.product_name,
       product_type: editing.product_type,
       short_intro: editing.short_intro,
-      detail_html: editing.detail_html,
+      detail_html: sanitizeProductDetailHtml(detailHtml),
       media: editing.media,
       conditions: editing.conditions,
       cover_image_url: editing.cover_image_url || null,
@@ -4509,7 +5023,10 @@ function ProductsAdminTab({ lang }: { lang: AdminLang }) {
 
   const addMedia = () => {
     if (!editing) return;
-    setEditing({ ...editing, media: [...editing.media, { type: "image", url: "", alt: "" }] });
+    setEditing({
+      ...editing,
+      media: [...editing.media, { type: "image", url: "", alt: "" }],
+    });
   };
 
   const addCondition = () => {
@@ -4518,11 +5035,6 @@ function ProductsAdminTab({ lang }: { lang: AdminLang }) {
       ...editing,
       conditions: [...editing.conditions, { label: "Price", value: "", visible: true }],
     });
-  };
-
-  const wrapDetail = (before: string, after = "") => {
-    if (!editing) return;
-    setEditing({ ...editing, detail_html: `${editing.detail_html || ""}${before}${after}` });
   };
 
   return (
@@ -4606,7 +5118,9 @@ function ProductsAdminTab({ lang }: { lang: AdminLang }) {
                       }
                       onBlur={(e) => {
                         if (e.target.value !== row.product_name)
-                          void quickUpdate(row, { product_name: e.target.value });
+                          void quickUpdate(row, {
+                            product_name: e.target.value,
+                          });
                       }}
                     />
                   </TableCell>
@@ -4623,7 +5137,9 @@ function ProductsAdminTab({ lang }: { lang: AdminLang }) {
                       }
                       onBlur={(e) => {
                         if (e.target.value !== row.product_type)
-                          void quickUpdate(row, { product_type: e.target.value });
+                          void quickUpdate(row, {
+                            product_type: e.target.value,
+                          });
                       }}
                     />
                     <datalist id="admin-product-type-options">
@@ -4670,6 +5186,10 @@ function ProductsAdminTab({ lang }: { lang: AdminLang }) {
         <DialogContent className="max-h-[92vh] max-w-5xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editing?.id ? t("editProduct") : t("newProduct")}</DialogTitle>
+            <DialogDescription>
+              Use this form to manage product content, media, publishing state, and the sanitized
+              rich detail section shown on public product pages.
+            </DialogDescription>
           </DialogHeader>
           {editing && (
             <div className="space-y-5">
@@ -4714,7 +5234,10 @@ function ProductsAdminTab({ lang }: { lang: AdminLang }) {
                     type="number"
                     value={editing.sort_order}
                     onChange={(e) =>
-                      setEditing({ ...editing, sort_order: Number(e.target.value) || 0 })
+                      setEditing({
+                        ...editing,
+                        sort_order: Number(e.target.value) || 0,
+                      })
                     }
                   />
                 </div>
@@ -4768,41 +5291,14 @@ function ProductsAdminTab({ lang }: { lang: AdminLang }) {
               </div>
 
               <div>
-                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                  <Label>{t("detailEditor")}</Label>
-                  <div className="flex flex-wrap gap-1">
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={() => wrapDetail("<h2>Title</h2>")}
-                    >
-                      H2
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={() =>
-                        wrapDetail('<p style="font-size:18px;color:#111827;">Text</p>')
-                      }
-                    >
-                      Text
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={() => wrapDetail('<img src="IMAGE_URL" alt="Product image" />')}
-                    >
-                      Image
-                    </Button>
-                  </div>
-                </div>
-                <Textarea
-                  className="min-h-[180px] font-mono text-xs"
+                <Label id="product-detail-editor-label" className="mb-2 block">
+                  {t("detailEditor")}
+                </Label>
+                <ProductDetailEditor
+                  ref={detailEditorRef}
+                  labelId="product-detail-editor-label"
                   value={editing.detail_html || ""}
-                  onChange={(e) => setEditing({ ...editing, detail_html: e.target.value })}
+                  onChange={(detail_html) => setEditing({ ...editing, detail_html })}
                 />
               </div>
 
@@ -4821,7 +5317,10 @@ function ProductsAdminTab({ lang }: { lang: AdminLang }) {
                         value={m.type}
                         onValueChange={(v) => {
                           const media = [...editing.media];
-                          media[idx] = { ...m, type: v as ProductMedia["type"] };
+                          media[idx] = {
+                            ...m,
+                            type: v as ProductMedia["type"],
+                          };
                           setEditing({ ...editing, media });
                         }}
                       >

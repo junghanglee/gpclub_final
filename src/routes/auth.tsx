@@ -1,13 +1,13 @@
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { Lock } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { z } from "zod";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { toast } from "sonner";
-import { Lock } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({ meta: [{ title: "Admin Sign In — GPCLUB Vietnam" }] }),
@@ -18,6 +18,9 @@ const schema = z.object({
   email: z.string().trim().email("Invalid email").max(200),
   password: z.string().min(6, "Min 6 characters").max(100),
 });
+
+const getErrorMessage = (error: unknown, fallback: string) =>
+  error instanceof Error ? error.message : fallback;
 
 function AuthPage() {
   const navigate = useNavigate();
@@ -33,7 +36,9 @@ function AuthPage() {
     });
 
     supabase.auth.getSession().then(({ data }) => {
-      const isRecovery = window.location.hash.includes("type=recovery") || window.location.search.includes("type=recovery");
+      const isRecovery =
+        window.location.hash.includes("type=recovery") ||
+        window.location.search.includes("type=recovery");
       if (isRecovery) {
         setRecoveryMode(true);
         return;
@@ -58,7 +63,10 @@ function AuthPage() {
     setLoading(true);
     try {
       if (mode === "signin") {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
         if (error) throw error;
         toast.success("Welcome back");
         navigate({ to: "/admin" });
@@ -71,8 +79,8 @@ function AuthPage() {
         if (error) throw error;
         toast.success("Account created — check your email to confirm.");
       }
-    } catch (e: any) {
-      toast.error(e.message ?? "Authentication failed");
+    } catch (e) {
+      toast.error(getErrorMessage(e, "Authentication failed"));
     } finally {
       setLoading(false);
     }
@@ -91,8 +99,8 @@ function AuthPage() {
       });
       if (error) throw error;
       toast.success("Password reset email sent. Please check your inbox.");
-    } catch (e: any) {
-      toast.error(e.message ?? "Could not send reset email");
+    } catch (e) {
+      toast.error(getErrorMessage(e, "Could not send reset email"));
     } finally {
       setLoading(false);
     }
@@ -106,12 +114,14 @@ function AuthPage() {
     }
     setLoading(true);
     try {
-      const { error } = await supabase.auth.updateUser({ password: parsed.data });
+      const { error } = await supabase.auth.updateUser({
+        password: parsed.data,
+      });
       if (error) throw error;
       toast.success("Password updated. Redirecting to admin.");
       navigate({ to: "/admin" });
-    } catch (e: any) {
-      toast.error(e.message ?? "Could not update password");
+    } catch (e) {
+      toast.error(getErrorMessage(e, "Could not update password"));
     } finally {
       setLoading(false);
     }
@@ -133,8 +143,17 @@ function AuthPage() {
         {recoveryMode ? (
           <div className="mt-6 space-y-4">
             <div>
-              <Label className="text-xs uppercase tracking-wider text-muted-foreground">New password</Label>
-              <Input className="mt-1.5 h-11" type="password" value={password} onChange={(e) => setPassword(e.target.value)} maxLength={100} autoComplete="new-password" />
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground">
+                New password
+              </Label>
+              <Input
+                className="mt-1.5 h-11"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                maxLength={100}
+                autoComplete="new-password"
+              />
             </div>
             <Button onClick={updatePassword} disabled={loading} className="w-full rounded-full">
               {loading ? "Please wait…" : "Update password"}
@@ -150,18 +169,49 @@ function AuthPage() {
             {(["signin", "signup"] as const).map((m) => (
               <TabsContent key={m} value={m} className="mt-6 space-y-4">
                 <div>
-                  <Label className="text-xs uppercase tracking-wider text-muted-foreground">Email</Label>
-                  <Input ref={emailRef} className="mt-1.5 h-11" type="email" value={email} onChange={(e) => setEmail(e.target.value)} maxLength={200} autoComplete="email" inputMode="email" autoCapitalize="none" spellCheck={false} />
+                  <Label className="text-xs uppercase tracking-wider text-muted-foreground">
+                    Email
+                  </Label>
+                  <Input
+                    ref={emailRef}
+                    className="mt-1.5 h-11"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    maxLength={200}
+                    autoComplete="email"
+                    inputMode="email"
+                    autoCapitalize="none"
+                    spellCheck={false}
+                  />
                 </div>
                 <div>
-                  <Label className="text-xs uppercase tracking-wider text-muted-foreground">Password</Label>
-                  <Input className="mt-1.5 h-11" type="password" value={password} onChange={(e) => setPassword(e.target.value)} maxLength={100} autoComplete={m === "signin" ? "current-password" : "new-password"} />
+                  <Label className="text-xs uppercase tracking-wider text-muted-foreground">
+                    Password
+                  </Label>
+                  <Input
+                    className="mt-1.5 h-11"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    maxLength={100}
+                    autoComplete={m === "signin" ? "current-password" : "new-password"}
+                  />
                 </div>
-                <Button onClick={() => handle(m)} disabled={loading} className="w-full rounded-full">
+                <Button
+                  onClick={() => handle(m)}
+                  disabled={loading}
+                  className="w-full rounded-full"
+                >
                   {loading ? "Please wait…" : m === "signin" ? "Sign In" : "Create account"}
                 </Button>
                 {m === "signin" && (
-                  <button type="button" onClick={sendResetEmail} disabled={loading} className="w-full text-center text-xs text-muted-foreground underline-offset-4 hover:text-primary hover:underline">
+                  <button
+                    type="button"
+                    onClick={sendResetEmail}
+                    disabled={loading}
+                    className="w-full text-center text-xs text-muted-foreground underline-offset-4 hover:text-primary hover:underline"
+                  >
                     Forgot password?
                   </button>
                 )}
@@ -171,7 +221,9 @@ function AuthPage() {
         )}
 
         <p className="mt-6 text-center text-xs text-muted-foreground">
-          <Link to="/" className="hover:text-primary">← Back to site</Link>
+          <Link to="/" className="hover:text-primary">
+            ← Back to site
+          </Link>
         </p>
       </div>
     </section>

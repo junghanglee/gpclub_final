@@ -1,9 +1,18 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
 import { ArrowRight, Search, Sparkles, Star } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useMemo, useState } from "react";
+import gippyProductsHero from "@/assets/gippy-products-hero.png";
+import { B2BInquiryDialog } from "@/components/site/B2BInquiryDialog";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -12,23 +21,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import gippyProductsHero from "@/assets/gippy-products-hero.png";
+  type CatalogProduct,
+  getCoverImage,
+  normalizeBrandText,
+  productSearchText,
+  useCatalogProducts,
+} from "@/lib/catalog-products";
 import { useI18n } from "@/lib/i18n";
 import { usePageContent } from "@/lib/page-content";
-import {
-  getCoverImage,
-  productSearchText,
-  normalizeBrandText,
-  useCatalogProducts,
-  type CatalogProduct,
-} from "@/lib/catalog-products";
-import { B2BInquiryDialog } from "@/components/site/B2BInquiryDialog";
+import { sanitizeProductDetailHtml } from "@/lib/product-detail-html";
 
 export const Route = createFileRoute("/products")({
   head: () => ({
@@ -40,7 +41,10 @@ export const Route = createFileRoute("/products")({
           "Review GPCLUB Vietnam product lineup for wholesale, reseller and B2B distribution opportunities.",
       },
       { property: "og:title", content: "K-Beauty Products — GPCLUB Vietnam" },
-      { property: "og:description", content: "JMsolution, Jmella and Trois Touch B2B products." },
+      {
+        property: "og:description",
+        content: "JMsolution, Jmella and Trois Touch B2B products.",
+      },
     ],
   }),
   component: ProductsPage,
@@ -347,7 +351,9 @@ function ProductsPage() {
                     {selected.detail_html ? (
                       <div
                         className="space-y-4 text-sm leading-7 text-foreground/80 [&_h3]:mb-3 [&_h3]:text-lg [&_h3]:font-black [&_h3]:text-foreground [&_li]:mb-1.5 [&_section]:rounded-2xl [&_section]:border [&_section]:bg-card [&_section]:p-5 [&_strong]:text-foreground [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:pl-5"
-                        dangerouslySetInnerHTML={{ __html: selected.detail_html }}
+                        dangerouslySetInnerHTML={{
+                          __html: sanitizeProductDetailHtml(selected.detail_html),
+                        }}
                       />
                     ) : (
                       <div className="rounded-2xl border bg-card p-5 text-sm leading-7 text-muted-foreground">

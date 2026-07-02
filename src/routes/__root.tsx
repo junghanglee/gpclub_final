@@ -1,21 +1,23 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { type QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
-  Outlet,
-  Link,
   createRootRouteWithContext,
+  HeadContent,
+  Link,
+  Outlet,
+  Scripts,
   useRouter,
 } from "@tanstack/react-router";
-
-import appCss from "../styles.css?url";
-import { Header } from "@/components/site/Header";
+import type { ReactNode } from "react";
+import { FloatingChat } from "@/components/site/FloatingChat";
 import { Footer } from "@/components/site/Footer";
 import { GippyChat } from "@/components/site/GippyChat";
-import { FloatingChat } from "@/components/site/FloatingChat";
+import { Header } from "@/components/site/Header";
 import { PopupHost } from "@/components/site/PopupHost";
 import { Toaster } from "@/components/ui/sonner";
-import { SiteSettingsProvider } from "@/lib/site-settings";
 import { HomeContentProvider } from "@/lib/home-content";
 import { I18nProvider } from "@/lib/i18n";
+import { SiteSettingsProvider } from "@/lib/site-settings";
+import appCss from "../styles.css?url";
 
 function NotFoundComponent() {
   return (
@@ -86,7 +88,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "Official Vietnam distributor for JMsolution & Jmella. Premium K-beauty skincare, fragrance & body care for retailers and B2B partners.",
       },
       { name: "author", content: "GPCLUB Vietnam" },
-      { property: "og:title", content: "GPCLUB Vietnam — JMsolution & Jmella K-Beauty Distributor" },
+      {
+        property: "og:title",
+        content: "GPCLUB Vietnam — JMsolution & Jmella K-Beauty Distributor",
+      },
       {
         property: "og:description",
         content:
@@ -94,12 +99,32 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "GPCLUB Vietnam — JMsolution & Jmella K-Beauty Distributor" },
-      { name: "description", content: "Builds a K-Beauty B2B platform for GPCLUB Vietnam with an AI beauty consultant." },
-      { property: "og:description", content: "Builds a K-Beauty B2B platform for GPCLUB Vietnam with an AI beauty consultant." },
-      { name: "twitter:description", content: "Builds a K-Beauty B2B platform for GPCLUB Vietnam with an AI beauty consultant." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/1cea9c9b-bf19-4ed5-adf4-b71abaef0d50/id-preview-931a4c25--4e9a5c57-b454-4ff9-b423-c8a1f775d5b1.lovable.app-1778212868704.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/1cea9c9b-bf19-4ed5-adf4-b71abaef0d50/id-preview-931a4c25--4e9a5c57-b454-4ff9-b423-c8a1f775d5b1.lovable.app-1778212868704.png" },
+      {
+        name: "twitter:title",
+        content: "GPCLUB Vietnam — JMsolution & Jmella K-Beauty Distributor",
+      },
+      {
+        name: "description",
+        content: "Builds a K-Beauty B2B platform for GPCLUB Vietnam with an AI beauty consultant.",
+      },
+      {
+        property: "og:description",
+        content: "Builds a K-Beauty B2B platform for GPCLUB Vietnam with an AI beauty consultant.",
+      },
+      {
+        name: "twitter:description",
+        content: "Builds a K-Beauty B2B platform for GPCLUB Vietnam with an AI beauty consultant.",
+      },
+      {
+        property: "og:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/1cea9c9b-bf19-4ed5-adf4-b71abaef0d50/id-preview-931a4c25--4e9a5c57-b454-4ff9-b423-c8a1f775d5b1.lovable.app-1778212868704.png",
+      },
+      {
+        name: "twitter:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/1cea9c9b-bf19-4ed5-adf4-b71abaef0d50/id-preview-931a4c25--4e9a5c57-b454-4ff9-b423-c8a1f775d5b1.lovable.app-1778212868704.png",
+      },
     ],
     links: [
       {
@@ -134,34 +159,52 @@ function RootComponent() {
 
   if (isAdminArea) {
     return (
-      <QueryClientProvider client={queryClient}>
-        <main key={pathname} className="min-h-screen flex-1">
-          <Outlet />
-        </main>
-        <Toaster />
-      </QueryClientProvider>
+      <RootDocument>
+        <QueryClientProvider client={queryClient}>
+          <main key={pathname} className="min-h-screen flex-1">
+            <Outlet />
+          </main>
+          <Toaster />
+        </QueryClientProvider>
+      </RootDocument>
     );
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <SiteSettingsProvider>
-        <HomeContentProvider>
-          <I18nProvider>
-            <div className="flex min-h-screen flex-col">
-              <Header />
-              <main key={pathname} className="flex-1 animate-page-in">
-                <Outlet />
-              </main>
-              <Footer />
-              <GippyChat />
-              <FloatingChat />
-              <PopupHost />
-              <Toaster />
-            </div>
-          </I18nProvider>
-        </HomeContentProvider>
-      </SiteSettingsProvider>
-    </QueryClientProvider>
+    <RootDocument>
+      <QueryClientProvider client={queryClient}>
+        <SiteSettingsProvider>
+          <HomeContentProvider>
+            <I18nProvider>
+              <div className="flex min-h-screen flex-col">
+                <Header />
+                <main key={pathname} className="flex-1 animate-page-in">
+                  <Outlet />
+                </main>
+                <Footer />
+                <GippyChat />
+                <FloatingChat />
+                <PopupHost />
+                <Toaster />
+              </div>
+            </I18nProvider>
+          </HomeContentProvider>
+        </SiteSettingsProvider>
+      </QueryClientProvider>
+    </RootDocument>
+  );
+}
+
+function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
+  return (
+    <html lang="vi">
+      <head>
+        <HeadContent />
+      </head>
+      <body>
+        {children}
+        <Scripts />
+      </body>
+    </html>
   );
 }
