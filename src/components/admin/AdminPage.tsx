@@ -19,6 +19,7 @@ import {
   Star,
   Trash2,
   Users,
+  X,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -4951,6 +4952,65 @@ function ProductCatalogsAdminTab({ lang }: { lang: AdminLang }) {
   );
 }
 
+/** Tag-style editor for string[] fields (skin_types / concerns) on a product. */
+function ProductTagField({
+  label,
+  placeholder,
+  values,
+  onChange,
+}: {
+  label: string;
+  placeholder?: string;
+  values: string[];
+  onChange: (next: string[]) => void;
+}) {
+  const [draft, setDraft] = useState("");
+  const add = () => {
+    const v = draft.trim();
+    if (!v) return;
+    if (!values.some((x) => x.toLowerCase() === v.toLowerCase())) onChange([...values, v]);
+    setDraft("");
+  };
+  return (
+    <div className="rounded-2xl border border-border p-4">
+      <Label>{label}</Label>
+      <div className="mt-1.5 flex gap-2">
+        <Input
+          value={draft}
+          placeholder={placeholder}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              add();
+            }
+          }}
+        />
+        <Button type="button" size="sm" variant="outline" onClick={add}>
+          <Plus className="h-3.5 w-3.5" /> Add
+        </Button>
+      </div>
+      {values.length > 0 && (
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {values.map((v) => (
+            <Badge key={v} variant="secondary" className="gap-1">
+              {v}
+              <button
+                type="button"
+                aria-label={`Remove ${v}`}
+                onClick={() => onChange(values.filter((x) => x !== v))}
+                className="ml-0.5 rounded-full hover:bg-foreground/10"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function emptyProduct(): CatalogProduct {
   return {
     id: "",
@@ -4967,6 +5027,8 @@ function emptyProduct(): CatalogProduct {
     is_new: false,
     is_popular: false,
     is_featured: false,
+    skin_types: [],
+    concerns: [],
   };
 }
 
@@ -5037,6 +5099,8 @@ function ProductsAdminTab({ lang }: { lang: AdminLang }) {
       is_new: editing.is_new,
       is_popular: editing.is_popular,
       is_featured: editing.is_featured,
+      skin_types: editing.skin_types ?? [],
+      concerns: editing.concerns ?? [],
     };
     const result = editing.id
       ? await supabase.from("admin_products").update(payload).eq("id", editing.id)
@@ -5369,6 +5433,23 @@ function ProductsAdminTab({ lang }: { lang: AdminLang }) {
                     onCheckedChange={(v) => setEditing({ ...editing, is_featured: v })}
                   />
                 </div>
+              </div>
+
+              {/* Skin types & concerns — power Gippy AI recommendations.
+                  Tag-style editor: type a value, press Add, remove via the X. */}
+              <div className="grid gap-4 md:grid-cols-2">
+                <ProductTagField
+                  label="Skin types"
+                  placeholder="e.g. Dry, Oily, Combination, Sensitive, All"
+                  values={editing.skin_types ?? []}
+                  onChange={(next) => setEditing({ ...editing, skin_types: next })}
+                />
+                <ProductTagField
+                  label="Concerns"
+                  placeholder="e.g. Hydration, Brightening, Anti-aging, Pores, Fragrance, Body care"
+                  values={editing.concerns ?? []}
+                  onChange={(next) => setEditing({ ...editing, concerns: next })}
+                />
               </div>
 
               <div>

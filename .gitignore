@@ -54,5 +54,7 @@ snippet.txt
 *.sw?
 
 # Large generated source data kept out of Git
+# Anchor to repo root so this never matches src/data/ (which previously made
+# the Vercel build fail because src/data/* was untracked + missing on disk).
 /data/
 docs/generated/
