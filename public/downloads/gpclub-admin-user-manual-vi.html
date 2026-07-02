@@ -1,286 +1,425 @@
 <!doctype html>
 <html lang="vi">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Hướng Dẫn Quản Trị GPCLUB Cho Người Mới</title>
-<style>
-@page { size: A4; margin: 16mm 14mm; }
-* { box-sizing: border-box; }
-body { margin: 0; font-family: Arial, "Segoe UI", sans-serif; color: #172033; background: #fff; line-height: 1.55; }
-main { max-width: 900px; margin: 0 auto; padding: 28px 24px 40px; }
-.cover { padding: 28px; border-radius: 22px; background: linear-gradient(135deg, #0f172a, #315c88); color: #fff; margin-bottom: 26px; }
-.brand { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; opacity: .82; }
-.cover h1 { margin: 10px 0 8px; font-size: 30px; line-height: 1.18; color: #fff; border: 0; padding: 0; }
-.subtitle { max-width: 650px; font-size: 16px; opacity: .92; }
-.meta { margin-top: 18px; display: flex; gap: 10px; flex-wrap: wrap; }
-.chip { padding: 7px 10px; border-radius: 999px; background: rgba(255,255,255,.14); font-size: 12px; }
-.notice { border: 1px solid #bfdbfe; background: #eff6ff; color: #1e3a8a; border-radius: 14px; padding: 14px 16px; margin: 18px 0 22px; }
-h1 { font-size: 28px; margin: 28px 0 14px; color: #0f172a; }
-h2 { break-after: avoid; margin: 26px 0 10px; padding-top: 12px; border-top: 1px solid #e5e7eb; color: #15395b; font-size: 20px; }
-h3 { break-after: avoid; margin: 18px 0 8px; color: #315c88; font-size: 16px; }
-p { margin: 7px 0; }
-ul { margin: 8px 0 12px 21px; padding: 0; }
-li { margin: 5px 0; }
-.step { padding: 8px 10px; background: #f8fafc; border-left: 4px solid #315c88; border-radius: 8px; }
-code { background: #f1f5f9; border-radius: 5px; padding: 1px 5px; }
-.footer { margin-top: 32px; color: #64748b; font-size: 12px; border-top: 1px solid #e2e8f0; padding-top: 12px; }
-@media print { main { padding: 0; } .cover { -webkit-print-color-adjust: exact; print-color-adjust: exact; } h2 { page-break-after: avoid; } }
-</style>
-</head>
-<body>
-<main>
-<section class="cover">
-  <div class="brand">GPCLUB Vietnam Admin Manual</div>
-  <h1>Hướng Dẫn Quản Trị GPCLUB Cho Người Mới</h1>
-  <div class="subtitle">Tài liệu thao tác từng bước cho nhân sự vận hành website GPCLUB Vietnam</div>
-  <div class="meta"><span class="chip">Updated: 2026-06-08</span><span class="chip">PDF Download Version</span><span class="chip">For non-technical operators</span></div>
-</section>
-<div class="notice">Mục tiêu của tài liệu này là giúp nhân sự vận hành tự đăng nhập, chỉnh nội dung, bấm lưu và kiểm tra kết quả một cách an toàn.</div>
-<p>Tài liệu này dành cho nhân sự vận hành chưa quen hệ thống. Chỉ cần làm theo từng bước, không cần biết kỹ thuật hoặc lập trình.</p>
-<ul>
-<li>Trang đăng nhập quản trị: /auth</li>
-<li>Trang quản trị: /admin</li>
-<li>Các trang cần kiểm tra sau khi lưu: /, /products, /catalog, /events, /contact</li>
-</ul>
-<h2>1. Nguyên Tắc Quan Trọng Nhất</h2>
-<p class="step">1. Chỉnh nội dung trong admin.</p>
-<p class="step">2. Bấm nút Save<code>/</code>Lưu.</p>
-<p class="step">3. Chờ thông báo thành công.</p>
-<p class="step">4. Mở trang công khai để kiểm tra.</p>
-<p class="step">5. Kiểm tra thêm trên điện thoại hoặc chế độ màn hình nhỏ.</p>
-<p>Không nên đóng trình duyệt ngay sau khi bấm Save. Hãy chờ hệ thống báo đã lưu thành công.</p>
-<h2>2. Đăng Nhập</h2>
-<p class="step">1. Mở /auth.</p>
-<p class="step">2. Nhập email và mật khẩu admin.</p>
-<p class="step">3. Sau khi đăng nhập, mở /admin.</p>
-<p class="step">4. Nếu thấy thông báo không có quyền, hãy báo quản lý hệ thống cấp quyền admin cho tài khoản.</p>
-<p class="step">5. Khi làm xong, bấm Sign out để đăng xuất.</p>
-<p>Không gửi mật khẩu admin qua chat hoặc email nhóm.</p>
-<h2>3. Cách Hiểu Menu Admin</h2>
-<p>Dashboard là nơi xem tình hình chung.</p>
-<p>Product Management dùng để quản lý sản phẩm và catalog.</p>
-<p>Customer Management dùng để xem hồ sơ đại lý và tin nhắn liên hệ.</p>
-<p>Content Management dùng để sửa nội dung website như trang chủ, sự kiện, popup, FAQ và chatbot.</p>
-<p>Settings dùng để sửa thông tin liên hệ công ty.</p>
-<p>Nếu không chắc nên vào menu nào, hãy bắt đầu từ Dashboard rồi chuyển sang phần liên quan.</p>
-<h2>4. Dashboard: Việc Cần Làm Mỗi Ngày</h2>
-<p>Vào Dashboard để xem số liệu mới.</p>
-<p>Cần chú ý:</p>
-<ul>
-<li>Có hồ sơ đại lý mới không.</li>
-<li>Có liên hệ mới không.</li>
-<li>Có popup hoặc sự kiện đang chạy không.</li>
-<li>Có dữ liệu chatbot cần cập nhật không.</li>
-</ul>
-<p>Nếu thấy số mới tăng, chuyển đến Customer Management để xử lý.</p>
-<h2>5. Products: Thêm Hoặc Sửa Sản Phẩm</h2>
-<p>Dùng khi cần đăng sản phẩm mới hoặc sửa thông tin sản phẩm đang hiển thị.</p>
-<p>Các bước thêm sản phẩm:</p>
-<p class="step">1. Vào Product Management &gt; Products.</p>
-<p class="step">2. Bấm New Product.</p>
-<p class="step">3. Nhập Brand Name, Product Name, Product Type.</p>
-<p class="step">4. Nhập Short Intro ngắn gọn, dễ hiểu.</p>
-<p class="step">5. Thêm Cover Image bằng URL ảnh công khai.</p>
-<p class="step">6. Nhập mô tả chi tiết, lợi ích và hướng dẫn sử dụng nếu có.</p>
-<p class="step">7. Bật Published nếu muốn sản phẩm hiển thị công khai.</p>
-<p class="step">8. Bấm Save.</p>
-<p class="step">9. Mở /products để kiểm tra.</p>
-<p>Các công tắc thường gặp:</p>
-<ul>
-<li>Published: bật để sản phẩm hiện trên website.</li>
-<li>New Product: đánh dấu là sản phẩm mới.</li>
-<li>Popular Product: đánh dấu sản phẩm phổ biến.</li>
-<li>Featured Product: cho sản phẩm nổi bật hơn.</li>
-</ul>
-<p>Trước khi bật Published, hãy kiểm tra tên sản phẩm, ảnh, thương hiệu, mô tả và giao diện mobile.</p>
-<h2>6. Catalog Management: Tạo Catalog Cho Đối Tác</h2>
-<p>Catalog là tài liệu danh sách sản phẩm để đối tác B2B xem hoặc tải xuống.</p>
-<p>Các bước tạo catalog:</p>
-<p class="step">1. Vào Product Management &gt; Catalog Management.</p>
-<p class="step">2. Bấm New Catalog.</p>
-<p class="step">3. Nhập tiêu đề, phụ đề và mô tả.</p>
-<p class="step">4. Chọn template. Nếu không chắc, chọn Premium.</p>
-<p class="step">5. Chọn các sản phẩm cần đưa vào catalog.</p>
-<p class="step">6. Nếu đây là catalog chính, bật Representative Catalog.</p>
-<p class="step">7. Bấm Save.</p>
-<p class="step">8. Mở /catalog để kiểm tra.</p>
-<p>Lưu ý: Chỉ nên có một Representative Catalog chính thức tại một thời điểm.</p>
-<h2>7. Dealers: Xử Lý Hồ Sơ Đại Lý</h2>
-<p>Dùng để xem người hoặc công ty đăng ký làm đại lý.</p>
-<p>Quy trình xử lý:</p>
-<p class="step">1. Vào Customer Management &gt; Dealers.</p>
-<p class="step">2. Mở hồ sơ mới.</p>
-<p class="step">3. Xem công ty, người liên hệ, email, số điện thoại, thành phố, sản lượng dự kiến và lời nhắn.</p>
-<p class="step">4. Liên hệ khách hàng nếu cần.</p>
-<p class="step">5. Ghi lại ghi chú nội bộ.</p>
-<p class="step">6. Đổi trạng thái hồ sơ.</p>
-<p class="step">7. Lưu lại.</p>
-<p>Gợi ý trạng thái:</p>
-<ul>
-<li>New: hồ sơ mới.</li>
-<li>Reviewing<code>/</code>In Progress: đang kiểm tra.</li>
-<li>Contacted: đã liên hệ.</li>
-<li>Approved: có thể tiếp tục hợp tác.</li>
-<li>Rejected<code>/</code>Closed: không tiếp tục hoặc đã xử lý xong.</li>
-</ul>
-<p>Không xóa hồ sơ trừ khi đó là spam hoặc bản ghi trùng.</p>
-<h2>8. Contacts: Xử Lý Tin Nhắn Liên Hệ</h2>
-<p>Dùng để xem yêu cầu liên hệ hoặc tin nhắn từ khách hàng.</p>
-<p>Các bước:</p>
-<p class="step">1. Vào Customer Management &gt; Contacts.</p>
-<p class="step">2. Xem các tin nhắn mới trước.</p>
-<p class="step">3. Phân loại hoặc cập nhật trạng thái sau khi xử lý.</p>
-<p class="step">4. Giữ lại bản ghi quan trọng.</p>
-<p class="step">5. Chỉ xóa spam hoặc dữ liệu trùng.</p>
-<p>Thông tin khách hàng là dữ liệu riêng tư. Không chia sẻ ra ngoài nhóm có quyền xử lý.</p>
-<h2>9. Home: Sửa Trang Chủ</h2>
-<p>Dùng để sửa phần đầu trang, nội dung giới thiệu, số liệu, CTA và hình ảnh trang chủ.</p>
-<p>Các bước:</p>
-<p class="step">1. Vào Content Management &gt; Home.</p>
-<p class="step">2. Chọn Page to Edit là Home.</p>
-<p class="step">3. Sửa tiêu đề, mô tả, nút CTA hoặc hình ảnh.</p>
-<p class="step">4. Bấm Save Home.</p>
-<p class="step">5. Mở trang / để kiểm tra.</p>
-<p>Các trường thường gặp:</p>
-<ul>
-<li>Kicker: dòng nhỏ phía trên tiêu đề.</li>
-<li>Title: tiêu đề chính.</li>
-<li>Subtitle: mô tả ngắn bên dưới.</li>
-<li>Primary CTA: nút chính.</li>
-<li>Secondary CTA: nút phụ.</li>
-<li>Image URL: đường dẫn ảnh.</li>
-<li>Image Alt: mô tả ảnh.</li>
-</ul>
-<p>Nút Reset chỉ dùng khi thật sự muốn quay về nội dung mặc định. Nếu không chắc, không bấm Reset.</p>
-<h2>10. Events: Đăng Sự Kiện Hoặc Tin Sản Phẩm Mới</h2>
-<p>Dùng để đăng sự kiện, tin ra mắt sản phẩm hoặc thông báo nổi bật.</p>
-<p>Các bước:</p>
-<p class="step">1. Vào Content Management &gt; Events.</p>
-<p class="step">2. Bấm New Event.</p>
-<p class="step">3. Chọn Event hoặc New Product Spotlight.</p>
-<p class="step">4. Nhập tiêu đề tiếng Việt và tiếng Anh.</p>
-<p class="step">5. Nhập mô tả ngắn.</p>
-<p class="step">6. Thêm hình ảnh<code>/</code>video nếu có.</p>
-<p class="step">7. Bật Featured nếu muốn nổi bật.</p>
-<p class="step">8. Bật Published khi đã sẵn sàng.</p>
-<p class="step">9. Bấm Save.</p>
-<p class="step">10. Mở /events để kiểm tra.</p>
-<p>Chỉ bật Published khi nội dung đã được kiểm tra cả hai ngôn ngữ.</p>
-<h2>11. Popups: Tạo Thông Báo Hiện Trên Website</h2>
-<p>Popup dùng cho thông báo quan trọng, chiến dịch hoặc khuyến mãi.</p>
-<p>Các bước:</p>
-<p class="step">1. Vào Content Management &gt; Popups.</p>
-<p class="step">2. Bấm New Popup.</p>
-<p class="step">3. Nhập tiêu đề và nội dung.</p>
-<p class="step">4. Thêm ảnh nếu cần.</p>
-<p class="step">5. Thêm nút CTA nếu popup cần dẫn tới trang khác.</p>
-<p class="step">6. Thiết lập thời gian bắt đầu<code>/</code>kết thúc nếu có lịch chạy.</p>
-<p class="step">7. Bật Active.</p>
-<p class="step">8. Bấm Save.</p>
-<p class="step">9. Mở website công khai để kiểm tra.</p>
-<p>Nếu popup không hiện, hãy kiểm tra Active, thời gian bắt đầu và thời gian kết thúc.</p>
-<h2>12. FAQs: Thêm Câu Hỏi Thường Gặp</h2>
-<p>Dùng để thêm câu hỏi và câu trả lời cho khách hàng.</p>
-<p>Các bước:</p>
-<p class="step">1. Vào Content Management &gt; FAQs.</p>
-<p class="step">2. Chọn ngôn ngữ cần sửa.</p>
-<p class="step">3. Bấm New FAQ.</p>
-<p class="step">4. Nhập câu hỏi.</p>
-<p class="step">5. Nhập câu trả lời.</p>
-<p class="step">6. Chọn category.</p>
-<p class="step">7. Bật Published.</p>
-<p class="step">8. Bấm Save.</p>
-<p>Câu trả lời nên ngắn, rõ, dễ hiểu. Tránh viết quá dài.</p>
-<h2>13. Chatbot: Cập Nhật Câu Trả Lời Cho Chatbot</h2>
-<p>Chatbot có bốn loại dữ liệu dễ hiểu:</p>
-<ul>
-<li>Q&amp;A: câu hỏi và câu trả lời ngắn.</li>
-<li>Product Info: thông tin sản phẩm.</li>
-<li>Document Library: tài liệu dài để chatbot học.</li>
-<li>Tree Scenario: các nút bấm trong chatbot.</li>
-</ul>
-<h3>Thêm Q&amp;A</h3>
-<p class="step">1. Vào Content Management &gt; Chatbot.</p>
-<p class="step">2. Chọn khu vực Q&amp;A.</p>
-<p class="step">3. Bấm New Training Entry.</p>
-<p class="step">4. Nhập câu hỏi và câu trả lời.</p>
-<p class="step">5. Bật Enabled.</p>
-<p class="step">6. Bấm Save.</p>
-<h3>Thêm thông tin sản phẩm</h3>
-<p class="step">1. Chọn Product Info.</p>
-<p class="step">2. Nhập tên hoặc tiêu đề sản phẩm.</p>
-<p class="step">3. Nhập lợi ích, cách dùng và ghi chú tư vấn.</p>
-<p class="step">4. Bật Enabled.</p>
-<p class="step">5. Bấm Save.</p>
-<h3>Thêm tài liệu dài</h3>
-<p class="step">1. Chọn Document Library.</p>
-<p class="step">2. Bấm New Document.</p>
-<p class="step">3. Nhập Title và Raw Content.</p>
-<p class="step">4. Chọn language và category.</p>
-<p class="step">5. Bấm Save.</p>
-<p class="step">6. Chờ hệ thống xử lý tài liệu thành các phần nhỏ.</p>
-<p>Nếu chatbot chưa trả lời đúng ngay, hãy kiểm tra dữ liệu đã Enabled chưa và tài liệu đã xử lý xong chưa.</p>
-<h2>14. Settings: Sửa Thông Tin Liên Hệ</h2>
-<p>Dùng để sửa email, số điện thoại, địa chỉ, Zalo, WhatsApp hoặc liên kết liên hệ.</p>
-<p>Các bước:</p>
-<p class="step">1. Vào Settings.</p>
-<p class="step">2. Sửa thông tin liên hệ.</p>
-<p class="step">3. Bấm Save Changes.</p>
-<p class="step">4. Mở /contact và cuối trang website để kiểm tra.</p>
-<p>Chỉ nhập thông tin được phép công khai.</p>
-<h2>15. Checklist Sau Khi Lưu</h2>
-<p>Sau mỗi lần chỉnh nội dung, hãy kiểm tra:</p>
-<ul>
-<li>Đã bấm Save chưa.</li>
-<li>Có thông báo lưu thành công chưa.</li>
-<li>Trang công khai đã hiện nội dung mới chưa.</li>
-<li>Mobile có bị vỡ layout không.</li>
-<li>Tiếng Anh và tiếng Việt có cùng ý nghĩa không.</li>
-<li>Ảnh có hiển thị đúng không.</li>
-<li>Link CTA có mở đúng trang không.</li>
-</ul>
-<h2>16. Khi Gặp Lỗi Thường Gặp</h2>
-<p>Không đăng nhập được:</p>
-<ul>
-<li>Kiểm tra email và mật khẩu.</li>
-<li>Thử lại /auth.</li>
-<li>Nếu vẫn không được, báo quản lý hệ thống.</li>
-</ul>
-<p>Đã lưu nhưng website chưa đổi:</p>
-<ul>
-<li>Refresh trang công khai.</li>
-<li>Kiểm tra Published hoặc Active.</li>
-<li>Chờ vài giây rồi thử lại.</li>
-</ul>
-<p>Ảnh không hiện:</p>
-<ul>
-<li>Mở URL ảnh trực tiếp.</li>
-<li>Nếu URL không mở được, cần thay URL ảnh khác.</li>
-</ul>
-<p>Popup không hiện:</p>
-<ul>
-<li>Kiểm tra Active.</li>
-<li>Kiểm tra thời gian bắt đầu<code>/</code>kết thúc.</li>
-<li>Kiểm tra có popup khác đang ưu tiên cao hơn không.</li>
-</ul>
-<p>Chatbot trả lời chưa đúng:</p>
-<ul>
-<li>Kiểm tra dữ liệu đã Enabled chưa.</li>
-<li>Với document, kiểm tra đã xử lý xong chưa.</li>
-<li>Thử viết Q&amp;A ngắn và rõ hơn.</li>
-</ul>
-<h2>17. Quy Tắc An Toàn</h2>
-<ul>
-<li>Không chia sẻ mật khẩu admin.</li>
-<li>Không xóa dữ liệu nếu không chắc.</li>
-<li>Không đăng thông tin nội bộ lên trường công khai.</li>
-<li>Không đăng giá, chứng nhận hoặc cam kết hiệu quả nếu chưa được duyệt.</li>
-<li>Không chia sẻ thông tin cá nhân khách hàng ra ngoài.</li>
-<li>Với nội dung quan trọng, nên chụp màn hình sau khi kiểm tra.</li>
-</ul>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Hướng Dẫn Quản Trị GPCLUB Cho Người Mới</title>
+    <style>
+      @page {
+        size: A4;
+        margin: 16mm 14mm;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: Arial, "Segoe UI", sans-serif;
+        color: #172033;
+        background: #fff;
+        line-height: 1.55;
+      }
+      main {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 28px 24px 40px;
+      }
+      .cover {
+        padding: 28px;
+        border-radius: 22px;
+        background: linear-gradient(135deg, #0f172a, #315c88);
+        color: #fff;
+        margin-bottom: 26px;
+      }
+      .brand {
+        font-size: 13px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        opacity: 0.82;
+      }
+      .cover h1 {
+        margin: 10px 0 8px;
+        font-size: 30px;
+        line-height: 1.18;
+        color: #fff;
+        border: 0;
+        padding: 0;
+      }
+      .subtitle {
+        max-width: 650px;
+        font-size: 16px;
+        opacity: 0.92;
+      }
+      .meta {
+        margin-top: 18px;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .chip {
+        padding: 7px 10px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.14);
+        font-size: 12px;
+      }
+      .notice {
+        border: 1px solid #bfdbfe;
+        background: #eff6ff;
+        color: #1e3a8a;
+        border-radius: 14px;
+        padding: 14px 16px;
+        margin: 18px 0 22px;
+      }
+      h1 {
+        font-size: 28px;
+        margin: 28px 0 14px;
+        color: #0f172a;
+      }
+      h2 {
+        break-after: avoid;
+        margin: 26px 0 10px;
+        padding-top: 12px;
+        border-top: 1px solid #e5e7eb;
+        color: #15395b;
+        font-size: 20px;
+      }
+      h3 {
+        break-after: avoid;
+        margin: 18px 0 8px;
+        color: #315c88;
+        font-size: 16px;
+      }
+      p {
+        margin: 7px 0;
+      }
+      ul {
+        margin: 8px 0 12px 21px;
+        padding: 0;
+      }
+      li {
+        margin: 5px 0;
+      }
+      .step {
+        padding: 8px 10px;
+        background: #f8fafc;
+        border-left: 4px solid #315c88;
+        border-radius: 8px;
+      }
+      code {
+        background: #f1f5f9;
+        border-radius: 5px;
+        padding: 1px 5px;
+      }
+      .footer {
+        margin-top: 32px;
+        color: #64748b;
+        font-size: 12px;
+        border-top: 1px solid #e2e8f0;
+        padding-top: 12px;
+      }
+      @media print {
+        main {
+          padding: 0;
+        }
+        .cover {
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+        h2 {
+          page-break-after: avoid;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="cover">
+        <div class="brand">GPCLUB Vietnam Admin Manual</div>
+        <h1>Hướng Dẫn Quản Trị GPCLUB Cho Người Mới</h1>
+        <div class="subtitle">
+          Tài liệu thao tác từng bước cho nhân sự vận hành website GPCLUB Vietnam
+        </div>
+        <div class="meta">
+          <span class="chip">Updated: 2026-06-08</span><span class="chip">PDF Download Version</span
+          ><span class="chip">For non-technical operators</span>
+        </div>
+      </section>
+      <div class="notice">
+        Mục tiêu của tài liệu này là giúp nhân sự vận hành tự đăng nhập, chỉnh nội dung, bấm lưu và
+        kiểm tra kết quả một cách an toàn.
+      </div>
+      <p>
+        Tài liệu này dành cho nhân sự vận hành chưa quen hệ thống. Chỉ cần làm theo từng bước, không
+        cần biết kỹ thuật hoặc lập trình.
+      </p>
+      <ul>
+        <li>Trang đăng nhập quản trị: /auth</li>
+        <li>Trang quản trị: /admin</li>
+        <li>Các trang cần kiểm tra sau khi lưu: /, /products, /catalog, /events, /contact</li>
+      </ul>
+      <h2>1. Nguyên Tắc Quan Trọng Nhất</h2>
+      <p class="step">1. Chỉnh nội dung trong admin.</p>
+      <p class="step">2. Bấm nút Save<code>/</code>Lưu.</p>
+      <p class="step">3. Chờ thông báo thành công.</p>
+      <p class="step">4. Mở trang công khai để kiểm tra.</p>
+      <p class="step">5. Kiểm tra thêm trên điện thoại hoặc chế độ màn hình nhỏ.</p>
+      <p>
+        Không nên đóng trình duyệt ngay sau khi bấm Save. Hãy chờ hệ thống báo đã lưu thành công.
+      </p>
+      <h2>2. Đăng Nhập</h2>
+      <p class="step">1. Mở /auth.</p>
+      <p class="step">2. Nhập email và mật khẩu admin.</p>
+      <p class="step">3. Sau khi đăng nhập, mở /admin.</p>
+      <p class="step">
+        4. Nếu thấy thông báo không có quyền, hãy báo quản lý hệ thống cấp quyền admin cho tài
+        khoản.
+      </p>
+      <p class="step">5. Khi làm xong, bấm Sign out để đăng xuất.</p>
+      <p>Không gửi mật khẩu admin qua chat hoặc email nhóm.</p>
+      <h2>3. Cách Hiểu Menu Admin</h2>
+      <p>Dashboard là nơi xem tình hình chung.</p>
+      <p>Product Management dùng để quản lý sản phẩm và catalog.</p>
+      <p>Customer Management dùng để xem hồ sơ đại lý và tin nhắn liên hệ.</p>
+      <p>
+        Content Management dùng để sửa nội dung website như trang chủ, sự kiện, popup, FAQ và
+        chatbot.
+      </p>
+      <p>Settings dùng để sửa thông tin liên hệ công ty.</p>
+      <p>
+        Nếu không chắc nên vào menu nào, hãy bắt đầu từ Dashboard rồi chuyển sang phần liên quan.
+      </p>
+      <h2>4. Dashboard: Việc Cần Làm Mỗi Ngày</h2>
+      <p>Vào Dashboard để xem số liệu mới.</p>
+      <p>Cần chú ý:</p>
+      <ul>
+        <li>Có hồ sơ đại lý mới không.</li>
+        <li>Có liên hệ mới không.</li>
+        <li>Có popup hoặc sự kiện đang chạy không.</li>
+        <li>Có dữ liệu chatbot cần cập nhật không.</li>
+      </ul>
+      <p>Nếu thấy số mới tăng, chuyển đến Customer Management để xử lý.</p>
+      <h2>5. Products: Thêm Hoặc Sửa Sản Phẩm</h2>
+      <p>Dùng khi cần đăng sản phẩm mới hoặc sửa thông tin sản phẩm đang hiển thị.</p>
+      <p>Các bước thêm sản phẩm:</p>
+      <p class="step">1. Vào Product Management &gt; Products.</p>
+      <p class="step">2. Bấm New Product.</p>
+      <p class="step">3. Nhập Brand Name, Product Name, Product Type.</p>
+      <p class="step">4. Nhập Short Intro ngắn gọn, dễ hiểu.</p>
+      <p class="step">5. Thêm Cover Image bằng URL ảnh công khai.</p>
+      <p class="step">6. Nhập mô tả chi tiết, lợi ích và hướng dẫn sử dụng nếu có.</p>
+      <p class="step">7. Bật Published nếu muốn sản phẩm hiển thị công khai.</p>
+      <p class="step">8. Bấm Save.</p>
+      <p class="step">9. Mở /products để kiểm tra.</p>
+      <p>Các công tắc thường gặp:</p>
+      <ul>
+        <li>Published: bật để sản phẩm hiện trên website.</li>
+        <li>New Product: đánh dấu là sản phẩm mới.</li>
+        <li>Popular Product: đánh dấu sản phẩm phổ biến.</li>
+        <li>Featured Product: cho sản phẩm nổi bật hơn.</li>
+      </ul>
+      <p>
+        Trước khi bật Published, hãy kiểm tra tên sản phẩm, ảnh, thương hiệu, mô tả và giao diện
+        mobile.
+      </p>
+      <h2>6. Catalog Management: Tạo Catalog Cho Đối Tác</h2>
+      <p>Catalog là tài liệu danh sách sản phẩm để đối tác B2B xem hoặc tải xuống.</p>
+      <p>Các bước tạo catalog:</p>
+      <p class="step">1. Vào Product Management &gt; Catalog Management.</p>
+      <p class="step">2. Bấm New Catalog.</p>
+      <p class="step">3. Nhập tiêu đề, phụ đề và mô tả.</p>
+      <p class="step">4. Chọn template. Nếu không chắc, chọn Premium.</p>
+      <p class="step">5. Chọn các sản phẩm cần đưa vào catalog.</p>
+      <p class="step">6. Nếu đây là catalog chính, bật Representative Catalog.</p>
+      <p class="step">7. Bấm Save.</p>
+      <p class="step">8. Mở /catalog để kiểm tra.</p>
+      <p>Lưu ý: Chỉ nên có một Representative Catalog chính thức tại một thời điểm.</p>
+      <h2>7. Dealers: Xử Lý Hồ Sơ Đại Lý</h2>
+      <p>Dùng để xem người hoặc công ty đăng ký làm đại lý.</p>
+      <p>Quy trình xử lý:</p>
+      <p class="step">1. Vào Customer Management &gt; Dealers.</p>
+      <p class="step">2. Mở hồ sơ mới.</p>
+      <p class="step">
+        3. Xem công ty, người liên hệ, email, số điện thoại, thành phố, sản lượng dự kiến và lời
+        nhắn.
+      </p>
+      <p class="step">4. Liên hệ khách hàng nếu cần.</p>
+      <p class="step">5. Ghi lại ghi chú nội bộ.</p>
+      <p class="step">6. Đổi trạng thái hồ sơ.</p>
+      <p class="step">7. Lưu lại.</p>
+      <p>Gợi ý trạng thái:</p>
+      <ul>
+        <li>New: hồ sơ mới.</li>
+        <li>Reviewing<code>/</code>In Progress: đang kiểm tra.</li>
+        <li>Contacted: đã liên hệ.</li>
+        <li>Approved: có thể tiếp tục hợp tác.</li>
+        <li>Rejected<code>/</code>Closed: không tiếp tục hoặc đã xử lý xong.</li>
+      </ul>
+      <p>Không xóa hồ sơ trừ khi đó là spam hoặc bản ghi trùng.</p>
+      <h2>8. Contacts: Xử Lý Tin Nhắn Liên Hệ</h2>
+      <p>Dùng để xem yêu cầu liên hệ hoặc tin nhắn từ khách hàng.</p>
+      <p>Các bước:</p>
+      <p class="step">1. Vào Customer Management &gt; Contacts.</p>
+      <p class="step">2. Xem các tin nhắn mới trước.</p>
+      <p class="step">3. Phân loại hoặc cập nhật trạng thái sau khi xử lý.</p>
+      <p class="step">4. Giữ lại bản ghi quan trọng.</p>
+      <p class="step">5. Chỉ xóa spam hoặc dữ liệu trùng.</p>
+      <p>Thông tin khách hàng là dữ liệu riêng tư. Không chia sẻ ra ngoài nhóm có quyền xử lý.</p>
+      <h2>9. Home: Sửa Trang Chủ</h2>
+      <p>Dùng để sửa phần đầu trang, nội dung giới thiệu, số liệu, CTA và hình ảnh trang chủ.</p>
+      <p>Các bước:</p>
+      <p class="step">1. Vào Content Management &gt; Home.</p>
+      <p class="step">2. Chọn Page to Edit là Home.</p>
+      <p class="step">3. Sửa tiêu đề, mô tả, nút CTA hoặc hình ảnh.</p>
+      <p class="step">4. Bấm Save Home.</p>
+      <p class="step">5. Mở trang / để kiểm tra.</p>
+      <p>Các trường thường gặp:</p>
+      <ul>
+        <li>Kicker: dòng nhỏ phía trên tiêu đề.</li>
+        <li>Title: tiêu đề chính.</li>
+        <li>Subtitle: mô tả ngắn bên dưới.</li>
+        <li>Primary CTA: nút chính.</li>
+        <li>Secondary CTA: nút phụ.</li>
+        <li>Image URL: đường dẫn ảnh.</li>
+        <li>Image Alt: mô tả ảnh.</li>
+      </ul>
+      <p>
+        Nút Reset chỉ dùng khi thật sự muốn quay về nội dung mặc định. Nếu không chắc, không bấm
+        Reset.
+      </p>
+      <h2>10. Events: Đăng Sự Kiện Hoặc Tin Sản Phẩm Mới</h2>
+      <p>Dùng để đăng sự kiện, tin ra mắt sản phẩm hoặc thông báo nổi bật.</p>
+      <p>Các bước:</p>
+      <p class="step">1. Vào Content Management &gt; Events.</p>
+      <p class="step">2. Bấm New Event.</p>
+      <p class="step">3. Chọn Event hoặc New Product Spotlight.</p>
+      <p class="step">4. Nhập tiêu đề tiếng Việt và tiếng Anh.</p>
+      <p class="step">5. Nhập mô tả ngắn.</p>
+      <p class="step">6. Thêm hình ảnh<code>/</code>video nếu có.</p>
+      <p class="step">7. Bật Featured nếu muốn nổi bật.</p>
+      <p class="step">8. Bật Published khi đã sẵn sàng.</p>
+      <p class="step">9. Bấm Save.</p>
+      <p class="step">10. Mở /events để kiểm tra.</p>
+      <p>Chỉ bật Published khi nội dung đã được kiểm tra cả hai ngôn ngữ.</p>
+      <h2>11. Popups: Tạo Thông Báo Hiện Trên Website</h2>
+      <p>Popup dùng cho thông báo quan trọng, chiến dịch hoặc khuyến mãi.</p>
+      <p>Các bước:</p>
+      <p class="step">1. Vào Content Management &gt; Popups.</p>
+      <p class="step">2. Bấm New Popup.</p>
+      <p class="step">3. Nhập tiêu đề và nội dung.</p>
+      <p class="step">4. Thêm ảnh nếu cần.</p>
+      <p class="step">5. Thêm nút CTA nếu popup cần dẫn tới trang khác.</p>
+      <p class="step">6. Thiết lập thời gian bắt đầu<code>/</code>kết thúc nếu có lịch chạy.</p>
+      <p class="step">7. Bật Active.</p>
+      <p class="step">8. Bấm Save.</p>
+      <p class="step">9. Mở website công khai để kiểm tra.</p>
+      <p>Nếu popup không hiện, hãy kiểm tra Active, thời gian bắt đầu và thời gian kết thúc.</p>
+      <h2>12. FAQs: Thêm Câu Hỏi Thường Gặp</h2>
+      <p>Dùng để thêm câu hỏi và câu trả lời cho khách hàng.</p>
+      <p>Các bước:</p>
+      <p class="step">1. Vào Content Management &gt; FAQs.</p>
+      <p class="step">2. Chọn ngôn ngữ cần sửa.</p>
+      <p class="step">3. Bấm New FAQ.</p>
+      <p class="step">4. Nhập câu hỏi.</p>
+      <p class="step">5. Nhập câu trả lời.</p>
+      <p class="step">6. Chọn category.</p>
+      <p class="step">7. Bật Published.</p>
+      <p class="step">8. Bấm Save.</p>
+      <p>Câu trả lời nên ngắn, rõ, dễ hiểu. Tránh viết quá dài.</p>
+      <h2>13. Chatbot: Cập Nhật Câu Trả Lời Cho Chatbot</h2>
+      <p>Chatbot có bốn loại dữ liệu dễ hiểu:</p>
+      <ul>
+        <li>Q&amp;A: câu hỏi và câu trả lời ngắn.</li>
+        <li>Product Info: thông tin sản phẩm.</li>
+        <li>Document Library: tài liệu dài để chatbot học.</li>
+        <li>Tree Scenario: các nút bấm trong chatbot.</li>
+      </ul>
+      <h3>Thêm Q&amp;A</h3>
+      <p class="step">1. Vào Content Management &gt; Chatbot.</p>
+      <p class="step">2. Chọn khu vực Q&amp;A.</p>
+      <p class="step">3. Bấm New Training Entry.</p>
+      <p class="step">4. Nhập câu hỏi và câu trả lời.</p>
+      <p class="step">5. Bật Enabled.</p>
+      <p class="step">6. Bấm Save.</p>
+      <h3>Thêm thông tin sản phẩm</h3>
+      <p class="step">1. Chọn Product Info.</p>
+      <p class="step">2. Nhập tên hoặc tiêu đề sản phẩm.</p>
+      <p class="step">3. Nhập lợi ích, cách dùng và ghi chú tư vấn.</p>
+      <p class="step">4. Bật Enabled.</p>
+      <p class="step">5. Bấm Save.</p>
+      <h3>Thêm tài liệu dài</h3>
+      <p class="step">1. Chọn Document Library.</p>
+      <p class="step">2. Bấm New Document.</p>
+      <p class="step">3. Nhập Title và Raw Content.</p>
+      <p class="step">4. Chọn language và category.</p>
+      <p class="step">5. Bấm Save.</p>
+      <p class="step">6. Chờ hệ thống xử lý tài liệu thành các phần nhỏ.</p>
+      <p>
+        Nếu chatbot chưa trả lời đúng ngay, hãy kiểm tra dữ liệu đã Enabled chưa và tài liệu đã xử
+        lý xong chưa.
+      </p>
+      <h2>14. Settings: Sửa Thông Tin Liên Hệ</h2>
+      <p>Dùng để sửa email, số điện thoại, địa chỉ, Zalo, WhatsApp hoặc liên kết liên hệ.</p>
+      <p>Các bước:</p>
+      <p class="step">1. Vào Settings.</p>
+      <p class="step">2. Sửa thông tin liên hệ.</p>
+      <p class="step">3. Bấm Save Changes.</p>
+      <p class="step">4. Mở /contact và cuối trang website để kiểm tra.</p>
+      <p>Chỉ nhập thông tin được phép công khai.</p>
+      <h2>15. Checklist Sau Khi Lưu</h2>
+      <p>Sau mỗi lần chỉnh nội dung, hãy kiểm tra:</p>
+      <ul>
+        <li>Đã bấm Save chưa.</li>
+        <li>Có thông báo lưu thành công chưa.</li>
+        <li>Trang công khai đã hiện nội dung mới chưa.</li>
+        <li>Mobile có bị vỡ layout không.</li>
+        <li>Tiếng Anh và tiếng Việt có cùng ý nghĩa không.</li>
+        <li>Ảnh có hiển thị đúng không.</li>
+        <li>Link CTA có mở đúng trang không.</li>
+      </ul>
+      <h2>16. Khi Gặp Lỗi Thường Gặp</h2>
+      <p>Không đăng nhập được:</p>
+      <ul>
+        <li>Kiểm tra email và mật khẩu.</li>
+        <li>Thử lại /auth.</li>
+        <li>Nếu vẫn không được, báo quản lý hệ thống.</li>
+      </ul>
+      <p>Đã lưu nhưng website chưa đổi:</p>
+      <ul>
+        <li>Refresh trang công khai.</li>
+        <li>Kiểm tra Published hoặc Active.</li>
+        <li>Chờ vài giây rồi thử lại.</li>
+      </ul>
+      <p>Ảnh không hiện:</p>
+      <ul>
+        <li>Mở URL ảnh trực tiếp.</li>
+        <li>Nếu URL không mở được, cần thay URL ảnh khác.</li>
+      </ul>
+      <p>Popup không hiện:</p>
+      <ul>
+        <li>Kiểm tra Active.</li>
+        <li>Kiểm tra thời gian bắt đầu<code>/</code>kết thúc.</li>
+        <li>Kiểm tra có popup khác đang ưu tiên cao hơn không.</li>
+      </ul>
+      <p>Chatbot trả lời chưa đúng:</p>
+      <ul>
+        <li>Kiểm tra dữ liệu đã Enabled chưa.</li>
+        <li>Với document, kiểm tra đã xử lý xong chưa.</li>
+        <li>Thử viết Q&amp;A ngắn và rõ hơn.</li>
+      </ul>
+      <h2>17. Quy Tắc An Toàn</h2>
+      <ul>
+        <li>Không chia sẻ mật khẩu admin.</li>
+        <li>Không xóa dữ liệu nếu không chắc.</li>
+        <li>Không đăng thông tin nội bộ lên trường công khai.</li>
+        <li>Không đăng giá, chứng nhận hoặc cam kết hiệu quả nếu chưa được duyệt.</li>
+        <li>Không chia sẻ thông tin cá nhân khách hàng ra ngoài.</li>
+        <li>Với nội dung quan trọng, nên chụp màn hình sau khi kiểm tra.</li>
+      </ul>
 
-<div class="footer">GPCLUB Vietnam admin operator guide. Keep this file internal and share only with authorized website operators.</div>
-</main>
-</body>
+      <div class="footer">
+        GPCLUB Vietnam admin operator guide. Keep this file internal and share only with authorized
+        website operators.
+      </div>
+    </main>
+  </body>
 </html>

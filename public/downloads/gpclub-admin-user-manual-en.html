@@ -1,286 +1,416 @@
 <!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>GPCLUB Admin Manual for New Operators</title>
-<style>
-@page { size: A4; margin: 16mm 14mm; }
-* { box-sizing: border-box; }
-body { margin: 0; font-family: Arial, "Segoe UI", sans-serif; color: #172033; background: #fff; line-height: 1.55; }
-main { max-width: 900px; margin: 0 auto; padding: 28px 24px 40px; }
-.cover { padding: 28px; border-radius: 22px; background: linear-gradient(135deg, #0f172a, #315c88); color: #fff; margin-bottom: 26px; }
-.brand { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; opacity: .82; }
-.cover h1 { margin: 10px 0 8px; font-size: 30px; line-height: 1.18; color: #fff; border: 0; padding: 0; }
-.subtitle { max-width: 650px; font-size: 16px; opacity: .92; }
-.meta { margin-top: 18px; display: flex; gap: 10px; flex-wrap: wrap; }
-.chip { padding: 7px 10px; border-radius: 999px; background: rgba(255,255,255,.14); font-size: 12px; }
-.notice { border: 1px solid #bfdbfe; background: #eff6ff; color: #1e3a8a; border-radius: 14px; padding: 14px 16px; margin: 18px 0 22px; }
-h1 { font-size: 28px; margin: 28px 0 14px; color: #0f172a; }
-h2 { break-after: avoid; margin: 26px 0 10px; padding-top: 12px; border-top: 1px solid #e5e7eb; color: #15395b; font-size: 20px; }
-h3 { break-after: avoid; margin: 18px 0 8px; color: #315c88; font-size: 16px; }
-p { margin: 7px 0; }
-ul { margin: 8px 0 12px 21px; padding: 0; }
-li { margin: 5px 0; }
-.step { padding: 8px 10px; background: #f8fafc; border-left: 4px solid #315c88; border-radius: 8px; }
-code { background: #f1f5f9; border-radius: 5px; padding: 1px 5px; }
-.footer { margin-top: 32px; color: #64748b; font-size: 12px; border-top: 1px solid #e2e8f0; padding-top: 12px; }
-@media print { main { padding: 0; } .cover { -webkit-print-color-adjust: exact; print-color-adjust: exact; } h2 { page-break-after: avoid; } }
-</style>
-</head>
-<body>
-<main>
-<section class="cover">
-  <div class="brand">GPCLUB Vietnam Admin Manual</div>
-  <h1>GPCLUB Admin Manual for New Operators</h1>
-  <div class="subtitle">Step-by-step website operation guide for GPCLUB Vietnam staff</div>
-  <div class="meta"><span class="chip">Updated: 2026-06-08</span><span class="chip">PDF Download Version</span><span class="chip">For non-technical operators</span></div>
-</section>
-<div class="notice">This guide helps operators log in, edit content, save changes, and verify public pages safely.</div>
-<p>This guide is written for operators who are not familiar with technical systems. Follow each step in order. No coding knowledge is required.</p>
-<ul>
-<li>Admin login page: /auth</li>
-<li>Admin page: /admin</li>
-<li>Public pages to check after saving: /, /products, /catalog, /events, /contact</li>
-</ul>
-<h2>1. The Most Important Rule</h2>
-<p class="step">1. Edit content in the admin panel.</p>
-<p class="step">2. Click Save.</p>
-<p class="step">3. Wait for the success message.</p>
-<p class="step">4. Open the public page and check the result.</p>
-<p class="step">5. Also check on mobile or a small screen.</p>
-<p>Do not close the browser immediately after clicking Save. Wait until the system confirms that the content has been saved.</p>
-<h2>2. Login</h2>
-<p class="step">1. Open /auth.</p>
-<p class="step">2. Enter the admin email and password.</p>
-<p class="step">3. After login, open /admin.</p>
-<p class="step">4. If access is denied, ask the system manager to give the account the admin role.</p>
-<p class="step">5. Click Sign out when finished.</p>
-<p>Do not share admin passwords through chat or group email.</p>
-<h2>3. Understanding the Admin Menu</h2>
-<p>Dashboard shows the current status.</p>
-<p>Product Management is for products and catalogs.</p>
-<p>Customer Management is for dealer applications and contact messages.</p>
-<p>Content Management is for homepage content, events, popups, FAQs, and chatbot data.</p>
-<p>Settings is for company contact information.</p>
-<p>If you are unsure where to start, check Dashboard first.</p>
-<h2>4. Dashboard: Daily Check</h2>
-<p>Open Dashboard to review new activity.</p>
-<p>Check these items:</p>
-<ul>
-<li>New dealer applications.</li>
-<li>New contact messages.</li>
-<li>Running popups or events.</li>
-<li>Chatbot data that may need updates.</li>
-</ul>
-<p>If new numbers appear, move to Customer Management.</p>
-<h2>5. Products: Add or Edit Products</h2>
-<p>Use this section when adding a new product or changing product information.</p>
-<p>Steps to add a product:</p>
-<p class="step">1. Go to Product Management &gt; Products.</p>
-<p class="step">2. Click New Product.</p>
-<p class="step">3. Enter Brand Name, Product Name, and Product Type.</p>
-<p class="step">4. Enter a short and clear Short Intro.</p>
-<p class="step">5. Add the Cover Image using a public image URL.</p>
-<p class="step">6. Add details, benefits, and usage notes if needed.</p>
-<p class="step">7. Turn Published on when the product is ready for the public website.</p>
-<p class="step">8. Click Save.</p>
-<p class="step">9. Open /products and check the result.</p>
-<p>Common switches:</p>
-<ul>
-<li>Published: shows the product on the website.</li>
-<li>New Product: marks it as new.</li>
-<li>Popular Product: marks it as popular.</li>
-<li>Featured Product: highlights it in important areas.</li>
-</ul>
-<p>Before turning Published on, check the product name, image, brand, description, and mobile layout.</p>
-<h2>6. Catalog Management: Create a Partner Catalog</h2>
-<p>Catalogs are product documents for B2B partners.</p>
-<p>Steps:</p>
-<p class="step">1. Go to Product Management &gt; Catalog Management.</p>
-<p class="step">2. Click New Catalog.</p>
-<p class="step">3. Enter title, subtitle, and description.</p>
-<p class="step">4. Choose a template. If unsure, use Premium.</p>
-<p class="step">5. Select products to include.</p>
-<p class="step">6. Turn Representative Catalog on if this is the main official catalog.</p>
-<p class="step">7. Click Save.</p>
-<p class="step">8. Open /catalog and check the result.</p>
-<p>Only one Representative Catalog should be used as the main current catalog.</p>
-<h2>7. Dealers: Handle Dealer Applications</h2>
-<p>Use this section to review companies or people applying to become dealers.</p>
-<p>Workflow:</p>
-<p class="step">1. Go to Customer Management &gt; Dealers.</p>
-<p class="step">2. Open a new application.</p>
-<p class="step">3. Check company, contact person, email, phone, city, expected volume, and message.</p>
-<p class="step">4. Contact the applicant if needed.</p>
-<p class="step">5. Add an internal note.</p>
-<p class="step">6. Change the status.</p>
-<p class="step">7. Save.</p>
-<p>Suggested statuses:</p>
-<ul>
-<li>New: not reviewed yet.</li>
-<li>Reviewing<code>/</code>In Progress: being checked.</li>
-<li>Contacted: already contacted.</li>
-<li>Approved: can continue as a possible partner.</li>
-<li>Rejected<code>/</code>Closed: not proceeding or finished.</li>
-</ul>
-<p>Do not delete applications unless they are spam or duplicates.</p>
-<h2>8. Contacts: Handle Messages</h2>
-<p>Use this section to review contact messages or chatbot<code>/contact</code> records.</p>
-<p>Steps:</p>
-<p class="step">1. Go to Customer Management &gt; Contacts.</p>
-<p class="step">2. Check new messages first.</p>
-<p class="step">3. Update status after handling.</p>
-<p class="step">4. Keep important records.</p>
-<p class="step">5. Delete only spam or incorrect duplicates.</p>
-<p>Customer information is private. Share it only with authorized staff.</p>
-<h2>9. Home: Edit the Homepage</h2>
-<p>Use this section to update the homepage hero, text, images, statistics, and CTA buttons.</p>
-<p>Steps:</p>
-<p class="step">1. Go to Content Management &gt; Home.</p>
-<p class="step">2. Select Home in Page to Edit.</p>
-<p class="step">3. Edit the title, subtitle, CTA, or image fields.</p>
-<p class="step">4. Click Save Home.</p>
-<p class="step">5. Open / and check the homepage.</p>
-<p>Common fields:</p>
-<ul>
-<li>Kicker: small text above the title.</li>
-<li>Title: main heading.</li>
-<li>Subtitle: short supporting text.</li>
-<li>Primary CTA: main button.</li>
-<li>Secondary CTA: second button.</li>
-<li>Image URL: public image link.</li>
-<li>Image Alt: image description.</li>
-</ul>
-<p>Use Reset only when you really want to return to default content.</p>
-<h2>10. Events: Add Events or Product News</h2>
-<p>Use this section for events, product launches, or important announcements.</p>
-<p>Steps:</p>
-<p class="step">1. Go to Content Management &gt; Events.</p>
-<p class="step">2. Click New Event.</p>
-<p class="step">3. Choose Event or New Product Spotlight.</p>
-<p class="step">4. Enter Vietnamese and English titles.</p>
-<p class="step">5. Enter a short summary.</p>
-<p class="step">6. Add image or video if needed.</p>
-<p class="step">7. Turn Featured on if it should be highlighted.</p>
-<p class="step">8. Turn Published on when ready.</p>
-<p class="step">9. Click Save.</p>
-<p class="step">10. Open /events and check the result.</p>
-<p>Only publish after both languages are reviewed.</p>
-<h2>11. Popups: Show Website Notices</h2>
-<p>Popups are for important notices, campaigns, or promotions.</p>
-<p>Steps:</p>
-<p class="step">1. Go to Content Management &gt; Popups.</p>
-<p class="step">2. Click New Popup.</p>
-<p class="step">3. Enter title and content.</p>
-<p class="step">4. Add an image if needed.</p>
-<p class="step">5. Add a CTA button if the popup should link somewhere.</p>
-<p class="step">6. Set start and end time if scheduled.</p>
-<p class="step">7. Turn Active on.</p>
-<p class="step">8. Click Save.</p>
-<p class="step">9. Open the public website and check it.</p>
-<p>If the popup does not appear, check Active, start time, and end time.</p>
-<h2>12. FAQs: Add Frequently Asked Questions</h2>
-<p>Use this section to add common questions and answers.</p>
-<p>Steps:</p>
-<p class="step">1. Go to Content Management &gt; FAQs.</p>
-<p class="step">2. Choose the language.</p>
-<p class="step">3. Click New FAQ.</p>
-<p class="step">4. Enter the question.</p>
-<p class="step">5. Enter the answer.</p>
-<p class="step">6. Choose a category.</p>
-<p class="step">7. Turn Published on.</p>
-<p class="step">8. Click Save.</p>
-<p>Answers should be short, clear, and easy to understand.</p>
-<h2>13. Chatbot: Update Chatbot Answers</h2>
-<p>The chatbot uses four simple data types:</p>
-<ul>
-<li>Q&amp;A: short questions and answers.</li>
-<li>Product Info: product information.</li>
-<li>Document Library: long documents for chatbot knowledge.</li>
-<li>Tree Scenario: button-based chatbot flows.</li>
-</ul>
-<h3>Add Q&amp;A</h3>
-<p class="step">1. Go to Content Management &gt; Chatbot.</p>
-<p class="step">2. Open the Q&amp;A area.</p>
-<p class="step">3. Click New Training Entry.</p>
-<p class="step">4. Enter the question and answer.</p>
-<p class="step">5. Turn Enabled on.</p>
-<p class="step">6. Click Save.</p>
-<h3>Add product information</h3>
-<p class="step">1. Open Product Info.</p>
-<p class="step">2. Enter product title or name.</p>
-<p class="step">3. Enter benefits, usage, and recommendation notes.</p>
-<p class="step">4. Turn Enabled on.</p>
-<p class="step">5. Click Save.</p>
-<h3>Add a long document</h3>
-<p class="step">1. Open Document Library.</p>
-<p class="step">2. Click New Document.</p>
-<p class="step">3. Enter Title and Raw Content.</p>
-<p class="step">4. Choose language and category.</p>
-<p class="step">5. Click Save.</p>
-<p class="step">6. Wait until the system processes the document into chunks.</p>
-<p>If chatbot answers do not update immediately, check whether the data is Enabled and whether the document processing is complete.</p>
-<h2>14. Settings: Edit Contact Information</h2>
-<p>Use this section for company email, phone, address, Zalo, WhatsApp, or contact links.</p>
-<p>Steps:</p>
-<p class="step">1. Go to Settings.</p>
-<p class="step">2. Edit contact information.</p>
-<p class="step">3. Click Save Changes.</p>
-<p class="step">4. Open /contact and the website footer to check.</p>
-<p>Only enter information that is allowed to be public.</p>
-<h2>15. Checklist After Saving</h2>
-<p>After every edit, check:</p>
-<ul>
-<li>Save button was clicked.</li>
-<li>Success message appeared.</li>
-<li>Public page shows the new content.</li>
-<li>Mobile layout is not broken.</li>
-<li>English and Vietnamese have the same meaning.</li>
-<li>Images appear correctly.</li>
-<li>CTA links open the correct page.</li>
-</ul>
-<h2>16. Common Problems</h2>
-<p>Cannot login:</p>
-<ul>
-<li>Check email and password.</li>
-<li>Try /auth again.</li>
-<li>If it still fails, contact the system manager.</li>
-</ul>
-<p>Saved content does not appear:</p>
-<ul>
-<li>Refresh the public page.</li>
-<li>Check Published or Active.</li>
-<li>Wait a few seconds and try again.</li>
-</ul>
-<p>Image does not appear:</p>
-<ul>
-<li>Open the image URL directly.</li>
-<li>If the URL does not open, replace it.</li>
-</ul>
-<p>Popup does not appear:</p>
-<ul>
-<li>Check Active.</li>
-<li>Check start and end time.</li>
-<li>Check whether another popup has higher priority.</li>
-</ul>
-<p>Chatbot answer is not correct:</p>
-<ul>
-<li>Check whether the data is Enabled.</li>
-<li>For documents, check whether processing is complete.</li>
-<li>Try writing a shorter and clearer Q&amp;A.</li>
-</ul>
-<h2>17. Safety Rules</h2>
-<ul>
-<li>Do not share admin passwords.</li>
-<li>Do not delete data unless you are sure.</li>
-<li>Do not put internal information in public fields.</li>
-<li>Do not publish prices, certifications, or performance claims unless approved.</li>
-<li>Do not share customer personal information outside authorized staff.</li>
-<li>For important updates, take a screenshot after checking the public page.</li>
-</ul>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GPCLUB Admin Manual for New Operators</title>
+    <style>
+      @page {
+        size: A4;
+        margin: 16mm 14mm;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: Arial, "Segoe UI", sans-serif;
+        color: #172033;
+        background: #fff;
+        line-height: 1.55;
+      }
+      main {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 28px 24px 40px;
+      }
+      .cover {
+        padding: 28px;
+        border-radius: 22px;
+        background: linear-gradient(135deg, #0f172a, #315c88);
+        color: #fff;
+        margin-bottom: 26px;
+      }
+      .brand {
+        font-size: 13px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        opacity: 0.82;
+      }
+      .cover h1 {
+        margin: 10px 0 8px;
+        font-size: 30px;
+        line-height: 1.18;
+        color: #fff;
+        border: 0;
+        padding: 0;
+      }
+      .subtitle {
+        max-width: 650px;
+        font-size: 16px;
+        opacity: 0.92;
+      }
+      .meta {
+        margin-top: 18px;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .chip {
+        padding: 7px 10px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.14);
+        font-size: 12px;
+      }
+      .notice {
+        border: 1px solid #bfdbfe;
+        background: #eff6ff;
+        color: #1e3a8a;
+        border-radius: 14px;
+        padding: 14px 16px;
+        margin: 18px 0 22px;
+      }
+      h1 {
+        font-size: 28px;
+        margin: 28px 0 14px;
+        color: #0f172a;
+      }
+      h2 {
+        break-after: avoid;
+        margin: 26px 0 10px;
+        padding-top: 12px;
+        border-top: 1px solid #e5e7eb;
+        color: #15395b;
+        font-size: 20px;
+      }
+      h3 {
+        break-after: avoid;
+        margin: 18px 0 8px;
+        color: #315c88;
+        font-size: 16px;
+      }
+      p {
+        margin: 7px 0;
+      }
+      ul {
+        margin: 8px 0 12px 21px;
+        padding: 0;
+      }
+      li {
+        margin: 5px 0;
+      }
+      .step {
+        padding: 8px 10px;
+        background: #f8fafc;
+        border-left: 4px solid #315c88;
+        border-radius: 8px;
+      }
+      code {
+        background: #f1f5f9;
+        border-radius: 5px;
+        padding: 1px 5px;
+      }
+      .footer {
+        margin-top: 32px;
+        color: #64748b;
+        font-size: 12px;
+        border-top: 1px solid #e2e8f0;
+        padding-top: 12px;
+      }
+      @media print {
+        main {
+          padding: 0;
+        }
+        .cover {
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+        h2 {
+          page-break-after: avoid;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="cover">
+        <div class="brand">GPCLUB Vietnam Admin Manual</div>
+        <h1>GPCLUB Admin Manual for New Operators</h1>
+        <div class="subtitle">Step-by-step website operation guide for GPCLUB Vietnam staff</div>
+        <div class="meta">
+          <span class="chip">Updated: 2026-06-08</span><span class="chip">PDF Download Version</span
+          ><span class="chip">For non-technical operators</span>
+        </div>
+      </section>
+      <div class="notice">
+        This guide helps operators log in, edit content, save changes, and verify public pages
+        safely.
+      </div>
+      <p>
+        This guide is written for operators who are not familiar with technical systems. Follow each
+        step in order. No coding knowledge is required.
+      </p>
+      <ul>
+        <li>Admin login page: /auth</li>
+        <li>Admin page: /admin</li>
+        <li>Public pages to check after saving: /, /products, /catalog, /events, /contact</li>
+      </ul>
+      <h2>1. The Most Important Rule</h2>
+      <p class="step">1. Edit content in the admin panel.</p>
+      <p class="step">2. Click Save.</p>
+      <p class="step">3. Wait for the success message.</p>
+      <p class="step">4. Open the public page and check the result.</p>
+      <p class="step">5. Also check on mobile or a small screen.</p>
+      <p>
+        Do not close the browser immediately after clicking Save. Wait until the system confirms
+        that the content has been saved.
+      </p>
+      <h2>2. Login</h2>
+      <p class="step">1. Open /auth.</p>
+      <p class="step">2. Enter the admin email and password.</p>
+      <p class="step">3. After login, open /admin.</p>
+      <p class="step">
+        4. If access is denied, ask the system manager to give the account the admin role.
+      </p>
+      <p class="step">5. Click Sign out when finished.</p>
+      <p>Do not share admin passwords through chat or group email.</p>
+      <h2>3. Understanding the Admin Menu</h2>
+      <p>Dashboard shows the current status.</p>
+      <p>Product Management is for products and catalogs.</p>
+      <p>Customer Management is for dealer applications and contact messages.</p>
+      <p>Content Management is for homepage content, events, popups, FAQs, and chatbot data.</p>
+      <p>Settings is for company contact information.</p>
+      <p>If you are unsure where to start, check Dashboard first.</p>
+      <h2>4. Dashboard: Daily Check</h2>
+      <p>Open Dashboard to review new activity.</p>
+      <p>Check these items:</p>
+      <ul>
+        <li>New dealer applications.</li>
+        <li>New contact messages.</li>
+        <li>Running popups or events.</li>
+        <li>Chatbot data that may need updates.</li>
+      </ul>
+      <p>If new numbers appear, move to Customer Management.</p>
+      <h2>5. Products: Add or Edit Products</h2>
+      <p>Use this section when adding a new product or changing product information.</p>
+      <p>Steps to add a product:</p>
+      <p class="step">1. Go to Product Management &gt; Products.</p>
+      <p class="step">2. Click New Product.</p>
+      <p class="step">3. Enter Brand Name, Product Name, and Product Type.</p>
+      <p class="step">4. Enter a short and clear Short Intro.</p>
+      <p class="step">5. Add the Cover Image using a public image URL.</p>
+      <p class="step">6. Add details, benefits, and usage notes if needed.</p>
+      <p class="step">7. Turn Published on when the product is ready for the public website.</p>
+      <p class="step">8. Click Save.</p>
+      <p class="step">9. Open /products and check the result.</p>
+      <p>Common switches:</p>
+      <ul>
+        <li>Published: shows the product on the website.</li>
+        <li>New Product: marks it as new.</li>
+        <li>Popular Product: marks it as popular.</li>
+        <li>Featured Product: highlights it in important areas.</li>
+      </ul>
+      <p>
+        Before turning Published on, check the product name, image, brand, description, and mobile
+        layout.
+      </p>
+      <h2>6. Catalog Management: Create a Partner Catalog</h2>
+      <p>Catalogs are product documents for B2B partners.</p>
+      <p>Steps:</p>
+      <p class="step">1. Go to Product Management &gt; Catalog Management.</p>
+      <p class="step">2. Click New Catalog.</p>
+      <p class="step">3. Enter title, subtitle, and description.</p>
+      <p class="step">4. Choose a template. If unsure, use Premium.</p>
+      <p class="step">5. Select products to include.</p>
+      <p class="step">6. Turn Representative Catalog on if this is the main official catalog.</p>
+      <p class="step">7. Click Save.</p>
+      <p class="step">8. Open /catalog and check the result.</p>
+      <p>Only one Representative Catalog should be used as the main current catalog.</p>
+      <h2>7. Dealers: Handle Dealer Applications</h2>
+      <p>Use this section to review companies or people applying to become dealers.</p>
+      <p>Workflow:</p>
+      <p class="step">1. Go to Customer Management &gt; Dealers.</p>
+      <p class="step">2. Open a new application.</p>
+      <p class="step">
+        3. Check company, contact person, email, phone, city, expected volume, and message.
+      </p>
+      <p class="step">4. Contact the applicant if needed.</p>
+      <p class="step">5. Add an internal note.</p>
+      <p class="step">6. Change the status.</p>
+      <p class="step">7. Save.</p>
+      <p>Suggested statuses:</p>
+      <ul>
+        <li>New: not reviewed yet.</li>
+        <li>Reviewing<code>/</code>In Progress: being checked.</li>
+        <li>Contacted: already contacted.</li>
+        <li>Approved: can continue as a possible partner.</li>
+        <li>Rejected<code>/</code>Closed: not proceeding or finished.</li>
+      </ul>
+      <p>Do not delete applications unless they are spam or duplicates.</p>
+      <h2>8. Contacts: Handle Messages</h2>
+      <p>Use this section to review contact messages or chatbot<code>/contact</code> records.</p>
+      <p>Steps:</p>
+      <p class="step">1. Go to Customer Management &gt; Contacts.</p>
+      <p class="step">2. Check new messages first.</p>
+      <p class="step">3. Update status after handling.</p>
+      <p class="step">4. Keep important records.</p>
+      <p class="step">5. Delete only spam or incorrect duplicates.</p>
+      <p>Customer information is private. Share it only with authorized staff.</p>
+      <h2>9. Home: Edit the Homepage</h2>
+      <p>
+        Use this section to update the homepage hero, text, images, statistics, and CTA buttons.
+      </p>
+      <p>Steps:</p>
+      <p class="step">1. Go to Content Management &gt; Home.</p>
+      <p class="step">2. Select Home in Page to Edit.</p>
+      <p class="step">3. Edit the title, subtitle, CTA, or image fields.</p>
+      <p class="step">4. Click Save Home.</p>
+      <p class="step">5. Open / and check the homepage.</p>
+      <p>Common fields:</p>
+      <ul>
+        <li>Kicker: small text above the title.</li>
+        <li>Title: main heading.</li>
+        <li>Subtitle: short supporting text.</li>
+        <li>Primary CTA: main button.</li>
+        <li>Secondary CTA: second button.</li>
+        <li>Image URL: public image link.</li>
+        <li>Image Alt: image description.</li>
+      </ul>
+      <p>Use Reset only when you really want to return to default content.</p>
+      <h2>10. Events: Add Events or Product News</h2>
+      <p>Use this section for events, product launches, or important announcements.</p>
+      <p>Steps:</p>
+      <p class="step">1. Go to Content Management &gt; Events.</p>
+      <p class="step">2. Click New Event.</p>
+      <p class="step">3. Choose Event or New Product Spotlight.</p>
+      <p class="step">4. Enter Vietnamese and English titles.</p>
+      <p class="step">5. Enter a short summary.</p>
+      <p class="step">6. Add image or video if needed.</p>
+      <p class="step">7. Turn Featured on if it should be highlighted.</p>
+      <p class="step">8. Turn Published on when ready.</p>
+      <p class="step">9. Click Save.</p>
+      <p class="step">10. Open /events and check the result.</p>
+      <p>Only publish after both languages are reviewed.</p>
+      <h2>11. Popups: Show Website Notices</h2>
+      <p>Popups are for important notices, campaigns, or promotions.</p>
+      <p>Steps:</p>
+      <p class="step">1. Go to Content Management &gt; Popups.</p>
+      <p class="step">2. Click New Popup.</p>
+      <p class="step">3. Enter title and content.</p>
+      <p class="step">4. Add an image if needed.</p>
+      <p class="step">5. Add a CTA button if the popup should link somewhere.</p>
+      <p class="step">6. Set start and end time if scheduled.</p>
+      <p class="step">7. Turn Active on.</p>
+      <p class="step">8. Click Save.</p>
+      <p class="step">9. Open the public website and check it.</p>
+      <p>If the popup does not appear, check Active, start time, and end time.</p>
+      <h2>12. FAQs: Add Frequently Asked Questions</h2>
+      <p>Use this section to add common questions and answers.</p>
+      <p>Steps:</p>
+      <p class="step">1. Go to Content Management &gt; FAQs.</p>
+      <p class="step">2. Choose the language.</p>
+      <p class="step">3. Click New FAQ.</p>
+      <p class="step">4. Enter the question.</p>
+      <p class="step">5. Enter the answer.</p>
+      <p class="step">6. Choose a category.</p>
+      <p class="step">7. Turn Published on.</p>
+      <p class="step">8. Click Save.</p>
+      <p>Answers should be short, clear, and easy to understand.</p>
+      <h2>13. Chatbot: Update Chatbot Answers</h2>
+      <p>The chatbot uses four simple data types:</p>
+      <ul>
+        <li>Q&amp;A: short questions and answers.</li>
+        <li>Product Info: product information.</li>
+        <li>Document Library: long documents for chatbot knowledge.</li>
+        <li>Tree Scenario: button-based chatbot flows.</li>
+      </ul>
+      <h3>Add Q&amp;A</h3>
+      <p class="step">1. Go to Content Management &gt; Chatbot.</p>
+      <p class="step">2. Open the Q&amp;A area.</p>
+      <p class="step">3. Click New Training Entry.</p>
+      <p class="step">4. Enter the question and answer.</p>
+      <p class="step">5. Turn Enabled on.</p>
+      <p class="step">6. Click Save.</p>
+      <h3>Add product information</h3>
+      <p class="step">1. Open Product Info.</p>
+      <p class="step">2. Enter product title or name.</p>
+      <p class="step">3. Enter benefits, usage, and recommendation notes.</p>
+      <p class="step">4. Turn Enabled on.</p>
+      <p class="step">5. Click Save.</p>
+      <h3>Add a long document</h3>
+      <p class="step">1. Open Document Library.</p>
+      <p class="step">2. Click New Document.</p>
+      <p class="step">3. Enter Title and Raw Content.</p>
+      <p class="step">4. Choose language and category.</p>
+      <p class="step">5. Click Save.</p>
+      <p class="step">6. Wait until the system processes the document into chunks.</p>
+      <p>
+        If chatbot answers do not update immediately, check whether the data is Enabled and whether
+        the document processing is complete.
+      </p>
+      <h2>14. Settings: Edit Contact Information</h2>
+      <p>Use this section for company email, phone, address, Zalo, WhatsApp, or contact links.</p>
+      <p>Steps:</p>
+      <p class="step">1. Go to Settings.</p>
+      <p class="step">2. Edit contact information.</p>
+      <p class="step">3. Click Save Changes.</p>
+      <p class="step">4. Open /contact and the website footer to check.</p>
+      <p>Only enter information that is allowed to be public.</p>
+      <h2>15. Checklist After Saving</h2>
+      <p>After every edit, check:</p>
+      <ul>
+        <li>Save button was clicked.</li>
+        <li>Success message appeared.</li>
+        <li>Public page shows the new content.</li>
+        <li>Mobile layout is not broken.</li>
+        <li>English and Vietnamese have the same meaning.</li>
+        <li>Images appear correctly.</li>
+        <li>CTA links open the correct page.</li>
+      </ul>
+      <h2>16. Common Problems</h2>
+      <p>Cannot login:</p>
+      <ul>
+        <li>Check email and password.</li>
+        <li>Try /auth again.</li>
+        <li>If it still fails, contact the system manager.</li>
+      </ul>
+      <p>Saved content does not appear:</p>
+      <ul>
+        <li>Refresh the public page.</li>
+        <li>Check Published or Active.</li>
+        <li>Wait a few seconds and try again.</li>
+      </ul>
+      <p>Image does not appear:</p>
+      <ul>
+        <li>Open the image URL directly.</li>
+        <li>If the URL does not open, replace it.</li>
+      </ul>
+      <p>Popup does not appear:</p>
+      <ul>
+        <li>Check Active.</li>
+        <li>Check start and end time.</li>
+        <li>Check whether another popup has higher priority.</li>
+      </ul>
+      <p>Chatbot answer is not correct:</p>
+      <ul>
+        <li>Check whether the data is Enabled.</li>
+        <li>For documents, check whether processing is complete.</li>
+        <li>Try writing a shorter and clearer Q&amp;A.</li>
+      </ul>
+      <h2>17. Safety Rules</h2>
+      <ul>
+        <li>Do not share admin passwords.</li>
+        <li>Do not delete data unless you are sure.</li>
+        <li>Do not put internal information in public fields.</li>
+        <li>Do not publish prices, certifications, or performance claims unless approved.</li>
+        <li>Do not share customer personal information outside authorized staff.</li>
+        <li>For important updates, take a screenshot after checking the public page.</li>
+      </ul>
 
-<div class="footer">GPCLUB Vietnam admin operator guide. Keep this file internal and share only with authorized website operators.</div>
-</main>
-</body>
+      <div class="footer">
+        GPCLUB Vietnam admin operator guide. Keep this file internal and share only with authorized
+        website operators.
+      </div>
+    </main>
+  </body>
 </html>
