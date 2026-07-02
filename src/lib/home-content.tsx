@@ -229,13 +229,16 @@ export function HomeContentProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     setLoading(true);
     (async () => {
-      const { data } = await supabase
-        .from("home_content")
-        .select("value")
-        .eq("key", "home")
-        .maybeSingle();
-      if (!cancelled) setContent(mergeHomeContent(data?.value));
-      if (!cancelled) setLoading(false);
+      try {
+        const { data } = await supabase
+          .from("home_content")
+          .select("value")
+          .eq("key", "home")
+          .maybeSingle();
+        if (!cancelled) setContent(mergeHomeContent(data?.value));
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     })();
     return () => {
       cancelled = true;

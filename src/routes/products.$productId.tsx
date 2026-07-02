@@ -1,10 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, CheckCircle, Image as ImageIcon, Video } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { B2BInquiryDialog } from "@/components/site/B2BInquiryDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getCoverImage, useCatalogProducts } from "@/lib/catalog-products";
+import {
+  type CatalogProduct,
+  fetchPublishedCatalogProductById,
+  getCoverImage,
+} from "@/lib/catalog-products";
 import { useI18n } from "@/lib/i18n";
 import { sanitizeProductDetailHtml } from "@/lib/product-detail-html";
 
@@ -43,9 +47,28 @@ function ProductDetailPage() {
   const { productId } = Route.useParams();
   const { lang } = useI18n();
   const t = text[lang];
-  const { rows, loading } = useCatalogProducts();
-  const product = rows.find((p) => p.id === productId);
+  const [product, setProduct] = useState<CatalogProduct | null>(null);
+  const [loading, setLoading] = useState(true);
   const [inquiryOpen, setInquiryOpen] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    setLoading(true);
+    fetchPublishedCatalogProductById(productId)
+      .then((data) => {
+        if (alive) setProduct(data);
+      })
+      .catch(() => {
+        if (alive) setProduct(null);
+      })
+      .finally(() => {
+        if (alive) setLoading(false);
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, [productId]);
 
   if (loading) {
     return <main className="min-h-[60vh] bg-background" />;
