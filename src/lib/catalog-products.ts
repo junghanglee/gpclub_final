@@ -33,6 +33,9 @@ export type CatalogProduct = {
   updated_at?: string;
 };
 
+const CATALOG_PRODUCT_LIST_COLUMNS =
+  "id,brand_name,product_name,product_type,short_intro,media,conditions,cover_image_url,sort_order,published,is_new,is_popular,is_featured,created_at,updated_at";
+
 export function normalizeBrandText(value?: string | null) {
   return (value || "").toLowerCase().replace(/[^a-z0-9]/g, "");
 }
@@ -62,16 +65,32 @@ export function productSearchText(p: CatalogProduct) {
   );
 }
 
-export async function fetchPublishedCatalogProducts() {
-  const { data, error } = await supabase
+export async function fetchPublishedCatalogProducts(limit = 120) {
+  let query = supabase
     .from("admin_products")
-    .select("*")
+    .select(CATALOG_PRODUCT_LIST_COLUMNS)
     .eq("published", true)
     .order("sort_order", { ascending: false })
     .order("created_at", { ascending: false });
 
+  if (limit > 0) query = query.limit(limit);
+
+  const { data, error } = await query;
+
   if (error) throw error;
   return (data || []) as CatalogProduct[];
+}
+
+export async function fetchPublishedCatalogProductById(id: string) {
+  const { data, error } = await supabase
+    .from("admin_products")
+    .select("*")
+    .eq("published", true)
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) throw error;
+  return (data ?? null) as CatalogProduct | null;
 }
 
 export function useCatalogProducts() {

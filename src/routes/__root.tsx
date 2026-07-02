@@ -7,7 +7,7 @@ import {
   Scripts,
   useRouter,
 } from "@tanstack/react-router";
-import type { ReactNode } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { FloatingChat } from "@/components/site/FloatingChat";
 import { Footer } from "@/components/site/Footer";
 import { GippyChat } from "@/components/site/GippyChat";
@@ -182,9 +182,7 @@ function RootComponent() {
                   <Outlet />
                 </main>
                 <Footer />
-                <GippyChat />
-                <FloatingChat />
-                <PopupHost />
+                <PublicEngagementLayer />
                 <Toaster />
               </div>
             </I18nProvider>
@@ -192,6 +190,25 @@ function RootComponent() {
         </SiteSettingsProvider>
       </QueryClientProvider>
     </RootDocument>
+  );
+}
+
+function PublicEngagementLayer() {
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    const id = window.setTimeout(() => setReady(true), 750);
+    return () => window.clearTimeout(id);
+  }, []);
+
+  if (!ready) return null;
+
+  return (
+    <>
+      <GippyChat />
+      <FloatingChat />
+      <PopupHost />
+    </>
   );
 }
 

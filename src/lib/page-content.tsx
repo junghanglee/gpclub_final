@@ -137,13 +137,16 @@ export function usePageContent(key: PageContentKey) {
     setLoading(true);
     setContent(DEFAULT_PAGE_CONTENT[key]);
     (async () => {
-      const { data } = await supabase
-        .from("home_content")
-        .select("value")
-        .eq("key", pageContentStorageKey(key))
-        .maybeSingle();
-      if (!cancelled) setContent(mergePageContent(key, data?.value));
-      if (!cancelled) setLoading(false);
+      try {
+        const { data } = await supabase
+          .from("home_content")
+          .select("value")
+          .eq("key", pageContentStorageKey(key))
+          .maybeSingle();
+        if (!cancelled) setContent(mergePageContent(key, data?.value));
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     })();
     return () => {
       cancelled = true;

@@ -75,14 +75,16 @@ export function SiteSettingsProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     setLoading(true);
     (async () => {
-      const { data } = await supabase
-        .from("site_settings")
-        .select("value")
-        .eq("key", "contact")
-        .maybeSingle();
-      if (cancelled) return;
-      setInfo(merge((data?.value as Stored) ?? null));
-      setLoading(false);
+      try {
+        const { data } = await supabase
+          .from("site_settings")
+          .select("value")
+          .eq("key", "contact")
+          .maybeSingle();
+        if (!cancelled) setInfo(merge((data?.value as Stored) ?? null));
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     })();
     return () => {
       cancelled = true;
