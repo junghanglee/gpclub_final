@@ -89,7 +89,7 @@ const productText = {
 
 function ProductsPage() {
   const { lang } = useI18n();
-  const page = usePageContent("products");
+  const { content: page, loading: pageLoading } = usePageContent("products");
   const t = productText[lang];
   const { rows, loading } = useCatalogProducts();
   const [q, setQ] = useState("");
@@ -144,6 +144,10 @@ function ProductsPage() {
     if (!selected) return;
     setInquiryOpen(true);
   };
+
+  if (pageLoading) {
+    return <main className="min-h-[60vh] bg-background" />;
+  }
 
   return (
     <>

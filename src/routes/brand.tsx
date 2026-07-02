@@ -9,18 +9,18 @@ import {
   Heart,
   ImagePlus,
   Leaf,
+  type LucideIcon,
   ShieldCheck,
   Sparkles,
-  type LucideIcon,
 } from "lucide-react";
+import aiAssistantImg from "@/assets/brand-ai-assistant.jpg";
+import jmellaImg from "@/assets/brand-jmella.jpg";
+import jmsolutionImg from "@/assets/brand-jmsolution.jpg";
+import labImg from "@/assets/brand-lab.jpg";
+import gippyBrandHero from "@/assets/gippy-brand-hero.png";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
 import { usePageContent } from "@/lib/page-content";
-import jmsolutionImg from "@/assets/brand-jmsolution.jpg";
-import jmellaImg from "@/assets/brand-jmella.jpg";
-import aiAssistantImg from "@/assets/brand-ai-assistant.jpg";
-import labImg from "@/assets/brand-lab.jpg";
-import gippyBrandHero from "@/assets/gippy-brand-hero.png";
 
 export const Route = createFileRoute("/brand")({
   head: () => ({
@@ -179,8 +179,12 @@ const IMAGE_SLOTS = [
 
 function BrandPage() {
   const { lang } = useI18n();
-  const page = usePageContent("brand");
+  const { content: page, loading: pageLoading } = usePageContent("brand");
   const pick = (copy: LocalText) => copy[lang];
+
+  if (pageLoading) {
+    return <main className="min-h-[60vh] bg-background" />;
+  }
 
   return (
     <>

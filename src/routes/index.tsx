@@ -1,14 +1,14 @@
 ﻿import { createFileRoute, Link } from "@tanstack/react-router";
-import { motion, useScroll, useTransform, useSpring } from "framer-motion";
+import { motion, useScroll, useSpring, useTransform } from "framer-motion";
+import { ArrowRight, Download, FlaskConical, Globe2, ShieldCheck, Sparkles } from "lucide-react";
 import { useRef, useState } from "react";
-import { ArrowRight, Download, Sparkles, ShieldCheck, FlaskConical, Globe2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import gippyMainHero from "@/assets/gippy-main-hero.png";
-import { useI18n } from "@/lib/i18n";
-import { useHomeContent } from "@/lib/home-content";
-import { getCoverImage, useCatalogProducts } from "@/lib/catalog-products";
-import { useRepresentativeCatalog } from "@/lib/product-catalogs";
 import { B2BInquiryDialog } from "@/components/site/B2BInquiryDialog";
+import { Button } from "@/components/ui/button";
+import { getCoverImage, useCatalogProducts } from "@/lib/catalog-products";
+import { useHomeContent } from "@/lib/home-content";
+import { useI18n } from "@/lib/i18n";
+import { useRepresentativeCatalog } from "@/lib/product-catalogs";
 
 type BrandShowcaseItem = {
   name: "JMsolution" | "Jmella" | "Trois Touch";
@@ -50,7 +50,10 @@ export const Route = createFileRoute("/")({
         content:
           "Official Vietnam partner platform for JMsolution, Jmella and Trois Touch. Built for resellers, wholesale distributors, retail chains and OEM/ODM beauty partners.",
       },
-      { property: "og:title", content: "GPCLUB Vietnam — K-Beauty B2B Growth Partner" },
+      {
+        property: "og:title",
+        content: "GPCLUB Vietnam — K-Beauty B2B Growth Partner",
+      },
       {
         property: "og:description",
         content: "Marketing and B2B partnership hub for proven K-Beauty brands in Vietnam.",
@@ -125,7 +128,11 @@ const partnerBenefits: { title: BilingualText; text: BilingualText }[] = [
   },
 ];
 
-const partnerProcess: { step: string; title: BilingualText; text: BilingualText }[] = [
+const partnerProcess: {
+  step: string;
+  title: BilingualText;
+  text: BilingualText;
+}[] = [
   {
     step: "01",
     title: { vi: "Chia sẻ mục tiêu", en: "Share your goal" },
@@ -154,7 +161,7 @@ const partnerProcess: { step: string; title: BilingualText; text: BilingualText 
 
 function HomePage() {
   const { lang } = useI18n();
-  const homeContent = useHomeContent();
+  const { content: homeContent, loading: homeContentLoading } = useHomeContent();
   const { rows: catalogProducts } = useCatalogProducts();
   const { downloadPath } = useRepresentativeCatalog();
   const homeProducts = catalogProducts
@@ -179,12 +186,23 @@ function HomePage() {
   };
   const heroTitleParts = hero.title.split("K-Beauty");
   const heroRef = useRef<HTMLElement>(null);
-  const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
-  const smooth = useSpring(scrollYProgress, { stiffness: 80, damping: 20, mass: 0.5 });
+  const { scrollYProgress } = useScroll({
+    target: heroRef,
+    offset: ["start start", "end start"],
+  });
+  const smooth = useSpring(scrollYProgress, {
+    stiffness: 80,
+    damping: 20,
+    mass: 0.5,
+  });
   const mascotY = useTransform(smooth, [0, 1], [0, -120]);
   const headlineY = useTransform(smooth, [0, 1], [0, 80]);
   const headlineOpacity = useTransform(smooth, [0, 0.8], [1, 0]);
   const [inquiryOpen, setInquiryOpen] = useState(false);
+
+  if (homeContentLoading) {
+    return <main className="min-h-[60vh] bg-background" />;
+  }
 
   return (
     <>
@@ -282,7 +300,11 @@ function HomePage() {
                 alt={hero.imageAlt}
                 className="relative z-10 h-full w-full object-contain drop-shadow-[0_40px_60px_oklch(0.70_0.18_350/0.25)]"
                 animate={{ y: [0, -16, 0] }}
-                transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+                transition={{
+                  duration: 6,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
               />
             </div>
           </motion.div>
@@ -605,7 +627,11 @@ function PinkStar({ className, delay = 0 }: { className?: string; delay?: number
       viewBox="0 0 24 24"
       className={className}
       initial={{ scale: 0, opacity: 0 }}
-      animate={{ scale: [0.8, 1.1, 0.9], opacity: [0.7, 1, 0.7], rotate: [0, 12, 0] }}
+      animate={{
+        scale: [0.8, 1.1, 0.9],
+        opacity: [0.7, 1, 0.7],
+        rotate: [0, 12, 0],
+      }}
       transition={{ duration: 4, repeat: Infinity, delay, ease: "easeInOut" }}
       fill="url(#pinkstar)"
       aria-hidden

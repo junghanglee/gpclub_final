@@ -1,9 +1,9 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, type ReactNode, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  COMPANY as DEFAULTS,
-  ZALO_PHONE as DEFAULT_ZALO,
   WHATSAPP_PHONE as DEFAULT_WA,
+  ZALO_PHONE as DEFAULT_ZALO,
+  COMPANY as DEFAULTS,
 } from "@/lib/contact";
 
 export type CompanyInfo = {
@@ -60,13 +60,20 @@ function merge(stored: Stored | null): CompanyInfo {
   };
 }
 
-const Ctx = createContext<CompanyInfo>(FALLBACK);
+type SiteSettingsContextValue = { info: CompanyInfo; loading: boolean };
+
+const Ctx = createContext<SiteSettingsContextValue>({
+  info: FALLBACK,
+  loading: true,
+});
 
 export function SiteSettingsProvider({ children }: { children: ReactNode }) {
   const [info, setInfo] = useState<CompanyInfo>(FALLBACK);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
+    setLoading(true);
     (async () => {
       const { data } = await supabase
         .from("site_settings")
@@ -75,16 +82,18 @@ export function SiteSettingsProvider({ children }: { children: ReactNode }) {
         .maybeSingle();
       if (cancelled) return;
       setInfo(merge((data?.value as Stored) ?? null));
+      setLoading(false);
     })();
     return () => {
       cancelled = true;
     };
   }, []);
 
-  return <Ctx.Provider value={info}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={{ info, loading }}>{children}</Ctx.Provider>;
 }
 
-export const useCompanyInfo = () => useContext(Ctx);
+export const useCompanyInfo = () => useContext(Ctx).info;
+export const useCompanyInfoLoading = () => useContext(Ctx).loading;
 
 export const buildZaloLink = (phone: string, msg = "Hello GPCLUB Vietnam!") =>
   `https://zalo.me/${phone}?msg=${encodeURIComponent(msg)}`;

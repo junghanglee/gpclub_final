@@ -16,7 +16,10 @@ export type PageEditableContent = {
 
 const text = (vi: string, en: string): PageLocalizedText => ({ vi, en });
 
-export const PAGE_CONTENT_OPTIONS: { key: "home" | PageContentKey; label: string }[] = [
+export const PAGE_CONTENT_OPTIONS: {
+  key: "home" | PageContentKey;
+  label: string;
+}[] = [
   { key: "home", label: "HOME" },
   { key: "brand", label: "BRAND" },
   { key: "products", label: "Products" },
@@ -127,9 +130,11 @@ export const pageContentStorageKey = (key: PageContentKey) => `page:${key}`;
 
 export function usePageContent(key: PageContentKey) {
   const [content, setContent] = useState<PageEditableContent>(() => DEFAULT_PAGE_CONTENT[key]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
+    setLoading(true);
     setContent(DEFAULT_PAGE_CONTENT[key]);
     (async () => {
       const { data } = await supabase
@@ -138,11 +143,12 @@ export function usePageContent(key: PageContentKey) {
         .eq("key", pageContentStorageKey(key))
         .maybeSingle();
       if (!cancelled) setContent(mergePageContent(key, data?.value));
+      if (!cancelled) setLoading(false);
     })();
     return () => {
       cancelled = true;
     };
   }, [key]);
 
-  return content;
+  return { content, loading };
 }
