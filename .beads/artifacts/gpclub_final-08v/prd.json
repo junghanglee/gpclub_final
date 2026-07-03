@@ -1,0 +1,133 @@
+{
+  "beadId": "gpclub_final-08v",
+  "prdName": "fix-gpclub-homepage-freeze",
+  "tasks": [
+    {
+      "id": "performance-1",
+      "category": "performance",
+      "title": "Lazy-load public engagement widgets",
+      "description": "The public root route no longer statically includes heavy chat and popup widget modules in the initial homepage bundle, while existing public engagement behavior remains available after the delayed engagement layer mounts.",
+      "steps": [
+        "npm run lint",
+        "npm run build",
+        "Inspect generated client chunks and confirm GippyChat is emitted outside the primary index-*.js chunk or is dynamically imported from the root."
+      ],
+      "passes": false,
+      "metadata": {
+        "depends_on": [],
+        "parallel": true,
+        "conflicts_with": ["Defer chat data until open"],
+        "files": ["src/routes/__root.tsx"]
+      }
+    },
+    {
+      "id": "data-1",
+      "category": "data",
+      "title": "Deduplicate catalog products with React Query",
+      "description": "Homepage and chat catalog consumers share one cached React Query request while useCatalogProducts preserves its current public return shape for existing UI code.",
+      "steps": [
+        "npm run lint",
+        "npm run build",
+        "Runtime or code inspection confirms useCatalogProducts() uses a stable React Query queryKey and no longer performs an uncached fetch in a local mount effect."
+      ],
+      "passes": false,
+      "metadata": {
+        "depends_on": [],
+        "parallel": true,
+        "conflicts_with": [],
+        "files": [
+          "src/lib/catalog-products.ts",
+          "src/routes/index.tsx",
+          "src/components/site/GippyChat.tsx"
+        ]
+      }
+    },
+    {
+      "id": "performance-2",
+      "category": "performance",
+      "title": "Defer chat data until open",
+      "description": "GippyChat does not fetch chatbot tree data or trigger catalog-dependent recommendation work while the widget is closed, and it still loads the same chat options after the user opens the widget.",
+      "steps": [
+        "npm run lint",
+        "npm run build",
+        "Browser/network smoke check confirms chatbot_tree_nodes is not requested before opening chat and is requested after chat opens."
+      ],
+      "passes": false,
+      "metadata": {
+        "depends_on": ["Deduplicate catalog products with React Query"],
+        "parallel": false,
+        "conflicts_with": ["Lazy-load public engagement widgets"],
+        "files": ["src/components/site/GippyChat.tsx"]
+      }
+    },
+    {
+      "id": "data-2",
+      "category": "data",
+      "title": "Limit popup host query",
+      "description": "PopupHost fetches only the fields it renders or needs for dismissal checks and uses a bounded active-popup result set before client-side dismissal filtering.",
+      "steps": [
+        "npm run lint",
+        "npm run build",
+        "Code inspection confirms the query does not use .select(\"*\") and includes .limit(...)."
+      ],
+      "passes": false,
+      "metadata": {
+        "depends_on": [],
+        "parallel": true,
+        "conflicts_with": [],
+        "files": ["src/components/site/PopupHost.tsx"]
+      }
+    },
+    {
+      "id": "verification-1",
+      "category": "verification",
+      "title": "Verify homepage freeze remediation",
+      "description": "The completed change has fresh static and runtime evidence that homepage initial load is lighter and the public widgets still work when invoked.",
+      "steps": [
+        "npm run lint",
+        "npm run build",
+        "Start a local preview build and smoke-test / plus chat-open behavior with browser automation when available.",
+        "Compare build output against the audit baseline: original primary client chunk was approximately 920.79 kB with heavy Gippy assets emitted from the initial import path."
+      ],
+      "passes": false,
+      "metadata": {
+        "depends_on": [
+          "Lazy-load public engagement widgets",
+          "Deduplicate catalog products with React Query",
+          "Defer chat data until open",
+          "Limit popup host query"
+        ],
+        "parallel": false,
+        "conflicts_with": [],
+        "files": ["package.json"]
+      }
+    }
+  ],
+  "context": {
+    "patterns": [
+      "React.lazy and Suspense are already used by src/routes/admin.tsx and src/components/admin/AdminPage.tsx.",
+      "QueryClient is created in src/router.tsx and provided in src/routes/__root.tsx.",
+      "PublicEngagementLayer currently mounts GippyChat and PopupHost from src/routes/__root.tsx after a 750ms delay."
+    ],
+    "keyFiles": [
+      "src/routes/__root.tsx",
+      "src/lib/catalog-products.ts",
+      "src/components/site/GippyChat.tsx",
+      "src/components/site/PopupHost.tsx",
+      "src/routes/index.tsx"
+    ],
+    "nonGoals": [
+      "No Supabase schema changes.",
+      "No homepage redesign.",
+      "No image format conversion in this bead.",
+      "No new runtime dependencies."
+    ]
+  },
+  "beadMetadata": {
+    "depends_on": [],
+    "parallel": false,
+    "conflicts_with": ["gpclub_final-xmr"],
+    "blocks": [],
+    "estimated_hours": 4
+  }
+}

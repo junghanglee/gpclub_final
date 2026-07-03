@@ -7,17 +7,26 @@ import {
   Scripts,
   useRouter,
 } from "@tanstack/react-router";
-import { type ReactNode, useEffect, useState } from "react";
+import { lazy, type ReactNode, Suspense, useEffect, useState } from "react";
 import { FloatingChat } from "@/components/site/FloatingChat";
 import { Footer } from "@/components/site/Footer";
-import { GippyChat } from "@/components/site/GippyChat";
 import { Header } from "@/components/site/Header";
-import { PopupHost } from "@/components/site/PopupHost";
 import { Toaster } from "@/components/ui/sonner";
 import { HomeContentProvider } from "@/lib/home-content";
 import { I18nProvider } from "@/lib/i18n";
 import { SiteSettingsProvider } from "@/lib/site-settings";
 import appCss from "../styles.css?url";
+
+const GippyChat = lazy(() =>
+  import("@/components/site/GippyChat").then((module) => ({
+    default: module.GippyChat,
+  })),
+);
+const PopupHost = lazy(() =>
+  import("@/components/site/PopupHost").then((module) => ({
+    default: module.PopupHost,
+  })),
+);
 
 function NotFoundComponent() {
   return (
@@ -205,9 +214,11 @@ function PublicEngagementLayer() {
 
   return (
     <>
-      <GippyChat />
+      <Suspense fallback={null}>
+        <GippyChat />
+        <PopupHost />
+      </Suspense>
       <FloatingChat />
-      <PopupHost />
     </>
   );
 }
