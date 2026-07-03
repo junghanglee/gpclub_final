@@ -1,0 +1,41 @@
+# Progress Log
+
+Bead: gpclub_final-08v
+Started: 2026-07-03
+
+## Codebase Patterns
+
+- `src/routes/admin.tsx` uses `React.lazy` and `Suspense`; reuse that pattern for public engagement widget code splitting.
+- `src/router.tsx` creates the TanStack Query client and `src/routes/__root.tsx` provides it; reuse this for shared catalog product caching.
+- Prior audit baseline: production HTML responds quickly from Vercel, while client bundle/hydration work is the suspected freeze path. Initial client build baseline included an `index-*.js` chunk around 920.79 kB and large Gippy PNG assets emitted from the static chat import path.
+
+---
+
+<!-- Task logs below - APPEND ONLY -->
+
+## 2026-07-03 Implementation pass
+
+- Implemented `performance-1`: `src/routes/__root.tsx` now lazy-loads `GippyChat` and `PopupHost` behind `Suspense fallback={null}` after the existing 750ms public engagement delay; `FloatingChat` remains eagerly available.
+- Implemented `data-1`: `src/lib/catalog-products.ts` now uses TanStack Query with stable `catalogProductsQueryKey`, 5 minute stale time, 30 minute garbage collection, and a stable empty-array fallback instead of an uncached mount-effect fetch.
+- Implemented `performance-2`: `src/components/site/GippyChat.tsx` enables catalog product fetch only when chat is open and skips `chatbot_tree_nodes` loading until chat is open.
+- Implemented `data-2`: `src/components/site/PopupHost.tsx` now selects explicit popup columns and limits active popup reads to 8 rows.
+
+## 2026-07-03 Verification
+
+- `rtk prettier --write src/routes/__root.tsx src/lib/catalog-products.ts src/components/site/GippyChat.tsx src/components/site/PopupHost.tsx`: passed for touched files.
+- `rtk npx eslint src/routes/__root.tsx src/lib/catalog-products.ts src/components/site/GippyChat.tsx src/components/site/PopupHost.tsx`: passed after fixing an initial `react-hooks/exhaustive-deps` warning with a stable `EMPTY_CATALOG_PRODUCTS` constant.
+- `rtk npm run build`: passed. Client output split `PopupHost-ULC2nF5W.js` (1.60 kB, gzip 0.88 kB) and `GippyChat-CXNx4xcL.js` (22.84 kB, gzip 7.91 kB) out of the primary chunk. Primary client chunk is now `index-B-9apZMg.js` at 761.14 kB gzip 227.74 kB, down from the PRD baseline around 920.79 kB.
+- `rtk npm run lint`: failed repo-wide with 13,862 problems (13,840 errors, 22 warnings), overwhelmingly existing Prettier CRLF errors (`Delete CR`) in untouched files such as `src/routes/products.$productId.tsx`, `src/routes/products.tsx`, `src/server.ts`, `src/spa.tsx`, `src/start.ts`, `vite.config.ts`, and `vite.spa.config.ts`.
+
+## 2026-07-03 Blocker
+
+- Bead remains open. The homepage freeze remediation source changes are implemented and targeted lint/build verification passed, but the PRD full-lint gate cannot pass without broad repo formatting/line-ending cleanup touching many files outside the requested change set.
+
+## 2026-07-03 Full verification after approved formatting
+
+- User approved broad formatting cleanup to unblock the full lint gate.
+- `rtk npm run format`: passed and ran `prettier --write .`, touching many repo files outside the homepage-freeze code path to normalize formatting/line endings.
+- `rtk npm run lint`: passed with 0 errors and 22 pre-existing warnings (`react-refresh/only-export-components` and `react-hooks/exhaustive-deps` in unrelated files).
+- `rtk npm run build`: passed. Client output kept split engagement chunks: `PopupHost-ULC2nF5W.js` (1.60 kB, gzip 0.88 kB) and `GippyChat-CXNx4xcL.js` (22.84 kB, gzip 7.91 kB). Primary client chunk remained `index-B-9apZMg.js` at 761.14 kB gzip 227.74 kB.
+- `vite preview` runtime smoke could not be used because the TanStack preview plugin repeatedly failed with `ERR_MODULE_NOT_FOUND` for `dist/server/server.js`; runtime smoke was run against `vite dev` instead.
+- `node gpclub-smoke.cjs`: passed against local `vite dev` on `127.0.0.1:4173` using Chrome DevTools Protocol. Result: `PASS chatbot_tree_nodes deferred: before=0 after=2`.

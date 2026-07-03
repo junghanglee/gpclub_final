@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { productDetailTextFromHtml } from "@/lib/product-detail-html";
 
@@ -37,6 +38,8 @@ export type CatalogProduct = {
 
 const CATALOG_PRODUCT_LIST_COLUMNS =
   "id,brand_name,product_name,product_type,short_intro,media,conditions,cover_image_url,sort_order,published,is_new,is_popular,is_featured,created_at,updated_at";
+export const catalogProductsQueryKey = ["catalog-products", "published"] as const;
+const EMPTY_CATALOG_PRODUCTS: CatalogProduct[] = [];
 
 export function normalizeBrandText(value?: string | null) {
   return (value || "").toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -84,8 +87,12 @@ export async function fetchPublishedCatalogProducts(limit = 120) {
   // migration never surface `undefined` to the Gippy chat recommender.
   return (data || []).map((row) => ({
     ...(row as CatalogProduct),
-    skin_types: Array.isArray((row as CatalogProduct).skin_types) ? (row as CatalogProduct).skin_types : [],
-    concerns: Array.isArray((row as CatalogProduct).concerns) ? (row as CatalogProduct).concerns : [],
+    skin_types: Array.isArray((row as CatalogProduct).skin_types)
+      ? (row as CatalogProduct).skin_types
+      : [],
+    concerns: Array.isArray((row as CatalogProduct).concerns)
+      ? (row as CatalogProduct).concerns
+      : [],
   }));
 }
 
@@ -101,29 +108,18 @@ export async function fetchPublishedCatalogProductById(id: string) {
   return (data ?? null) as CatalogProduct | null;
 }
 
-export function useCatalogProducts() {
-  const [rows, setRows] = useState<CatalogProduct[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [source, setSource] = useState<"admin" | "empty">("empty");
-
-  useEffect(() => {
-    let alive = true;
-    fetchPublishedCatalogProducts()
-      .then((data) => {
-        if (!alive) return;
-        setRows(data);
-        setSource(data.length > 0 ? "admin" : "empty");
-      })
-      .catch(() => {
-        if (!alive) return;
-        setRows([]);
-        setSource("empty");
-      })
-      .finally(() => alive && setLoading(false));
-    return () => {
-      alive = false;
-    };
-  }, []);
+export function useCatalogProducts(options: { enabled?: boolean } = {}) {
+  const query = useQuery({
+    queryKey: catalogProductsQueryKey,
+    queryFn: () => fetchPublishedCatalogProducts(),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    retry: 1,
+    enabled: options.enabled ?? true,
+  });
+  const rows = query.data ?? EMPTY_CATALOG_PRODUCTS;
+  const loading = query.isLoading;
+  const source: "admin" | "empty" = rows.length > 0 ? "admin" : "empty";
 
   const types = useMemo(
     () => ["All", ...Array.from(new Set(rows.map((p) => p.product_type).filter(Boolean)))],

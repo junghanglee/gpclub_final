@@ -15,16 +15,16 @@ import gippyCelebrate from "@/assets/gippy-celebrate.png";
 import gippyChatImg from "@/assets/gippy-chat.png";
 import gippyFront from "@/assets/gippy-front.png";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 import {
-  useCatalogProducts,
+  type CatalogProduct,
   getCoverImage,
-  pickBySkin,
   pickByConcern,
   pickByQuery,
-  type CatalogProduct,
+  pickBySkin,
   type SkinType,
+  useCatalogProducts,
 } from "@/lib/catalog-products";
-import { supabase } from "@/integrations/supabase/client";
 import { askChatbotClient } from "@/lib/chatbot";
 import { onGippyOpen } from "@/lib/gippy-bus";
 import { buildWhatsappLink, buildZaloLink, useCompanyInfo } from "@/lib/site-settings";
@@ -70,8 +70,8 @@ const uid = () => Math.random().toString(36).slice(2, 9);
 
 export function GippyChat() {
   const ask = askChatbotClient;
-  const { rows: catalogProducts } = useCatalogProducts();
   const [open, setOpen] = useState(false);
+  const { rows: catalogProducts } = useCatalogProducts({ enabled: open });
   const [mode, setMode] = useState<Mode>("menu");
   const [chatUiMode, setChatUiMode] = useState<ChatUiMode>("natural");
   const [treeNodes, setTreeNodes] = useState<TreeNode[]>([]);
@@ -124,6 +124,7 @@ export function GippyChat() {
   }, [messages, typing, mode]);
 
   useEffect(() => {
+    if (!open || treeNodes.length > 0) return;
     let mounted = true;
     supabase
       .from("chatbot_tree_nodes")
@@ -143,7 +144,7 @@ export function GippyChat() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [open, treeNodes.length]);
 
   const handleOpen = () => {
     setOpen(true);
@@ -690,14 +691,21 @@ function MessageBubble({ msg }: { msg: Msg }) {
                 className="flex items-center gap-3 rounded-2xl border border-border/60 bg-card p-2 shadow-sm"
               >
                 <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-muted">
-                  <img src={getCoverImage(p)} alt={p.product_name} className="h-full w-full object-cover" loading="lazy" />
+                  <img
+                    src={getCoverImage(p)}
+                    alt={p.product_name}
+                    className="h-full w-full object-cover"
+                    loading="lazy"
+                  />
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="text-[10px] font-semibold uppercase tracking-widest text-gold">
                     {p.brand_name} · {p.product_type}
                   </div>
                   <div className="line-clamp-1 text-sm font-medium">{p.product_name}</div>
-                  <div className="line-clamp-1 text-[11px] text-muted-foreground">{p.short_intro}</div>
+                  <div className="line-clamp-1 text-[11px] text-muted-foreground">
+                    {p.short_intro}
+                  </div>
                 </div>
               </div>
             ))}

@@ -28,12 +28,13 @@ export function PopupHost() {
       const nowIso = new Date().toISOString();
       const { data, error } = await supabase
         .from("popups")
-        .select("*")
+        .select("id,title,content,image_url,cta_label,cta_url,active,priority,starts_at,ends_at")
         .eq("active", true)
         .or(`starts_at.is.null,starts_at.lte.${nowIso}`)
         .or(`ends_at.is.null,ends_at.gte.${nowIso}`)
         .order("priority", { ascending: false })
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(8);
       if (cancelled || error || !data) return;
       const popups = (data ?? []) as Popup[];
       const eligible = popups.find((p) => {

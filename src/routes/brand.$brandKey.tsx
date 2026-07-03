@@ -199,7 +199,9 @@ function BrandDetailPage() {
                   <span className="grid h-11 w-11 place-items-center rounded-full bg-primary/10 text-primary">
                     <Icon className="h-5 w-5" />
                   </span>
-                  <div className="text-[10px] font-bold uppercase tracking-[0.28em] text-primary">{f.sub}</div>
+                  <div className="text-[10px] font-bold uppercase tracking-[0.28em] text-primary">
+                    {f.sub}
+                  </div>
                   <div className="font-display text-xl font-black tracking-tight">{f.title}</div>
                   <p className="text-[14px] leading-relaxed text-foreground/70">{f.text}</p>
                 </div>
