@@ -278,7 +278,7 @@ function GippyHeroSection({ page }: { page: ReturnType<typeof usePageContent>["c
               }
             >
               <span className="inline-flex items-center">
-                {page.primaryCta[lang]}{" "}
+                {lang === "vi" ? "Hỏi Gippy AI" : "Ask Gippy AI"}{" "}
                 <ArrowRight className="ml-2 h-4 w-4 transition group-hover:translate-x-1" />
               </span>
             </Button>
