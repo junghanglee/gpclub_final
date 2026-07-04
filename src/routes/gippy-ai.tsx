@@ -1,8 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Briefcase, MessageCircle, Package, Sparkle, Sparkles } from "lucide-react";
+import {
+  ArrowRight,
+  Briefcase,
+  MessageCircle,
+  Package,
+  Search,
+  Sparkle,
+  Sparkles,
+} from "lucide-react";
 import gippyAiHero from "@/assets/gippy-ai-hero.png";
 import { HeroCopySkeleton } from "@/components/site/SectionSkeletons";
 import { Button } from "@/components/ui/button";
+import { openGippy } from "@/lib/gippy-bus";
 import { useI18n } from "@/lib/i18n";
 import { usePageContent } from "@/lib/page-content";
 
@@ -29,6 +38,7 @@ const SUGGESTIONS: {
   icon: React.ReactNode;
   title: { vi: string; en: string };
   sub: { vi: string; en: string };
+  prompt: { vi: string; en: string };
 }[] = [
   {
     icon: <Sparkle className="h-4 w-4" />,
@@ -36,6 +46,10 @@ const SUGGESTIONS: {
     sub: {
       vi: "Gợi ý danh mục JMsolution / Jmella / Trois Touch theo kênh bán",
       en: "JMsolution / Jmella / Trois Touch lineup guidance by sales channel",
+    },
+    prompt: {
+      vi: "Hãy gợi ý danh mục sản phẩm GPCLUB phù hợp cho kênh bán của tôi.",
+      en: "Please recommend a GPCLUB product lineup for my sales channel.",
     },
   },
   {
@@ -45,6 +59,10 @@ const SUGGESTIONS: {
       vi: "Thông điệp bán hàng, điểm mạnh sản phẩm và cách trưng bày",
       en: "Sales messages, product strengths and merchandising angles",
     },
+    prompt: {
+      vi: "Hãy giúp tôi tạo câu chuyện bán hàng cho JMsolution, Jmella hoặc Trois Touch.",
+      en: "Help me build a sales story for JMsolution, Jmella or Trois Touch.",
+    },
   },
   {
     icon: <Briefcase className="h-4 w-4" />,
@@ -52,6 +70,10 @@ const SUGGESTIONS: {
     sub: {
       vi: "Kết nối đại lý, phân phối và yêu cầu bán sỉ",
       en: "Dealer, distribution and wholesale inquiry connection",
+    },
+    prompt: {
+      vi: "Tôi muốn hỏi về hợp tác B2B, đại lý hoặc phân phối với GPCLUB.",
+      en: "I want to ask about GPCLUB B2B, dealer or distribution partnership.",
     },
   },
   {
@@ -61,8 +83,42 @@ const SUGGESTIONS: {
       vi: "Kết nối báo giá, tài liệu sản phẩm và thông tin hợp tác",
       en: "Quote, product material and partnership support routing",
     },
+    prompt: {
+      vi: "Tôi cần báo giá, tài liệu sản phẩm hoặc thông tin hỗ trợ đối tác.",
+      en: "I need pricing, product materials or partner support information.",
+    },
   },
 ];
+
+const QUICK_ACTIONS = [
+  {
+    icon: <MessageCircle className="h-4 w-4" />,
+    label: { vi: "Mở Gippy AI", en: "Open Gippy AI" },
+    body: {
+      vi: "Bắt đầu hỏi về sản phẩm, cách bán, hoặc hợp tác.",
+      en: "Ask about products, selling angles, or partnership flow.",
+    },
+    kind: "gippy",
+  },
+  {
+    icon: <Search className="h-4 w-4" />,
+    label: { vi: "Xem sản phẩm", en: "Browse products" },
+    body: {
+      vi: "Mở danh mục sản phẩm đang được đăng trên GPCLUB.",
+      en: "Open the current GPCLUB product catalog.",
+    },
+    kind: "products",
+  },
+  {
+    icon: <Briefcase className="h-4 w-4" />,
+    label: { vi: "Yêu cầu B2B", en: "B2B inquiry" },
+    body: {
+      vi: "Gửi yêu cầu hợp tác nếu đã sẵn sàng trao đổi với đội ngũ.",
+      en: "Send a partnership inquiry when you are ready to talk to the team.",
+    },
+    kind: "b2b",
+  },
+] as const;
 
 function GippyAIPage() {
   const { lang } = useI18n();
@@ -88,17 +144,17 @@ function GippyAIPage() {
             </div>
             <p className="max-w-xl text-sm font-medium leading-relaxed text-muted-foreground">
               {lang === "vi"
-                ? "Trang được tinh gọn để tải nhanh hơn và kết nối trực tiếp đến kênh liên hệ."
-                : "For faster loading, this page is now simplified into a lightweight guide and contact flow."}
+                ? "Chọn chủ đề để Gippy mở cuộc trò chuyện đúng mục đích, hoặc đi thẳng đến danh mục sản phẩm và biểu mẫu B2B."
+                : "Choose a topic to open the right Gippy conversation, or go directly to products and the B2B inquiry flow."}
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {SUGGESTIONS.map((item) => (
-              <Link
+              <button
                 key={item.title.en}
-                to="/contact"
-                search={{ topic: item.title.en }}
-                className="group rounded-3xl border border-border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-md"
+                type="button"
+                onClick={() => openGippy(item.prompt[lang])}
+                className="group rounded-3xl border border-border bg-card p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-md"
               >
                 <div className="mb-4 grid h-10 w-10 place-items-center rounded-full bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
                   {item.icon}
@@ -110,11 +166,71 @@ function GippyAIPage() {
                   {pick(item.sub)}
                 </p>
                 <div className="mt-4 inline-flex items-center text-xs font-bold uppercase tracking-[0.16em] text-primary">
-                  {lang === "vi" ? "Liên hệ" : "Contact"}{" "}
+                  {lang === "vi" ? "Hỏi Gippy" : "Ask Gippy"}{" "}
                   <ArrowRight className="ml-1 h-3.5 w-3.5" />
                 </div>
-              </Link>
+              </button>
             ))}
+          </div>
+          <div className="mt-8 grid gap-3 md:grid-cols-3">
+            {QUICK_ACTIONS.map((item) => {
+              const content = (
+                <>
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary text-primary">
+                    {item.icon}
+                  </div>
+                  <div>
+                    <div className="font-display text-sm font-bold text-foreground">
+                      {item.label[lang]}
+                    </div>
+                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                      {item.body[lang]}
+                    </p>
+                  </div>
+                </>
+              );
+
+              if (item.kind === "products") {
+                return (
+                  <Link
+                    key={item.kind}
+                    to="/products"
+                    className="flex gap-3 rounded-2xl border border-border bg-background p-4 transition hover:border-primary/50 hover:bg-primary/5"
+                  >
+                    {content}
+                  </Link>
+                );
+              }
+
+              if (item.kind === "b2b") {
+                return (
+                  <Link
+                    key={item.kind}
+                    to="/b2b"
+                    className="flex gap-3 rounded-2xl border border-border bg-background p-4 transition hover:border-primary/50 hover:bg-primary/5"
+                  >
+                    {content}
+                  </Link>
+                );
+              }
+
+              return (
+                <button
+                  key={item.kind}
+                  type="button"
+                  onClick={() =>
+                    openGippy(
+                      lang === "vi"
+                        ? "Xin chào Gippy, hãy hướng dẫn tôi cách chọn chủ đề tư vấn phù hợp."
+                        : "Hi Gippy, please guide me to the right consultation topic.",
+                    )
+                  }
+                  className="flex gap-3 rounded-2xl border border-border bg-background p-4 text-left transition hover:border-primary/50 hover:bg-primary/5"
+                >
+                  {content}
+                </button>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -188,14 +304,20 @@ function GippyHeroSection({
           </p>
           <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center lg:justify-start">
             <Button
-              asChild
               size="lg"
               className="group h-12 rounded-none bg-foreground px-7 text-sm font-bold uppercase tracking-[0.16em] text-background hover:bg-primary"
+              onClick={() =>
+                openGippy(
+                  lang === "vi"
+                    ? "Xin chào Gippy, tôi muốn được tư vấn sản phẩm và hợp tác với GPCLUB."
+                    : "Hi Gippy, I want product and partnership guidance from GPCLUB.",
+                )
+              }
             >
-              <Link to="/contact">
-                {page.primaryCta[lang]}{" "}
+              <span className="inline-flex items-center">
+                {lang === "vi" ? "Hỏi Gippy AI" : "Ask Gippy AI"}{" "}
                 <ArrowRight className="ml-2 h-4 w-4 transition group-hover:translate-x-1" />
-              </Link>
+              </span>
             </Button>
             <Button
               asChild

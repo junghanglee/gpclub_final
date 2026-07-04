@@ -1,6 +1,12 @@
-import { PackageOpen, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { ImagePlus, PackageOpen, Pencil, Plus, RefreshCw, Trash2, UploadCloud } from "lucide-react";
+import { type DragEvent, type Ref, type RefObject, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { type ADMIN_I18N, type AdminLang, tx } from "@/components/admin/admin-i18n";
+import { pageRange } from "@/components/admin/admin-shared";
+import {
+  ProductDetailEditor,
+  type ProductDetailEditorHandle,
+} from "@/components/admin/product-detail-editor";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,9 +34,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { type AdminLang, ADMIN_I18N, tx } from "@/components/admin/admin-i18n";
-import { pageRange } from "@/components/admin/admin-shared";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -74,6 +79,19 @@ const emptyEvent: EventItem = {
   post_type: "event",
 };
 
+const EVENT_MEDIA_BUCKET = "event-media";
+
+const acceptedMedia = "image/*,video/*";
+
+const inferMediaType = (file: File) => (file.type.startsWith("video/") ? "video" : "image");
+
+const safeFileName = (name: string) =>
+  name
+    .toLowerCase()
+    .replace(/[^a-z0-9._-]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "") || "media";
+
 export default function EventsTab({ lang }: { lang: AdminLang }) {
   const t = (key: keyof typeof ADMIN_I18N) => tx(lang, key);
   const [rows, setRows] = useState<EventRow[]>([]);
@@ -82,6 +100,9 @@ export default function EventsTab({ lang }: { lang: AdminLang }) {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [totalRows, setTotalRows] = useState(0);
+  const [uploading, setUploading] = useState(false);
+  const bodyViEditorRef = useRef<ProductDetailEditorHandle>(null);
+  const bodyEnEditorRef = useRef<ProductDetailEditorHandle>(null);
 
   const load = async () => {
     setLoading(true);
@@ -107,6 +128,8 @@ export default function EventsTab({ lang }: { lang: AdminLang }) {
 
   const save = async () => {
     if (!editing) return;
+    const bodyVi = bodyViEditorRef.current?.commit() ?? editing.body_vi;
+    const bodyEn = bodyEnEditorRef.current?.commit() ?? editing.body_en;
     if (!editing.title_vi.trim() || !editing.title_en.trim()) {
       toast.error(t("titleViEnRequired"));
       return;
@@ -115,8 +138,8 @@ export default function EventsTab({ lang }: { lang: AdminLang }) {
       ...editing,
       summary_vi: editing.summary_vi || null,
       summary_en: editing.summary_en || null,
-      body_vi: editing.body_vi || null,
-      body_en: editing.body_en || null,
+      body_vi: bodyVi || null,
+      body_en: bodyEn || null,
       media_url: editing.media_url || null,
       cta_label_vi: editing.cta_label_vi || null,
       cta_label_en: editing.cta_label_en || null,
@@ -133,6 +156,37 @@ export default function EventsTab({ lang }: { lang: AdminLang }) {
     setOpen(false);
     setEditing(null);
     load();
+  };
+
+  const uploadMediaFile = async (file: File) => {
+    if (!editing) return;
+    if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) {
+      toast.error("Only image or video files can be uploaded.");
+      return;
+    }
+
+    setUploading(true);
+    const path = `${new Date().toISOString().slice(0, 10)}/${crypto.randomUUID()}-${safeFileName(
+      file.name,
+    )}`;
+    const { error } = await supabase.storage.from(EVENT_MEDIA_BUCKET).upload(path, file, {
+      cacheControl: "31536000",
+      contentType: file.type || undefined,
+      upsert: false,
+    });
+    if (error) {
+      setUploading(false);
+      toast.error(error.message);
+      return;
+    }
+    const { data } = supabase.storage.from(EVENT_MEDIA_BUCKET).getPublicUrl(path);
+    setEditing({
+      ...editing,
+      media_url: data.publicUrl,
+      media_type: inferMediaType(file),
+    });
+    setUploading(false);
+    toast.success("Media uploaded.");
   };
 
   const remove = async (id: string) => {
@@ -257,7 +311,7 @@ export default function EventsTab({ lang }: { lang: AdminLang }) {
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
+        <DialogContent className="max-h-[90vh] max-w-5xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editing?.id ? t("editEvent") : t("newEvent")}</DialogTitle>
           </DialogHeader>
@@ -284,63 +338,52 @@ export default function EventsTab({ lang }: { lang: AdminLang }) {
                     </SelectContent>
                   </Select>
                 </div>
-                <div>
-                  <Label>{t("titleVi")}</Label>
+                <div className="md:col-span-2">
+                  <Label>{t("eventDate")}</Label>
                   <Input
+                    type="date"
                     className="mt-1.5"
-                    value={editing.title_vi}
-                    onChange={(e) => setEditing({ ...editing, title_vi: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label>{t("titleEn")}</Label>
-                  <Input
-                    className="mt-1.5"
-                    value={editing.title_en}
-                    onChange={(e) => setEditing({ ...editing, title_en: e.target.value })}
+                    value={editing.event_date ?? ""}
+                    onChange={(e) => setEditing({ ...editing, event_date: e.target.value })}
                   />
                 </div>
               </div>
-              <div className="grid gap-3 md:grid-cols-2">
-                <div>
-                  <Label>{t("summary")} VI</Label>
-                  <Textarea
-                    className="mt-1.5"
-                    rows={3}
-                    value={editing.summary_vi ?? ""}
-                    onChange={(e) => setEditing({ ...editing, summary_vi: e.target.value })}
+
+              <Tabs defaultValue="vi" className="rounded-2xl border border-border/60 p-3">
+                <TabsList className="grid h-auto w-full grid-cols-2">
+                  <TabsTrigger value="vi">Vietnamese</TabsTrigger>
+                  <TabsTrigger value="en">English</TabsTrigger>
+                </TabsList>
+                <TabsContent value="vi" className="mt-4 space-y-4">
+                  <LanguageFields
+                    titleLabel={t("titleVi")}
+                    summaryLabel={`${t("summary")} VI`}
+                    bodyLabel={`${t("body")} VI`}
+                    title={editing.title_vi}
+                    summary={editing.summary_vi ?? ""}
+                    body={editing.body_vi ?? ""}
+                    editorRef={bodyViEditorRef}
+                    onTitleChange={(title_vi) => setEditing({ ...editing, title_vi })}
+                    onSummaryChange={(summary_vi) => setEditing({ ...editing, summary_vi })}
+                    onBodyChange={(body_vi) => setEditing({ ...editing, body_vi })}
                   />
-                </div>
-                <div>
-                  <Label>{t("summary")} EN</Label>
-                  <Textarea
-                    className="mt-1.5"
-                    rows={3}
-                    value={editing.summary_en ?? ""}
-                    onChange={(e) => setEditing({ ...editing, summary_en: e.target.value })}
+                </TabsContent>
+                <TabsContent value="en" className="mt-4 space-y-4">
+                  <LanguageFields
+                    titleLabel={t("titleEn")}
+                    summaryLabel={`${t("summary")} EN`}
+                    bodyLabel={`${t("body")} EN`}
+                    title={editing.title_en}
+                    summary={editing.summary_en ?? ""}
+                    body={editing.body_en ?? ""}
+                    editorRef={bodyEnEditorRef}
+                    onTitleChange={(title_en) => setEditing({ ...editing, title_en })}
+                    onSummaryChange={(summary_en) => setEditing({ ...editing, summary_en })}
+                    onBodyChange={(body_en) => setEditing({ ...editing, body_en })}
                   />
-                </div>
-              </div>
-              <div className="grid gap-3 md:grid-cols-2">
-                <div>
-                  <Label>{t("body")} VI</Label>
-                  <Textarea
-                    className="mt-1.5"
-                    rows={6}
-                    value={editing.body_vi ?? ""}
-                    onChange={(e) => setEditing({ ...editing, body_vi: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label>{t("body")} EN</Label>
-                  <Textarea
-                    className="mt-1.5"
-                    rows={6}
-                    value={editing.body_en ?? ""}
-                    onChange={(e) => setEditing({ ...editing, body_en: e.target.value })}
-                  />
-                </div>
-              </div>
+                </TabsContent>
+              </Tabs>
+
               <div className="grid gap-3 md:grid-cols-[180px_1fr]">
                 <div>
                   <Label>{t("mediaType")}</Label>
@@ -358,26 +401,15 @@ export default function EventsTab({ lang }: { lang: AdminLang }) {
                     </SelectContent>
                   </Select>
                 </div>
-                <div>
-                  <Label>{t("mediaUrl")}</Label>
-                  <Input
-                    className="mt-1.5"
-                    placeholder="https://..."
-                    value={editing.media_url ?? ""}
-                    onChange={(e) => setEditing({ ...editing, media_url: e.target.value })}
-                  />
-                </div>
+                <MediaUploader
+                  mediaUrl={editing.media_url ?? ""}
+                  uploading={uploading}
+                  onUrlChange={(media_url) => setEditing({ ...editing, media_url })}
+                  onFile={uploadMediaFile}
+                  label={t("mediaUrl")}
+                />
               </div>
-              <div className="grid gap-3 md:grid-cols-3">
-                <div>
-                  <Label>{t("eventDate")}</Label>
-                  <Input
-                    type="date"
-                    className="mt-1.5"
-                    value={editing.event_date ?? ""}
-                    onChange={(e) => setEditing({ ...editing, event_date: e.target.value })}
-                  />
-                </div>
+              <div className="grid gap-3 md:grid-cols-2">
                 <div>
                   <Label>{t("sortOrder")}</Label>
                   <Input
@@ -441,10 +473,142 @@ export default function EventsTab({ lang }: { lang: AdminLang }) {
             <Button variant="outline" onClick={() => setOpen(false)}>
               {t("cancel")}
             </Button>
-            <Button onClick={save}>{t("save")}</Button>
+            <Button onClick={save} disabled={uploading}>
+              {t("save")}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+function LanguageFields({
+  titleLabel,
+  summaryLabel,
+  bodyLabel,
+  title,
+  summary,
+  body,
+  editorRef,
+  onTitleChange,
+  onSummaryChange,
+  onBodyChange,
+}: {
+  titleLabel: string;
+  summaryLabel: string;
+  bodyLabel: string;
+  title: string;
+  summary: string;
+  body: string;
+  editorRef: RefObject<ProductDetailEditorHandle | null>;
+  onTitleChange: (value: string) => void;
+  onSummaryChange: (value: string) => void;
+  onBodyChange: (value: string) => void;
+}) {
+  return (
+    <div className="space-y-4">
+      <div>
+        <Label>{titleLabel}</Label>
+        <Input className="mt-1.5" value={title} onChange={(e) => onTitleChange(e.target.value)} />
+      </div>
+      <div>
+        <Label>{summaryLabel}</Label>
+        <Textarea
+          className="mt-1.5"
+          rows={3}
+          value={summary}
+          onChange={(e) => onSummaryChange(e.target.value)}
+        />
+      </div>
+      <div>
+        <Label className="mb-1.5 block">{bodyLabel}</Label>
+        <ProductDetailEditor
+          ref={editorRef as Ref<ProductDetailEditorHandle>}
+          value={body}
+          onChange={onBodyChange}
+        />
+      </div>
+    </div>
+  );
+}
+
+function MediaUploader({
+  mediaUrl,
+  uploading,
+  onUrlChange,
+  onFile,
+  label,
+}: {
+  mediaUrl: string;
+  uploading: boolean;
+  onUrlChange: (value: string) => void;
+  onFile: (file: File) => void;
+  label: string;
+}) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const pickFile = (file?: File) => {
+    if (file) onFile(file);
+  };
+  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    pickFile(event.dataTransfer.files?.[0]);
+  };
+
+  return (
+    <div className="space-y-3">
+      <div>
+        <Label>{label}</Label>
+        <Input
+          className="mt-1.5"
+          placeholder="https://..."
+          value={mediaUrl}
+          onChange={(e) => onUrlChange(e.target.value)}
+        />
+      </div>
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={() => fileInputRef.current?.click()}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") fileInputRef.current?.click();
+        }}
+        onDragOver={(event) => event.preventDefault()}
+        onDrop={handleDrop}
+        className="flex min-h-[132px] cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-muted/25 px-4 py-5 text-center transition hover:border-primary/70 hover:bg-primary/5"
+      >
+        {uploading ? (
+          <UploadCloud className="mb-2 h-8 w-8 animate-pulse text-primary" />
+        ) : (
+          <ImagePlus className="mb-2 h-8 w-8 text-primary" />
+        )}
+        <div className="text-sm font-semibold">
+          {uploading ? "Uploading media..." : "Choose image/video or drop file here"}
+        </div>
+        <div className="mt-1 text-xs text-muted-foreground">
+          Images and videos are uploaded, then the public URL is filled automatically.
+        </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept={acceptedMedia}
+          className="hidden"
+          onChange={(event) => pickFile(event.target.files?.[0])}
+        />
+      </div>
+      {mediaUrl ? (
+        <div className="overflow-hidden rounded-xl border border-border bg-background">
+          {mediaUrl.match(/\.(mp4|webm|mov)(\?|$)/i) ? (
+            <video src={mediaUrl} controls className="aspect-video w-full bg-black object-cover" />
+          ) : (
+            <img
+              src={mediaUrl}
+              alt="Event media preview"
+              className="aspect-video w-full object-cover"
+            />
+          )}
+        </div>
+      ) : null}
     </div>
   );
 }

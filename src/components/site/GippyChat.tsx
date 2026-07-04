@@ -11,9 +11,9 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import gippyCelebrate from "@/assets/gippy-celebrate.png";
-import gippyChatImg from "@/assets/gippy-chat.png";
-import gippyFront from "@/assets/gippy-front.png";
+import gippyCelebrate from "@/assets/gippy-celebrate.webp";
+import gippyChatImg from "@/assets/gippy-chat.webp";
+import gippyFront from "@/assets/gippy-front.webp";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -27,7 +27,7 @@ import {
 } from "@/lib/catalog-products";
 import { askChatbotClient } from "@/lib/chatbot";
 import { onGippyOpen } from "@/lib/gippy-bus";
-import { buildWhatsappLink, buildZaloLink, useCompanyInfo } from "@/lib/site-settings";
+import { buildZaloLink } from "@/lib/site-settings";
 
 type GippyState = "greet" | "talking" | "done";
 const POSES: Record<GippyState, string> = {
@@ -588,7 +588,7 @@ export function GippyChat() {
                       <QuickAction
                         icon={<UserCircle2 className="h-4 w-4" />}
                         label="Chat with a local manager"
-                        sub="Zalo / WhatsApp"
+                        sub="Zalo EN / Zalo VN"
                         onClick={async () => {
                           await reply(() => ({
                             id: uid(),
@@ -787,17 +787,18 @@ function TypingBubble() {
 }
 
 function ManagerCTAs() {
-  const company = useCompanyInfo();
+  const zaloEnPhone = "0911412309";
+  const zaloVnPhone = "0703321243";
   return (
     <div className="flex w-full gap-2">
       <Button asChild size="sm" className="flex-1 rounded-full bg-[#0068ff] hover:bg-[#0068ff]/90">
-        <a href={buildZaloLink(company.zaloPhone)} target="_blank" rel="noreferrer">
-          <MessageCircle className="mr-1 h-4 w-4" /> Zalo
+        <a href={buildZaloLink(zaloVnPhone)} target="_blank" rel="noreferrer">
+          <MessageCircle className="mr-1 h-4 w-4" /> Zalo VN
         </a>
       </Button>
-      <Button asChild size="sm" className="flex-1 rounded-full bg-[#25D366] hover:bg-[#25D366]/90">
-        <a href={buildWhatsappLink(company.whatsappPhone)} target="_blank" rel="noreferrer">
-          <MessageCircle className="mr-1 h-4 w-4" /> WhatsApp
+      <Button asChild size="sm" className="flex-1 rounded-full bg-[#0084ff] hover:bg-[#0084ff]/90">
+        <a href={buildZaloLink(zaloEnPhone)} target="_blank" rel="noreferrer">
+          <MessageCircle className="mr-1 h-4 w-4" /> Zalo EN
         </a>
       </Button>
     </div>
