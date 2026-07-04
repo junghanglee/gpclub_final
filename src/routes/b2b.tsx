@@ -12,6 +12,7 @@ import {
   Layers,
   type LucideIcon,
   Megaphone,
+  PackageCheck,
   Send,
   ShieldCheck,
   Sparkles,

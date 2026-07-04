@@ -55,3 +55,9 @@ Started: 2026-07-04
 - Scoped Prettier passed. Contract search found no stale fake-loading helpers or text loading fallbacks such as `createCatalogPreview`, route-local shell helpers, `Loading product`, `Loading catalog`, or `Loading events`.
 - Local route smoke checks against `http://localhost:8080` returned 200 and shell HTML for `/products`, `/catalog`, `/events`, `/b2b`, and `/contact`.
 - Review noted possible concern about catalog nested loading and default page copy; both were treated as non-blocking because catalog product areas keep a nested shared skeleton while products load, and default page copy is the static shell copy intentionally rendered immediately by the PRD contract.
+
+## 2026-07-04 - Review follow-up
+
+- A follow-up verify pass flagged `src/routes/b2b.tsx` under full `tsc --noEmit` because `PackageCheck` was still used by a static B2B card after the skeleton refactor but the import had been removed.
+- Restored the `PackageCheck` import. `rtk npx eslint src/routes/b2b.tsx` passed with no issues, `rtk npx prettier --check src/routes/b2b.tsx` passed, and `rtk npm run build` passed.
+- `rtk tsc --noEmit --pretty false` no longer reports `src/routes/b2b.tsx`; remaining TypeScript errors are pre-existing admin-scope issues in `src/components/admin/tabs/ChatbotTab.tsx` and `src/components/admin/tabs/ContactsTab.tsx`.
