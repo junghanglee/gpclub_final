@@ -196,6 +196,10 @@ export const DEFAULT_HOME_CONTENT: HomeAdminContent = {
     button: { vi: "Gửi yêu cầu B2B", en: "Start B2B inquiry" },
   },
 };
+
+const CACHE_KEY = "gpclub:home-content:v1";
+const CACHE_MAX_AGE_MS = 5 * 60 * 1000;
+
 function isObj(v: unknown): v is Record<string, unknown> {
   return !!v && typeof v === "object" && !Array.isArray(v);
 }
@@ -214,20 +218,43 @@ export function mergeHomeContent(value: unknown): HomeAdminContent {
   return deepMerge(DEFAULT_HOME_CONTENT, value);
 }
 
+function readCachedHomeContent(): HomeAdminContent {
+  if (typeof window === "undefined") return DEFAULT_HOME_CONTENT;
+  try {
+    const cached = window.localStorage.getItem(CACHE_KEY);
+    if (!cached) return DEFAULT_HOME_CONTENT;
+    const parsed = JSON.parse(cached) as { savedAt?: number; value?: unknown };
+    if (!parsed.savedAt || Date.now() - parsed.savedAt > CACHE_MAX_AGE_MS) {
+      return DEFAULT_HOME_CONTENT;
+    }
+    return mergeHomeContent(parsed.value);
+  } catch {
+    return DEFAULT_HOME_CONTENT;
+  }
+}
+
+function writeCachedHomeContent(value: unknown) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(CACHE_KEY, JSON.stringify({ savedAt: Date.now(), value }));
+  } catch {
+    // Ignore storage failures; default content keeps the homepage usable.
+  }
+}
+
 type HomeContentContextValue = { content: HomeAdminContent; loading: boolean };
 
 const Ctx = createContext<HomeContentContextValue>({
   content: DEFAULT_HOME_CONTENT,
-  loading: true,
+  loading: false,
 });
 
 export function HomeContentProvider({ children }: { children: ReactNode }) {
-  const [content, setContent] = useState<HomeAdminContent>(DEFAULT_HOME_CONTENT);
-  const [loading, setLoading] = useState(true);
+  const [content, setContent] = useState<HomeAdminContent>(() => readCachedHomeContent());
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
     (async () => {
       try {
         const { data } = await supabase
@@ -235,6 +262,7 @@ export function HomeContentProvider({ children }: { children: ReactNode }) {
           .select("value")
           .eq("key", "home")
           .maybeSingle();
+        writeCachedHomeContent(data?.value);
         if (!cancelled) setContent(mergeHomeContent(data?.value));
       } finally {
         if (!cancelled) setLoading(false);

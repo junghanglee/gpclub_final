@@ -6,7 +6,7 @@ import gippyMainHero from "@/assets/gippy-main-hero.png";
 import { B2BInquiryDialog } from "@/components/site/B2BInquiryDialog";
 import { Button } from "@/components/ui/button";
 import { getCoverImage, useCatalogProducts } from "@/lib/catalog-products";
-import { useHomeContent } from "@/lib/home-content";
+import { HomeContentProvider, useHomeContent } from "@/lib/home-content";
 import { useI18n } from "@/lib/i18n";
 import { useRepresentativeCatalog } from "@/lib/product-catalogs";
 
@@ -60,8 +60,16 @@ export const Route = createFileRoute("/")({
       },
     ],
   }),
-  component: HomePage,
+  component: HomePageRoute,
 });
+
+function HomePageRoute() {
+  return (
+    <HomeContentProvider>
+      <HomePage />
+    </HomeContentProvider>
+  );
+}
 
 type BilingualText = { vi: string; en: string };
 
@@ -161,7 +169,7 @@ const partnerProcess: {
 
 function HomePage() {
   const { lang } = useI18n();
-  const { content: homeContent, loading: homeContentLoading } = useHomeContent();
+  const { content: homeContent } = useHomeContent();
   const { rows: catalogProducts } = useCatalogProducts();
   const { downloadPath } = useRepresentativeCatalog();
   const homeProducts = catalogProducts
@@ -199,10 +207,6 @@ function HomePage() {
   const headlineY = useTransform(smooth, [0, 1], [0, 80]);
   const headlineOpacity = useTransform(smooth, [0, 0.8], [1, 0]);
   const [inquiryOpen, setInquiryOpen] = useState(false);
-
-  if (homeContentLoading) {
-    return <main className="min-h-[60vh] bg-background" />;
-  }
 
   return (
     <>

@@ -12,7 +12,6 @@ import { FloatingChat } from "@/components/site/FloatingChat";
 import { Footer } from "@/components/site/Footer";
 import { Header } from "@/components/site/Header";
 import { Toaster } from "@/components/ui/sonner";
-import { HomeContentProvider } from "@/lib/home-content";
 import { I18nProvider } from "@/lib/i18n";
 import { SiteSettingsProvider } from "@/lib/site-settings";
 import appCss from "../styles.css?url";
@@ -183,19 +182,17 @@ function RootComponent() {
     <RootDocument>
       <QueryClientProvider client={queryClient}>
         <SiteSettingsProvider>
-          <HomeContentProvider>
-            <I18nProvider>
-              <div className="flex min-h-screen flex-col">
-                <Header />
-                <main key={pathname} className="flex-1 animate-page-in">
-                  <Outlet />
-                </main>
-                <Footer />
-                <PublicEngagementLayer />
-                <Toaster />
-              </div>
-            </I18nProvider>
-          </HomeContentProvider>
+          <I18nProvider>
+            <div className="flex min-h-screen flex-col">
+              <Header />
+              <main key={pathname} className="flex-1 animate-page-in">
+                <Outlet />
+              </main>
+              <Footer />
+              <PublicEngagementLayer />
+              <Toaster />
+            </div>
+          </I18nProvider>
         </SiteSettingsProvider>
       </QueryClientProvider>
     </RootDocument>

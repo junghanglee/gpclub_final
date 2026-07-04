@@ -28,6 +28,9 @@ const FALLBACK: CompanyInfo = {
   whatsappPhone: DEFAULT_WA,
 };
 
+const CACHE_KEY = "gpclub:site-settings:v1";
+const CACHE_MAX_AGE_MS = 5 * 60 * 1000;
+
 type Stored = Partial<{
   legal_name: string;
   legal_name_vi: string;
@@ -60,20 +63,41 @@ function merge(stored: Stored | null): CompanyInfo {
   };
 }
 
+function readCachedInfo(): CompanyInfo {
+  if (typeof window === "undefined") return FALLBACK;
+  try {
+    const cached = window.localStorage.getItem(CACHE_KEY);
+    if (!cached) return FALLBACK;
+    const parsed = JSON.parse(cached) as { savedAt?: number; value?: Stored };
+    if (!parsed.savedAt || Date.now() - parsed.savedAt > CACHE_MAX_AGE_MS) return FALLBACK;
+    return merge(parsed.value ?? null);
+  } catch {
+    return FALLBACK;
+  }
+}
+
+function writeCachedInfo(value: Stored | null) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(CACHE_KEY, JSON.stringify({ savedAt: Date.now(), value }));
+  } catch {
+    // Ignore storage failures; the fallback content is enough to render the site.
+  }
+}
+
 type SiteSettingsContextValue = { info: CompanyInfo; loading: boolean };
 
 const Ctx = createContext<SiteSettingsContextValue>({
   info: FALLBACK,
-  loading: true,
+  loading: false,
 });
 
 export function SiteSettingsProvider({ children }: { children: ReactNode }) {
-  const [info, setInfo] = useState<CompanyInfo>(FALLBACK);
-  const [loading, setLoading] = useState(true);
+  const [info, setInfo] = useState<CompanyInfo>(() => readCachedInfo());
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
     (async () => {
       try {
         const { data } = await supabase
@@ -81,7 +105,9 @@ export function SiteSettingsProvider({ children }: { children: ReactNode }) {
           .select("value")
           .eq("key", "contact")
           .maybeSingle();
-        if (!cancelled) setInfo(merge((data?.value as Stored) ?? null));
+        const value = (data?.value as Stored) ?? null;
+        writeCachedInfo(value);
+        if (!cancelled) setInfo(merge(value));
       } finally {
         if (!cancelled) setLoading(false);
       }
