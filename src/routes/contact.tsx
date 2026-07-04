@@ -26,12 +26,54 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { usePageContent } from "@/lib/page-content";
-import {
-  buildWhatsappLink,
-  buildZaloLink,
-  useCompanyInfo,
-  useCompanyInfoLoading,
-} from "@/lib/site-settings";
+import { buildZaloLink, useCompanyInfo, useCompanyInfoLoading } from "@/lib/site-settings";
+
+const ZALO_EN_PHONE = "0911412309";
+const ZALO_VN_PHONE = "0703321243";
+const ZALO_VN_DISPLAY = "070 332 1243";
+
+type FaqLang = "ko" | "en" | "vi";
+type FaqItem = { question: string; answer: string; category?: string };
+
+const FAQ_LANG_OPTIONS: { value: FaqLang; label: string }[] = [
+  { value: "vi", label: "Tiếng Việt" },
+  { value: "ko", label: "한국어" },
+  { value: "en", label: "English" },
+];
+
+const FAQ_TOPIC_FALLBACK: Record<string, { vi: string; ko: string; en: string }> = {
+  partnership: { vi: "Đại lý / hợp tác", ko: "대리점 / 협력", en: "Dealer / Partnership" },
+  products: { vi: "Sản phẩm / chính hãng", ko: "상품 / 정품", en: "Products / Authenticity" },
+  orders: { vi: "Đặt hàng / MOQ", ko: "주문 / MOQ", en: "Orders / MOQ" },
+  support: { vi: "Marketing / hỗ trợ", ko: "마케팅 / 지원", en: "Marketing / Support" },
+  general: { vi: "Khác", ko: "기타", en: "General" },
+};
+
+function normalizeFaqLang(appLang: "vi" | "en"): FaqLang {
+  return appLang === "vi" ? "vi" : "en";
+}
+
+function splitCategory(category?: string) {
+  const value = category?.trim() ?? "";
+  const match = value.match(/^(KO|KR|EN|VI)\s*\|\s*(.+)$/i);
+  if (!match) return { lang: "ko" as FaqLang, topic: value || "general" };
+  const lang =
+    match[1].toUpperCase() === "EN" ? "en" : match[1].toUpperCase() === "VI" ? "vi" : "ko";
+  return { lang: lang as FaqLang, topic: match[2].trim() || "general" };
+}
+
+function topicKey(topic: string) {
+  const value = topic.toLowerCase();
+  if (/dealer|partner|b2b|대리|협력|đại lý|hợp tác/.test(value)) return "partnership";
+  if (/product|authentic|brand|상품|제품|정품|sản phẩm|chính hãng/.test(value)) return "products";
+  if (/order|moq|price|quote|주문|가격|발주|đặt hàng|báo giá/.test(value)) return "orders";
+  if (/marketing|support|training|마케팅|지원|hỗ trợ|đào tạo/.test(value)) return "support";
+  return value.replace(/\s+/g, "-") || "general";
+}
+
+function topicLabel(key: string, topic: string, lang: FaqLang) {
+  return FAQ_TOPIC_FALLBACK[key]?.[lang] ?? topic.replace(/[-_]/g, " ");
+}
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
@@ -40,12 +82,12 @@ export const Route = createFileRoute("/contact")({
       {
         name: "description",
         content:
-          "Reach GPCLUB Vietnam via Zalo, WhatsApp, email or phone. Headquartered in Ho Chi Minh City.",
+          "Reach GPCLUB Vietnam via Zalo, email or phone. Headquartered in Ho Chi Minh City.",
       },
       { property: "og:title", content: "Contact GPCLUB Vietnam" },
       {
         property: "og:description",
-        content: "Connect via Zalo, WhatsApp, email.",
+        content: "Connect via Zalo, email or phone.",
       },
     ],
   }),
@@ -81,10 +123,9 @@ const contactText = {
     heroB: "câu chuyện thành công làm đẹp tiếp theo tại Việt Nam.",
     heroDesc:
       "Nhà phân phối, nhà bán lẻ và đối tác OEM/ODM — hãy chia sẻ nhu cầu của bạn. Tư vấn viên chuyên trách sẽ phản hồi trong 24 giờ với đề xuất phù hợp.",
-    zaloDesc: "Kênh phản hồi nhanh cho đối tác Việt Nam",
+    zaloDesc: "Kênh phản hồi nhanh bằng tiếng Việt",
+    zaloEnDesc: "Hỗ trợ đối tác bằng tiếng Anh",
     openZalo: "Mở Zalo",
-    whatsappDesc: "Hỗ trợ đối tác quốc tế",
-    openWhatsapp: "Mở WhatsApp",
     sendEmail: "Gửi email",
     call: "Gọi ngay",
     hq: "TP. Hồ Chí Minh — Trụ sở chính",
@@ -103,6 +144,9 @@ const contactText = {
     registry: "Xem đăng ký công khai",
     faqTitle: "Câu hỏi thường gặp",
     faqDesc: "Câu trả lời nhanh cho những câu hỏi đối tác thường hỏi nhất.",
+    faqLanguage: "Ngôn ngữ",
+    faqTopic: "Chủ đề",
+    faqAllTopics: "Tất cả chủ đề",
     chatZalo: "Chat trên Zalo",
     emailUs: "Gửi email cho chúng tôi",
     formKicker: "Gửi tin nhắn",
@@ -144,10 +188,9 @@ const contactText = {
     heroB: "next beauty success story.",
     heroDesc:
       "Distributors, retailers, and OEM/ODM partners — tell us about your business. A dedicated consultant will reply within 24 hours with a tailored proposal.",
-    zaloDesc: "Fastest channel for Vietnam partners",
+    zaloDesc: "Fast Vietnamese-language partner support",
+    zaloEnDesc: "English-language partner support",
     openZalo: "Open Zalo",
-    whatsappDesc: "International partners welcome",
-    openWhatsapp: "Open WhatsApp",
     sendEmail: "Send email",
     call: "Call us",
     hq: "Ho Chi Minh City — Headquarters",
@@ -166,6 +209,9 @@ const contactText = {
     registry: "View public registry",
     faqTitle: "Frequently asked",
     faqDesc: "Quick answers to the questions partners ask us most often.",
+    faqLanguage: "Language",
+    faqTopic: "Topic",
+    faqAllTopics: "All topics",
     chatZalo: "Chat on Zalo",
     emailUs: "Email us",
     formKicker: "Send a message",
@@ -197,25 +243,25 @@ function ContactPage() {
   const COMPANY = useCompanyInfo();
   const companyLoading = useCompanyInfoLoading();
   const t = contactText[lang];
-  const zaloLink = () => buildZaloLink(COMPANY.zaloPhone);
-  const whatsappLink = () => buildWhatsappLink(COMPANY.whatsappPhone);
+  const zaloEnLink = () => buildZaloLink(ZALO_EN_PHONE);
+  const zaloVnLink = () => buildZaloLink(ZALO_VN_PHONE);
   const offices = [
     {
       city: t.hq,
       address: COMPANY.address,
-      phone: COMPANY.phone,
+      phone: ZALO_VN_DISPLAY,
       hours: t.hours,
       mapsQuery: COMPANY.mapsQuery,
     },
   ];
 
-  const [faqs, setFaqs] = useState<{ question: string; answer: string; category?: string }[]>(
-    t.faqs,
-  );
-  const [faqLang, setFaqLang] = useState<"ko" | "en" | "vi">(lang);
+  const [faqs, setFaqs] = useState<FaqItem[]>(t.faqs);
+  const [faqLang, setFaqLang] = useState<FaqLang>(normalizeFaqLang(lang));
+  const [faqTopic, setFaqTopic] = useState("all");
 
   useEffect(() => {
-    setFaqLang(lang);
+    setFaqLang(normalizeFaqLang(lang));
+    setFaqTopic("all");
   }, [lang]);
 
   useEffect(() => {
@@ -244,16 +290,36 @@ function ContactPage() {
     };
   }, [t.faqs]);
 
-  const visibleFaqs = useMemo(() => {
-    const byLang = faqs.filter((faq) => {
-      const category = faq.category ?? "";
-      if (faqLang === "en") return category.startsWith("EN | ");
-      if (faqLang === "vi") return category.startsWith("VI | ");
-      return !category.startsWith("EN | ") && !category.startsWith("VI | ");
+  const faqRows = useMemo(() => {
+    const source = faqs.length > 0 ? faqs : t.faqs;
+    return source.map((faq) => {
+      const meta = splitCategory(faq.category);
+      const key = topicKey(meta.topic);
+      return { ...faq, faqLang: meta.lang, topic: meta.topic, topicKey: key };
     });
+  }, [faqs, t.faqs]);
 
-    return byLang.length > 0 ? byLang : t.faqs;
-  }, [faqLang, faqs, t.faqs]);
+  const topicOptions = useMemo(() => {
+    const seen = new Map<string, string>();
+    faqRows
+      .filter((faq) => faq.faqLang === faqLang)
+      .forEach((faq) => {
+        if (!seen.has(faq.topicKey)) seen.set(faq.topicKey, faq.topic);
+      });
+
+    return Array.from(seen, ([key, topic]) => ({
+      key,
+      label: topicLabel(key, topic, faqLang),
+    }));
+  }, [faqLang, faqRows]);
+
+  const visibleFaqs = useMemo(() => {
+    const byLang = faqRows.filter((faq) => faq.faqLang === faqLang);
+    const byTopic = faqTopic === "all" ? byLang : byLang.filter((faq) => faq.topicKey === faqTopic);
+    const rows = byTopic.length > 0 ? byTopic : byLang;
+
+    return rows.slice(0, 5);
+  }, [faqLang, faqRows, faqTopic]);
 
   // Inquiry form state
   const [form, setForm] = useState({
@@ -320,18 +386,18 @@ function ContactPage() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <ChannelCard
             icon={<MessageCircle className="h-5 w-5" />}
-            title="Zalo"
+            title="Zalo VN"
             desc={t.zaloDesc}
             cta={t.openZalo}
-            href={zaloLink()}
+            href={zaloVnLink()}
             highlight
           />
           <ChannelCard
             icon={<MessageCircle className="h-5 w-5" />}
-            title="WhatsApp"
-            desc={t.whatsappDesc}
-            cta={t.openWhatsapp}
-            href={whatsappLink()}
+            title="Zalo EN"
+            desc={t.zaloEnDesc}
+            cta={t.openZalo}
+            href={zaloEnLink()}
           />
           <ChannelCard
             icon={<Mail className="h-5 w-5" />}
@@ -343,9 +409,9 @@ function ContactPage() {
           <ChannelCard
             icon={<Phone className="h-5 w-5" />}
             title="Phone"
-            desc={COMPANY.phone}
+            desc={ZALO_VN_DISPLAY}
             cta={t.call}
-            href={`tel:${COMPANY.phoneTel}`}
+            href={`tel:${ZALO_VN_PHONE}`}
           />
         </div>
       </section>
@@ -372,7 +438,7 @@ function ContactPage() {
                 <div className="mt-4 space-y-2.5 text-sm">
                   <Line icon={<MapPin className="h-4 w-4" />}>{o.address}</Line>
                   <Line icon={<Phone className="h-4 w-4" />}>
-                    <a href={`tel:${o.phone.replace(/\s/g, "")}`} className="hover:text-primary">
+                    <a href={`tel:${ZALO_VN_PHONE}`} className="hover:text-primary">
                       {o.phone}
                     </a>
                   </Line>
@@ -435,25 +501,64 @@ function ContactPage() {
             <p className="mt-3 text-sm text-muted-foreground md:text-base">{t.faqDesc}</p>
           </div>
 
-          <div className="mt-8 flex flex-wrap justify-center gap-2">
-            {[
-              { value: "ko", label: "한국어" },
-              { value: "en", label: "English" },
-              { value: "vi", label: "Tiếng Việt" },
-            ].map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => setFaqLang(option.value as "ko" | "en" | "vi")}
-                className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
-                  faqLang === option.value
-                    ? "border-primary bg-primary text-primary-foreground shadow-soft"
-                    : "border-border/70 bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground"
-                }`}
-              >
-                {option.label}
-              </button>
-            ))}
+          <div className="mt-8 space-y-4 rounded-3xl border border-border/60 bg-card p-4 shadow-soft">
+            <div>
+              <div className="mb-2 text-center text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+                {t.faqLanguage}
+              </div>
+              <div className="flex flex-wrap justify-center gap-2">
+                {FAQ_LANG_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => {
+                      setFaqLang(option.value);
+                      setFaqTopic("all");
+                    }}
+                    className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                      faqLang === option.value
+                        ? "border-primary bg-primary text-primary-foreground shadow-soft"
+                        : "border-border/70 bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <div className="mb-2 text-center text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+                {t.faqTopic}
+              </div>
+              <div className="flex flex-wrap justify-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setFaqTopic("all")}
+                  className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                    faqTopic === "all"
+                      ? "border-foreground bg-foreground text-background shadow-soft"
+                      : "border-border/70 bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                  }`}
+                >
+                  {t.faqAllTopics}
+                </button>
+                {topicOptions.map((topic) => (
+                  <button
+                    key={topic.key}
+                    type="button"
+                    onClick={() => setFaqTopic(topic.key)}
+                    className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                      faqTopic === topic.key
+                        ? "border-foreground bg-foreground text-background shadow-soft"
+                        : "border-border/70 bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                    }`}
+                  >
+                    {topic.label}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
 
           <Accordion
@@ -475,7 +580,7 @@ function ContactPage() {
 
           <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Button asChild className="rounded-full">
-              <a href={zaloLink()} target="_blank" rel="noreferrer">
+              <a href={zaloVnLink()} target="_blank" rel="noreferrer">
                 <MessageCircle className="mr-1 h-4 w-4" /> {t.chatZalo}
               </a>
             </Button>
