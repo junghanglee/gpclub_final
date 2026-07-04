@@ -283,6 +283,14 @@ export function EventCardSkeleton({ count = 3 }: CountProps) {
   );
 }
 
+export function EventMediaSkeleton({ className = "" }: { className?: string }) {
+  return (
+    <div className={`aspect-video overflow-hidden bg-muted ${className}`} aria-hidden="true">
+      <VisualSkeleton />
+    </div>
+  );
+}
+
 export function ImageSlotSkeletonGrid({ slots }: { slots: string[] }) {
   return (
     <>

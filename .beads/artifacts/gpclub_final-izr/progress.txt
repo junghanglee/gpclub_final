@@ -33,3 +33,10 @@ Started: 2026-07-04
 - Removed route-local product/catalog skeleton helpers and removed `createCatalogPreview`, so catalog metadata loading no longer creates a fake dynamic catalog record.
 - Product/catalog image gaps now preserve card shape with shared image skeletons instead of text labels or blank media panels.
 - Verification: `rtk npx eslint src/components/site/SectionSkeletons.tsx src/routes/products.tsx 'src/routes/products.$productId.tsx' src/routes/catalog.index.tsx 'src/routes/catalog.$catalogId.tsx'` passed with no issues; `rtk npx prettier --check ...` passed; `rtk npm run build` passed. `Select-String` found no matches for the removed fake-loading helper names or `createCatalogPreview`.
+
+## 2026-07-04 - Task 3 events/B2B/contact conversion
+
+- Converted events, B2B, and contact dynamic loading states to shared skeletons from `src/components/site/SectionSkeletons.tsx`.
+- Removed route-local loading skeleton helpers for event timelines, new-product spotlight loading, B2B catalog-derived images, B2B image slots, and FAQ rows.
+- Event media without remote media now uses a data-free media skeleton, and B2B/contact loading sections no longer render fake product, brand, company, or FAQ copy.
+- Verification: `rtk npx eslint src/components/site/SectionSkeletons.tsx src/routes/events.tsx src/routes/b2b.tsx src/routes/contact.tsx` passed with no issues; `rtk npx prettier --check ...` passed; `rtk npm run build` passed. `Select-String` found no matches for removed Task 3 local helper names or fake loading labels.

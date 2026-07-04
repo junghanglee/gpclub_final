@@ -13,6 +13,7 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 import gippyContactHero from "@/assets/gippy-contact-hero.png";
+import { ContactRowSkeleton, FaqSkeletonItems } from "@/components/site/SectionSkeletons";
 import {
   Accordion,
   AccordionContent,
@@ -26,6 +27,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { usePageContent } from "@/lib/page-content";
+import { withPublicDataTimeout } from "@/lib/public-data-timeout";
 import {
   buildWhatsappLink,
   buildZaloLink,
@@ -196,6 +198,7 @@ function ContactPage() {
   const { content: page, loading: pageLoading } = usePageContent("contact");
   const COMPANY = useCompanyInfo();
   const companyLoading = useCompanyInfoLoading();
+  const contactLoading = pageLoading || companyLoading;
   const t = contactText[lang];
   const zaloLink = () => buildZaloLink(COMPANY.zaloPhone);
   const whatsappLink = () => buildWhatsappLink(COMPANY.whatsappPhone);
@@ -213,6 +216,7 @@ function ContactPage() {
     t.faqs,
   );
   const [faqLang, setFaqLang] = useState<"ko" | "en" | "vi">(lang);
+  const [faqLoading, setFaqLoading] = useState(false);
 
   useEffect(() => {
     setFaqLang(lang);
@@ -222,20 +226,30 @@ function ContactPage() {
     let cancelled = false;
 
     const loadFaqs = async () => {
-      const { data, error } = await supabase
-        .from("faqs")
-        .select("question, answer, category, sort_order")
-        .eq("published", true)
-        .order("sort_order")
-        .order("created_at");
+      setFaqLoading(true);
+      try {
+        const { data, error } = await withPublicDataTimeout(
+          supabase
+            .from("faqs")
+            .select("question, answer, category, sort_order")
+            .eq("published", true)
+            .order("sort_order")
+            .order("created_at"),
+          "contact faqs",
+        );
 
-      if (cancelled) return;
-      if (error || !data || data.length === 0) {
-        setFaqs(t.faqs);
-        return;
+        if (cancelled) return;
+        if (error || !data || data.length === 0) {
+          setFaqs(t.faqs);
+          return;
+        }
+
+        setFaqs(data);
+      } catch {
+        if (!cancelled) setFaqs(t.faqs);
+      } finally {
+        if (!cancelled) setFaqLoading(false);
       }
-
-      setFaqs(data);
     };
 
     loadFaqs();
@@ -275,10 +289,6 @@ function ContactPage() {
     toast.success(t.thanks);
     setForm({ name: "", email: "", phone: "", subject: "", message: "" });
   };
-
-  if (pageLoading || companyLoading) {
-    return <main className="min-h-[60vh] bg-background" />;
-  }
 
   return (
     <>
@@ -324,6 +334,7 @@ function ContactPage() {
             desc={t.zaloDesc}
             cta={t.openZalo}
             href={zaloLink()}
+            loading={contactLoading}
             highlight
           />
           <ChannelCard
@@ -332,6 +343,7 @@ function ContactPage() {
             desc={t.whatsappDesc}
             cta={t.openWhatsapp}
             href={whatsappLink()}
+            loading={contactLoading}
           />
           <ChannelCard
             icon={<Mail className="h-5 w-5" />}
@@ -339,6 +351,7 @@ function ContactPage() {
             desc={COMPANY.email}
             cta={t.sendEmail}
             href={`mailto:${COMPANY.email}`}
+            loading={contactLoading}
           />
           <ChannelCard
             icon={<Phone className="h-5 w-5" />}
@@ -346,6 +359,7 @@ function ContactPage() {
             desc={COMPANY.phone}
             cta={t.call}
             href={`tel:${COMPANY.phoneTel}`}
+            loading={contactLoading}
           />
         </div>
       </section>
@@ -405,13 +419,13 @@ function ContactPage() {
               </div>
             </div>
             <dl className="mt-6 divide-y divide-border/60 text-sm">
-              <Row label={t.legalName} value={COMPANY.legalNameVi} />
-              <Row label={t.tax} value={COMPANY.taxCode} />
-              <Row label={t.rep} value={COMPANY.representative} />
-              <Row label={t.est} value={COMPANY.established} />
-              <Row label={t.address} value={COMPANY.address} />
-              <Row label={t.type} value={t.llc} />
-              <Row label={t.status} value={t.active} />
+              <Row label={t.legalName} value={COMPANY.legalNameVi} loading={companyLoading} />
+              <Row label={t.tax} value={COMPANY.taxCode} loading={companyLoading} />
+              <Row label={t.rep} value={COMPANY.representative} loading={companyLoading} />
+              <Row label={t.est} value={COMPANY.established} loading={companyLoading} />
+              <Row label={t.address} value={COMPANY.address} loading={companyLoading} />
+              <Row label={t.type} value={t.llc} loading={companyLoading} />
+              <Row label={t.status} value={t.active} loading={companyLoading} />
             </dl>
             <Button asChild variant="outline" size="sm" className="mt-6 rounded-full">
               <a
@@ -461,16 +475,20 @@ function ContactPage() {
             collapsible
             className="mt-6 rounded-3xl border border-border/60 bg-card px-2 shadow-soft"
           >
-            {visibleFaqs.map((f, i) => (
-              <AccordionItem key={i} value={`item-${i}`} className="px-4">
-                <AccordionTrigger className="text-left text-base font-semibold">
-                  {f.question}
-                </AccordionTrigger>
-                <AccordionContent className="text-sm text-muted-foreground">
-                  {f.answer}
-                </AccordionContent>
-              </AccordionItem>
-            ))}
+            {faqLoading ? (
+              <FaqSkeletonItems />
+            ) : (
+              visibleFaqs.map((f, i) => (
+                <AccordionItem key={i} value={`item-${i}`} className="px-4">
+                  <AccordionTrigger className="text-left text-base font-semibold">
+                    {f.question}
+                  </AccordionTrigger>
+                  <AccordionContent className="text-sm text-muted-foreground">
+                    {f.answer}
+                  </AccordionContent>
+                </AccordionItem>
+              ))
+            )}
           </Accordion>
 
           <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -569,6 +587,7 @@ function ChannelCard({
   desc,
   cta,
   href,
+  loading,
   highlight,
 }: {
   icon: React.ReactNode;
@@ -576,6 +595,7 @@ function ChannelCard({
   desc: string;
   cta: string;
   href: string;
+  loading?: boolean;
   highlight?: boolean;
 }) {
   return (
@@ -594,7 +614,7 @@ function ChannelCard({
       </span>
       <div>
         <div className="font-display text-xl">{title}</div>
-        <p className="text-sm text-muted-foreground">{desc}</p>
+        {loading ? <ContactRowSkeleton /> : <p className="text-sm text-muted-foreground">{desc}</p>}
       </div>
       <div className="text-sm font-medium text-primary">{cta} →</div>
     </a>
@@ -610,13 +630,15 @@ function Line({ icon, children }: { icon: React.ReactNode; children: React.React
   );
 }
 
-function Row({ label, value }: { label: string; value: string }) {
+function Row({ label, value, loading }: { label: string; value: string; loading?: boolean }) {
   return (
     <div className="flex flex-col gap-0.5 py-2.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
       <dt className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         {label}
       </dt>
-      <dd className="text-sm font-medium text-foreground sm:text-right">{value}</dd>
+      <dd className="text-sm font-medium text-foreground sm:text-right">
+        {loading ? <ContactRowSkeleton /> : value}
+      </dd>
     </div>
   );
 }

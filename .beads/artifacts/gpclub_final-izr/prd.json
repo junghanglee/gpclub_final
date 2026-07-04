@@ -53,7 +53,7 @@
 				"`rtk npx prettier --check src/routes/events.tsx src/routes/b2b.tsx src/routes/contact.tsx`",
 				"Dynamic skeletons in these routes contain no fake event, product, company, or FAQ copy"
 			],
-			"passes": false,
+			"passes": true,
 			"metadata": {
 				"depends_on": ["Add shared public skeleton components"],
 				"parallel": true,

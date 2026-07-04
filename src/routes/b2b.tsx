@@ -12,7 +12,6 @@ import {
   Layers,
   type LucideIcon,
   Megaphone,
-  PackageCheck,
   Send,
   ShieldCheck,
   Sparkles,
@@ -26,6 +25,7 @@ import { z } from "zod";
 import jmellaImg from "@/assets/brand-jmella.jpg";
 import jmsolutionImg from "@/assets/brand-jmsolution.jpg";
 import gippyB2BHero from "@/assets/gippy-b2b-hero.png";
+import { BrandImageSkeleton, ImageSlotSkeletonGrid } from "@/components/site/SectionSkeletons";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -374,7 +374,7 @@ function B2BPage() {
   const [step, setStep] = useState(0);
   const [done, setDone] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const { rows: catalogRows } = useCatalogProducts();
+  const { rows: catalogRows, loading: catalogLoading } = useCatalogProducts();
 
   const brandProductImages = useMemo(() => {
     const map = new Map<string, string>();
@@ -494,10 +494,6 @@ function B2BPage() {
   }
 
   const progress = ((step + 1) / steps.length) * 100;
-
-  if (pageLoading) {
-    return <main className="min-h-[60vh] bg-background" />;
-  }
 
   return (
     <>
@@ -637,13 +633,17 @@ function B2BPage() {
                 key={brand.name}
                 className="grid items-center gap-6 border border-border p-6 md:grid-cols-5 md:p-8"
               >
-                <img
-                  src={
-                    brandProductImages.get(brand.name.trim().toLowerCase()) || brand.fallbackImage
-                  }
-                  alt={brand.name}
-                  className="aspect-square w-full rounded-sm object-cover shadow-sm md:col-span-2"
-                />
+                {catalogLoading ? (
+                  <BrandImageSkeleton />
+                ) : (
+                  <img
+                    src={
+                      brandProductImages.get(brand.name.trim().toLowerCase()) || brand.fallbackImage
+                    }
+                    alt={brand.name}
+                    className="aspect-square w-full rounded-sm object-cover shadow-sm md:col-span-2"
+                  />
+                )}
                 <div className="md:col-span-3">
                   <div className="font-display text-2xl font-black tracking-tight">
                     {brand.name}
@@ -697,35 +697,39 @@ function B2BPage() {
             <p className="mt-3 text-sm text-foreground/60">{t.imagesDesc}</p>
           </div>
           <div className="mt-10 grid gap-5 md:grid-cols-3">
-            {t.slots.map((slot, index) => {
-              const sample = sampleProductImages[index];
-              return (
-                <div
-                  key={slot}
-                  className="group relative overflow-hidden border border-border bg-background"
-                >
-                  {sample ? (
-                    <img
-                      src={sample.src}
-                      alt={sample.alt}
-                      className="aspect-[4/3] w-full object-cover transition duration-500 group-hover:scale-105"
-                    />
-                  ) : (
-                    <div className="grid aspect-[4/3] place-items-center border border-dashed border-primary/40 bg-primary/5 p-6 text-center">
-                      <ImagePlus className="h-8 w-8 text-primary" />
-                    </div>
-                  )}
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent p-5 text-white">
-                    <div className="text-xs font-bold uppercase tracking-[0.2em]">{slot}</div>
+            {catalogLoading ? (
+              <ImageSlotSkeletonGrid slots={t.slots} />
+            ) : (
+              t.slots.map((slot, index) => {
+                const sample = sampleProductImages[index];
+                return (
+                  <div
+                    key={slot}
+                    className="group relative overflow-hidden border border-border bg-background"
+                  >
                     {sample ? (
-                      <p className="mt-2 line-clamp-1 text-xs text-white/75">{sample.alt}</p>
+                      <img
+                        src={sample.src}
+                        alt={sample.alt}
+                        className="aspect-[4/3] w-full object-cover transition duration-500 group-hover:scale-105"
+                      />
                     ) : (
-                      <p className="mt-2 text-xs text-white/75">{t.replace}</p>
+                      <div className="grid aspect-[4/3] place-items-center border border-dashed border-primary/40 bg-primary/5 p-6 text-center">
+                        <ImagePlus className="h-8 w-8 text-primary" />
+                      </div>
                     )}
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent p-5 text-white">
+                      <div className="text-xs font-bold uppercase tracking-[0.2em]">{slot}</div>
+                      {sample ? (
+                        <p className="mt-2 line-clamp-1 text-xs text-white/75">{sample.alt}</p>
+                      ) : (
+                        <p className="mt-2 text-xs text-white/75">{t.replace}</p>
+                      )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
         </div>
       </section>
