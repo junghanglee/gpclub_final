@@ -1,13 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
 import { Download, Eye, FileText, Search, Star } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useEffect, useMemo, useState } from "react";
+import { CatalogTabsSkeleton, IncludedProductsSkeleton } from "@/components/site/SectionSkeletons";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { type CatalogProduct, useCatalogProducts } from "@/lib/catalog-products";
 import { useI18n } from "@/lib/i18n";
 import { fetchProductCatalogs, type ProductCatalog } from "@/lib/product-catalogs";
-import { useCatalogProducts, type CatalogProduct } from "@/lib/catalog-products";
 
 export const Route = createFileRoute("/catalog/")({
   head: () => ({
@@ -24,7 +25,7 @@ export const Route = createFileRoute("/catalog/")({
 
 function CatalogDownloadPage() {
   const { lang } = useI18n();
-  const { rows: products } = useCatalogProducts();
+  const { rows: products, loading: productsLoading } = useCatalogProducts();
   const [catalogs, setCatalogs] = useState<ProductCatalog[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -134,7 +135,7 @@ function CatalogDownloadPage() {
         </div>
 
         <div className="mt-8">
-          {loading ? <p className="text-sm text-muted-foreground">Loading...</p> : null}
+          {loading ? <CatalogTabsSkeleton includedProductsLabel={copy.includedProducts} /> : null}
           {!loading && filteredCatalogs.length === 0 ? (
             <div className="rounded-3xl border border-dashed border-border bg-white/70 p-8 text-center">
               <p className="text-sm font-semibold text-muted-foreground">{copy.empty}</p>
@@ -144,7 +145,7 @@ function CatalogDownloadPage() {
             </div>
           ) : null}
 
-          {filteredCatalogs.length > 0 ? (
+          {!loading && filteredCatalogs.length > 0 ? (
             <Tabs
               value={activeCatalogId || filteredCatalogs[0].id}
               onValueChange={setActiveCatalogId}
@@ -241,22 +242,28 @@ function CatalogDownloadPage() {
                           {copy.includedProducts}
                         </h3>
                         <div className="mt-4 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-                          {selectedProducts.slice(0, 24).map((product) => (
-                            <div
-                              key={product.id}
-                              className="rounded-2xl border border-border/70 bg-background/70 p-4"
-                            >
-                              <div className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">
-                                {product.brand_name}
+                          {productsLoading && selectedProducts.length === 0 ? (
+                            <IncludedProductsSkeleton />
+                          ) : selectedProducts.length === 0 ? (
+                            <IncludedProductsEmpty />
+                          ) : (
+                            selectedProducts.slice(0, 24).map((product) => (
+                              <div
+                                key={product.id}
+                                className="rounded-2xl border border-border/70 bg-background/70 p-4"
+                              >
+                                <div className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">
+                                  {product.brand_name}
+                                </div>
+                                <div className="mt-1 font-semibold leading-snug">
+                                  {product.product_name}
+                                </div>
+                                <div className="mt-1 text-xs text-muted-foreground">
+                                  {product.product_type}
+                                </div>
                               </div>
-                              <div className="mt-1 font-semibold leading-snug">
-                                {product.product_name}
-                              </div>
-                              <div className="mt-1 text-xs text-muted-foreground">
-                                {product.product_type}
-                              </div>
-                            </div>
-                          ))}
+                            ))
+                          )}
                         </div>
                       </div>
                     </article>
@@ -268,5 +275,13 @@ function CatalogDownloadPage() {
         </div>
       </section>
     </main>
+  );
+}
+
+function IncludedProductsEmpty() {
+  return (
+    <div className="rounded-2xl border border-dashed border-border/70 bg-background/70 p-4 text-sm text-muted-foreground md:col-span-2 lg:col-span-3">
+      Product slots will appear here when this catalog has selected items.
+    </div>
   );
 }

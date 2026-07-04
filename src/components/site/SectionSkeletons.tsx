@@ -198,6 +198,46 @@ export function CatalogProductSkeleton({ count = 4 }: CountProps) {
   );
 }
 
+export function CatalogCoverSkeleton() {
+  return (
+    <section
+      className="catalog-cover relative isolate grid min-h-[820px] overflow-hidden bg-[#151014] text-white md:grid-cols-2 print:min-h-[980px] print:grid-cols-2"
+      aria-busy="true"
+    >
+      <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_20%_20%,rgba(236,72,153,0.45),transparent_34%),linear-gradient(135deg,#120e11,#2a1622_55%,#f7b6c9)]" />
+      <div className="flex flex-col justify-between p-10 md:p-14 print:p-12">
+        <div>
+          <div className="inline-flex items-center gap-2 border-b border-white/40 pb-2">
+            <SkeletonLine className="h-3 w-36 bg-white/30" />
+          </div>
+          <div className="mt-10 space-y-4">
+            <div className="h-16 w-full max-w-xl rounded-full bg-white/18 md:h-20" />
+            <div className="h-16 w-4/5 rounded-full bg-white/18 md:h-20" />
+          </div>
+          <div className="mt-7 space-y-3">
+            <div className="h-5 w-full max-w-xl rounded-full bg-white/16" />
+            <div className="h-5 w-2/3 rounded-full bg-white/16" />
+          </div>
+        </div>
+        <div className="mt-12 grid grid-cols-3 gap-3 text-center">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <div key={index} className="border border-white/20 bg-white/10 p-4 backdrop-blur">
+              <div className="mx-auto h-9 w-14 rounded-full bg-white/20" />
+              <div className="mx-auto mt-3 h-3 w-16 rounded-full bg-white/16" />
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="relative min-h-[420px] p-10 md:p-14 print:p-12">
+        <div className="absolute right-10 top-10 h-40 w-40 rounded-full bg-pink-300/30 blur-3xl" />
+        <div className="relative h-full min-h-[620px] overflow-hidden rounded-[2.5rem] border border-white/20 bg-white/10 shadow-2xl print:min-h-[760px]">
+          <VisualSkeleton className="bg-transparent text-white/45" />
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export function EventTimelineSkeleton() {
   return (
     <>

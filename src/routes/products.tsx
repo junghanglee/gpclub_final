@@ -3,6 +3,7 @@ import { ArrowRight, Search, Sparkles, Star } from "lucide-react";
 import { useMemo, useState } from "react";
 import gippyProductsHero from "@/assets/gippy-products-hero.png";
 import { B2BInquiryDialog } from "@/components/site/B2BInquiryDialog";
+import { ProductCardSkeletonGrid, ProductImageSkeleton } from "@/components/site/SectionSkeletons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -89,7 +90,7 @@ const productText = {
 
 function ProductsPage() {
   const { lang } = useI18n();
-  const { content: page, loading: pageLoading } = usePageContent("products");
+  const { content: page } = usePageContent("products");
   const t = productText[lang];
   const { rows, loading } = useCatalogProducts();
   const [q, setQ] = useState("");
@@ -140,14 +141,12 @@ function ProductsPage() {
     });
   }, [rows, q, cat, brand]);
 
+  const showProductShells = loading && filtered.length === 0;
+
   const openInquiry = () => {
     if (!selected) return;
     setInquiryOpen(true);
   };
-
-  if (pageLoading) {
-    return <main className="min-h-[60vh] bg-background" />;
-  }
 
   return (
     <>
@@ -241,10 +240,10 @@ function ProductsPage() {
       </section>
 
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        {loading ? (
-          <p className="py-16 text-center text-muted-foreground">Loading...</p>
+        {showProductShells ? (
+          <ProductCardSkeletonGrid />
         ) : filtered.length === 0 ? (
-          <p className="py-16 text-center text-muted-foreground">{t.empty}</p>
+          <ProductEmptyGrid message={t.empty} />
         ) : (
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
             {filtered.map((p) => (
@@ -264,7 +263,9 @@ function ProductsPage() {
                       loading="lazy"
                       className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                     />
-                  ) : null}
+                  ) : (
+                    <ProductImageSkeleton />
+                  )}
                   <div className="absolute left-3 top-3 flex flex-wrap gap-1">
                     {p.is_new ? (
                       <Badge className="gap-1 bg-primary text-primary-foreground">
@@ -329,7 +330,11 @@ function ProductsPage() {
                         alt={selected.product_name}
                         className="aspect-square w-full rounded-3xl border bg-muted object-cover shadow-soft"
                       />
-                    ) : null}
+                    ) : (
+                      <div className="aspect-square w-full overflow-hidden rounded-3xl border bg-muted shadow-soft">
+                        <ProductImageSkeleton />
+                      </div>
+                    )}
                     <div className="rounded-2xl border bg-muted/25 p-4">
                       <div className="mb-3 text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
                         Product summary
@@ -432,5 +437,25 @@ function ProductsPage() {
         title="Register B2B inquiry without leaving this product"
       />
     </>
+  );
+}
+
+function ProductEmptyGrid({ message }: { message: string }) {
+  return (
+    <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+      {Array.from({ length: 4 }).map((_, index) => (
+        <div
+          key={index}
+          className="overflow-hidden rounded-2xl border border-dashed border-border bg-card text-left"
+        >
+          <div className="relative aspect-square overflow-hidden bg-muted">
+            <ProductImageSkeleton />
+          </div>
+          <div className="p-4">
+            <p className="mt-2 text-sm text-muted-foreground">{message}</p>
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }

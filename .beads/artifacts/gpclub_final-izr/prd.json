@@ -28,7 +28,7 @@
 				"`rtk npx prettier --check src/routes/products.tsx src/routes/products.$productId.tsx src/routes/catalog.index.tsx src/routes/catalog.$catalogId.tsx`",
 				"`Select-String -Path src/routes/catalog.$catalogId.tsx -Pattern 'createCatalogPreview'` returns no matches"
 			],
-			"passes": false,
+			"passes": true,
 			"metadata": {
 				"depends_on": ["Add shared public skeleton components"],
 				"parallel": true,
