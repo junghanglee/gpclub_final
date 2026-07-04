@@ -206,7 +206,12 @@ function PublicEngagementLayer() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const id = window.setTimeout(() => setReady(true), 750);
+    const load = () => setReady(true);
+    if ("requestIdleCallback" in window) {
+      const id = window.requestIdleCallback(load, { timeout: 2500 });
+      return () => window.cancelIdleCallback(id);
+    }
+    const id = window.setTimeout(load, 1200);
     return () => window.clearTimeout(id);
   }, []);
 
