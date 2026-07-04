@@ -1,10 +1,18 @@
 import { type QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { createRootRouteWithContext, Link, Outlet, useRouter } from "@tanstack/react-router";
+import {
+  createRootRouteWithContext,
+  HeadContent,
+  Link,
+  Outlet,
+  Scripts,
+  useRouter,
+} from "@tanstack/react-router";
 import { lazy, type ReactNode, Suspense, useEffect, useState } from "react";
 import { FloatingChat } from "@/components/site/FloatingChat";
 import { Footer } from "@/components/site/Footer";
 import { Header } from "@/components/site/Header";
 import { Toaster } from "@/components/ui/sonner";
+import { HomeContentProvider } from "@/lib/home-content";
 import { I18nProvider } from "@/lib/i18n";
 import { SiteSettingsProvider } from "@/lib/site-settings";
 import appCss from "../styles.css?url";
@@ -162,17 +170,19 @@ function RootComponent() {
     <RootDocument>
       <QueryClientProvider client={queryClient}>
         <SiteSettingsProvider>
-          <I18nProvider>
-            <div className="flex min-h-screen flex-col">
-              <Header />
-              <main key={pathname} className="flex-1 animate-page-in">
-                <Outlet />
-              </main>
-              <Footer />
-              <PublicEngagementLayer />
-              <Toaster />
-            </div>
-          </I18nProvider>
+          <HomeContentProvider>
+            <I18nProvider>
+              <div className="flex min-h-screen flex-col">
+                <Header />
+                <main key={pathname} className="flex-1 animate-page-in">
+                  <Outlet />
+                </main>
+                <Footer />
+                <PublicEngagementLayer />
+                <Toaster />
+              </div>
+            </I18nProvider>
+          </HomeContentProvider>
         </SiteSettingsProvider>
       </QueryClientProvider>
     </RootDocument>
@@ -206,5 +216,15 @@ function PublicEngagementLayer() {
 }
 
 function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
-  return <>{children}</>;
+  return (
+    <html lang="vi">
+      <head>
+        <HeadContent />
+      </head>
+      <body>
+        {children}
+        <Scripts />
+      </body>
+    </html>
+  );
 }

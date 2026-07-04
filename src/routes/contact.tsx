@@ -42,7 +42,7 @@ import {
 export const Route = createFileRoute("/contact")({
   head: () => ({
     meta: [
-      { title: "Contact â€” GPCLUB Vietnam" },
+      { title: "Contact — GPCLUB Vietnam" },
       {
         name: "description",
         content:
@@ -60,59 +60,59 @@ export const Route = createFileRoute("/contact")({
 
 const contactText = {
   vi: {
-    heroA: "CÃ¹ng xÃ¢y dá»±ng",
-    heroB: "cÃ¢u chuyá»‡n thÃ nh cÃ´ng lÃ m Ä‘áº¹p tiáº¿p theo táº¡i Viá»‡t Nam.",
+    heroA: "Cùng xây dựng",
+    heroB: "câu chuyện thành công làm đẹp tiếp theo tại Việt Nam.",
     heroDesc:
-      "NhÃ  phÃ¢n phá»‘i, nhÃ  bÃ¡n láº» vÃ  Ä‘á»‘i tÃ¡c OEM/ODM â€” hÃ£y chia sáº» nhu cáº§u cá»§a báº¡n. TÆ° váº¥n viÃªn chuyÃªn trÃ¡ch sáº½ pháº£n há»“i trong 24 giá» vá»›i Ä‘á» xuáº¥t phÃ¹ há»£p.",
-    zaloDesc: "KÃªnh pháº£n há»“i nhanh cho Ä‘á»‘i tÃ¡c Viá»‡t Nam",
-    openZalo: "Má»Ÿ Zalo",
-    whatsappDesc: "Há»— trá»£ Ä‘á»‘i tÃ¡c quá»‘c táº¿",
-    openWhatsapp: "Má»Ÿ WhatsApp",
-    sendEmail: "Gá»­i email",
-    call: "Gá»i ngay",
-    hq: "TP. Há»“ ChÃ­ Minh â€” Trá»¥ sá»Ÿ chÃ­nh",
-    hours: "Thá»© 2â€“Thá»© 6 Â· 9:00â€“18:00",
-    maps: "Má»Ÿ báº±ng Google Maps",
-    companyInfo: "ThÃ´ng tin cÃ´ng ty",
-    legalName: "TÃªn phÃ¡p lÃ½ (VN)",
-    tax: "MÃ£ sá»‘ thuáº¿",
-    rep: "NgÆ°á»i Ä‘áº¡i diá»‡n phÃ¡p luáº­t",
-    est: "ThÃ nh láº­p",
-    address: "Äá»‹a chá»‰ Ä‘Äƒng kÃ½",
-    type: "Loáº¡i hÃ¬nh doanh nghiá»‡p",
-    status: "Tráº¡ng thÃ¡i",
-    llc: "CÃ´ng ty trÃ¡ch nhiá»‡m há»¯u háº¡n",
-    active: "Äang hoáº¡t Ä‘á»™ng",
-    registry: "Xem Ä‘Äƒng kÃ½ cÃ´ng khai",
-    faqTitle: "CÃ¢u há»i thÆ°á»ng gáº·p",
-    faqDesc: "CÃ¢u tráº£ lá»i nhanh cho nhá»¯ng cÃ¢u há»i Ä‘á»‘i tÃ¡c thÆ°á»ng há»i nháº¥t.",
-    chatZalo: "Chat trÃªn Zalo",
-    emailUs: "Gá»­i email cho chÃºng tÃ´i",
-    formKicker: "Gá»­i tin nháº¯n",
-    formTitle: "Cho chÃºng tÃ´i biáº¿t báº¡n cáº§n há»— trá»£ gÃ¬",
-    name: "Há» vÃ  tÃªn",
+      "Nhà phân phối, nhà bán lẻ và đối tác OEM/ODM — hãy chia sẻ nhu cầu của bạn. Tư vấn viên chuyên trách sẽ phản hồi trong 24 giờ với đề xuất phù hợp.",
+    zaloDesc: "Kênh phản hồi nhanh cho đối tác Việt Nam",
+    openZalo: "Mở Zalo",
+    whatsappDesc: "Hỗ trợ đối tác quốc tế",
+    openWhatsapp: "Mở WhatsApp",
+    sendEmail: "Gửi email",
+    call: "Gọi ngay",
+    hq: "TP. Hồ Chí Minh — Trụ sở chính",
+    hours: "Thứ 2–Thứ 6 · 9:00–18:00",
+    maps: "Mở bằng Google Maps",
+    companyInfo: "Thông tin công ty",
+    legalName: "Tên pháp lý (VN)",
+    tax: "Mã số thuế",
+    rep: "Người đại diện pháp luật",
+    est: "Thành lập",
+    address: "Địa chỉ đăng ký",
+    type: "Loại hình doanh nghiệp",
+    status: "Trạng thái",
+    llc: "Công ty trách nhiệm hữu hạn",
+    active: "Đang hoạt động",
+    registry: "Xem đăng ký công khai",
+    faqTitle: "Câu hỏi thường gặp",
+    faqDesc: "Câu trả lời nhanh cho những câu hỏi đối tác thường hỏi nhất.",
+    chatZalo: "Chat trên Zalo",
+    emailUs: "Gửi email cho chúng tôi",
+    formKicker: "Gửi tin nhắn",
+    formTitle: "Cho chúng tôi biết bạn cần hỗ trợ gì",
+    name: "Họ và tên",
     email: "Email",
-    phone: "Sá»‘ Ä‘iá»‡n thoáº¡i",
-    optional: "khÃ´ng báº¯t buá»™c",
-    subject: "Chá»§ Ä‘á»",
-    message: "Ná»™i dung",
-    sending: "Äang gá»­iâ€¦",
-    send: "Gá»­i tin nháº¯n",
-    thanks: "Cáº£m Æ¡n! ChÃºng tÃ´i sáº½ pháº£n há»“i sá»›m.",
+    phone: "Số điện thoại",
+    optional: "không bắt buộc",
+    subject: "Chủ đề",
+    message: "Nội dung",
+    sending: "Đang gửi…",
+    send: "Gửi tin nhắn",
+    thanks: "Cảm ơn! Chúng tôi sẽ phản hồi sớm.",
   },
   en: {
     heroA: "Let's build Vietnam's",
     heroB: "next beauty success story.",
     heroDesc:
-      "Distributors, retailers, and OEM/ODM partners â€” tell us about your business. A dedicated consultant will reply within 24 hours with a tailored proposal.",
+      "Distributors, retailers, and OEM/ODM partners — tell us about your business. A dedicated consultant will reply within 24 hours with a tailored proposal.",
     zaloDesc: "Fastest channel for Vietnam partners",
     openZalo: "Open Zalo",
     whatsappDesc: "International partners welcome",
     openWhatsapp: "Open WhatsApp",
     sendEmail: "Send email",
     call: "Call us",
-    hq: "Ho Chi Minh City â€” Headquarters",
-    hours: "Monâ€“Fri Â· 9:00â€“18:00",
+    hq: "Ho Chi Minh City — Headquarters",
+    hours: "Mon–Fri · 9:00–18:00",
     maps: "Open in Google Maps",
     companyInfo: "Company information",
     legalName: "Legal name (VN)",
@@ -137,11 +137,14 @@ const contactText = {
     optional: "optional",
     subject: "Subject",
     message: "Message",
-    sending: "Sendingâ€¦",
+    sending: "Sending…",
     send: "Send message",
     thanks: "Thanks! We'll get back to you soon.",
   },
 };
+
+const INITIAL_FAQ_COUNT = 12;
+const FAQ_BATCH_SIZE = 12;
 
 const inquirySchema = z.object({
   name: z.string().trim().min(1).max(100),
@@ -173,9 +176,11 @@ function ContactPage() {
   const [faqs, setFaqs] = useState<{ question: string; answer: string; category?: string }[]>([]);
   const [faqLang, setFaqLang] = useState<"ko" | "en" | "vi">(lang);
   const [faqLoading, setFaqLoading] = useState(true);
+  const [visibleFaqCount, setVisibleFaqCount] = useState(INITIAL_FAQ_COUNT);
 
   useEffect(() => {
     setFaqLang(lang);
+    setVisibleFaqCount(INITIAL_FAQ_COUNT);
   }, [lang]);
 
   useEffect(() => {
@@ -224,6 +229,8 @@ function ContactPage() {
 
     return byLang;
   }, [faqLang, faqs]);
+  const displayedFaqs = visibleFaqs.slice(0, visibleFaqCount);
+  const hasMoreFaqs = visibleFaqCount < visibleFaqs.length;
 
   // Inquiry form state
   const [form, setForm] = useState({
@@ -254,7 +261,7 @@ function ContactPage() {
           aria-hidden
           className="pointer-events-none absolute -top-20 right-0 h-[360px] w-[360px] rounded-full bg-primary/10 blur-3xl"
         />
-        <div className="relative mx-auto grid max-w-[1100px] items-center gap-10 px-4 py-20 sm:px-6 md:py-28 lg:grid-cols-12 lg:px-10">
+        <div className="relative mx-auto grid min-h-[560px] max-w-[1100px] items-center gap-10 px-4 py-20 sm:min-h-[620px] sm:px-6 md:py-28 lg:min-h-[640px] lg:grid-cols-12 lg:px-10">
           <div className="text-center lg:col-span-7 lg:text-left">
             {pageLoading ? (
               <HeroCopySkeleton />
@@ -419,14 +426,17 @@ function ContactPage() {
 
           <div className="mt-8 flex flex-wrap justify-center gap-2">
             {[
-              { value: "ko", label: "í•œêµ­ì–´" },
+              { value: "ko", label: "한국어" },
               { value: "en", label: "English" },
-              { value: "vi", label: "Tiáº¿ng Viá»‡t" },
+              { value: "vi", label: "Tiếng Việt" },
             ].map((option) => (
               <button
                 key={option.value}
                 type="button"
-                onClick={() => setFaqLang(option.value as "ko" | "en" | "vi")}
+                onClick={() => {
+                  setFaqLang(option.value as "ko" | "en" | "vi");
+                  setVisibleFaqCount(INITIAL_FAQ_COUNT);
+                }}
                 className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
                   faqLang === option.value
                     ? "border-primary bg-primary text-primary-foreground shadow-soft"
@@ -448,7 +458,7 @@ function ContactPage() {
             ) : visibleFaqs.length === 0 ? (
               <ContactFaqEmptyState />
             ) : (
-              visibleFaqs.map((f, i) => (
+              displayedFaqs.map((f, i) => (
                 <AccordionItem key={i} value={`item-${i}`} className="px-4">
                   <AccordionTrigger className="text-left text-base font-semibold">
                     {f.question}
@@ -460,6 +470,19 @@ function ContactPage() {
               ))
             )}
           </Accordion>
+
+          {!faqLoading && hasMoreFaqs && (
+            <div className="mt-5 flex justify-center">
+              <Button
+                type="button"
+                variant="outline"
+                className="rounded-full"
+                onClick={() => setVisibleFaqCount((count) => count + FAQ_BATCH_SIZE)}
+              >
+                {lang === "vi" ? "Xem thêm câu hỏi" : "Load more questions"}
+              </Button>
+            </div>
+          )}
 
           <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Button asChild className="rounded-full">
@@ -586,7 +609,7 @@ function ChannelCard({
         <div className="font-display text-xl">{title}</div>
         {loading ? <ContactRowSkeleton /> : <p className="text-sm text-muted-foreground">{desc}</p>}
       </div>
-      <div className="text-sm font-medium text-primary">{cta} â†’</div>
+      <div className="text-sm font-medium text-primary">{cta} →</div>
     </a>
   );
 }

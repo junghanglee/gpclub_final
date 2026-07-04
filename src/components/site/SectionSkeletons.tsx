@@ -74,10 +74,19 @@ export function ProductCardSkeleton() {
         <div className="absolute left-3 top-3 h-6 w-16 rounded-full bg-background/80" />
       </div>
       <div className="space-y-3 p-4">
-        <SkeletonLine className="h-3 w-20" />
-        <SkeletonLine className="h-4 w-full" />
-        <SkeletonLine className="h-3 w-2/3" />
-        <SkeletonLine className="h-3 w-24 bg-primary/20" />
+        <div className="flex items-center justify-between gap-2">
+          <SkeletonLine className="h-3 w-20" />
+          <SkeletonLine className="h-5 w-16 bg-secondary" />
+        </div>
+        <div className="space-y-2">
+          <SkeletonLine className="h-4 w-full" />
+          <SkeletonLine className="h-4 w-4/5" />
+        </div>
+        <div className="space-y-2">
+          <SkeletonLine className="h-3 w-full" />
+          <SkeletonLine className="h-3 w-2/3" />
+        </div>
+        <SkeletonLine className="mt-4 h-3 w-24 bg-primary/20" />
       </div>
     </div>
   );

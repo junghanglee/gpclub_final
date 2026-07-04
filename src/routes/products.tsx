@@ -218,7 +218,7 @@ function ProductsPage() {
           aria-hidden
           className="pointer-events-none absolute -bottom-40 -left-24 h-[420px] w-[420px] rounded-full bg-accent/50 blur-3xl"
         />
-        <div className="relative mx-auto grid max-w-[1200px] items-center gap-12 px-4 py-20 sm:px-6 md:py-28 lg:grid-cols-12 lg:px-10">
+        <div className="relative mx-auto grid min-h-[560px] max-w-[1200px] items-center gap-12 px-4 py-20 sm:min-h-[620px] sm:px-6 md:py-28 lg:min-h-[640px] lg:grid-cols-12 lg:px-10">
           <div className="text-center lg:col-span-7 lg:text-left">
             {pageLoading ? (
               <HeroCopySkeleton />
@@ -309,7 +309,7 @@ function ProductsPage() {
 
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         {showProductShells ? (
-          <ProductCardSkeletonGrid />
+          <ProductCardSkeletonGrid count={INITIAL_PRODUCT_COUNT} />
         ) : filtered.length === 0 ? (
           <ProductEmptyGrid message={t.empty} />
         ) : (

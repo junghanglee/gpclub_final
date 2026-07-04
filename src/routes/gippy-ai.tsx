@@ -259,7 +259,7 @@ function GippyHeroSection({
           aria-hidden
           className="pointer-events-none absolute -bottom-44 -left-24 h-[420px] w-[420px] rounded-full bg-accent/60 blur-3xl"
         />
-        <div className="relative mx-auto grid w-full max-w-[1200px] grid-cols-1 items-center gap-8 px-4 py-12 sm:px-6 md:py-16 lg:grid-cols-12 lg:px-10">
+        <div className="relative mx-auto grid min-h-[560px] w-full max-w-[1200px] grid-cols-1 items-center gap-8 px-4 py-12 sm:min-h-[620px] sm:px-6 md:py-16 lg:min-h-[640px] lg:grid-cols-12 lg:px-10">
           <div className="text-center lg:col-span-7 lg:text-left">
             <HeroCopySkeleton withCta />
           </div>
@@ -288,7 +288,7 @@ function GippyHeroSection({
         aria-hidden
         className="pointer-events-none absolute -bottom-44 -left-24 h-[420px] w-[420px] rounded-full bg-accent/60 blur-3xl"
       />
-      <div className="relative mx-auto grid w-full max-w-[1200px] grid-cols-1 items-center gap-8 px-4 py-12 sm:px-6 md:py-16 lg:grid-cols-12 lg:px-10">
+      <div className="relative mx-auto grid min-h-[560px] w-full max-w-[1200px] grid-cols-1 items-center gap-8 px-4 py-12 sm:min-h-[620px] sm:px-6 md:py-16 lg:min-h-[640px] lg:grid-cols-12 lg:px-10">
         <div className="text-center lg:col-span-7 lg:text-left">
           <div className="inline-flex items-center gap-2 border-b border-primary/40 pb-1 text-[11px] font-bold uppercase tracking-[0.28em] text-primary">
             <Sparkles className="h-3 w-3" /> {page.kicker[lang]}
