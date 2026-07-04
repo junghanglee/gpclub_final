@@ -1,0 +1,28 @@
+﻿# Progress Log
+
+Bead: gpclub_final-izr
+Started: 2026-07-04
+
+## Codebase Patterns
+
+- Router pending UI is centralized in `src/router.tsx`.
+- Static route framing should render immediately without waiting for remote data.
+- Remote record/list/detail sections should use shared skeleton components while loading.
+- Dynamic loading must not use fallback product, catalog, event, company, contact, FAQ, or product-image data to look populated.
+- Empty states should appear only after the relevant loading flag is false.
+- `LoadingModal` is a fullscreen overlay and should be reserved for true blocking flows.
+
+---
+
+<!-- Task logs below - APPEND ONLY -->
+
+## 2026-07-04 - Scope correction
+
+- Updated bead direction to Option B: shared skeleton components.
+- Replaced fallback-first language with a skeleton contract: static UI renders immediately, dynamic data sections render skeletons while loading, and empty states render only after loading completes.
+- Added `src/components/site/SectionSkeletons.tsx` as the canonical component home for public skeletons.
+
+## 2026-07-04 - Task 1 component skeletons
+
+- Added `src/components/site/SectionSkeletons.tsx` with data-free shared skeleton components for section headers, product cards/details, catalog tabs/products, event cards/timelines, B2B image slots, contact rows, and FAQ rows.
+- Verification: `rtk npx eslint src/components/site/SectionSkeletons.tsx` passed with no issues after formatting; `rtk npx prettier --check src/components/site/SectionSkeletons.tsx` passed.
