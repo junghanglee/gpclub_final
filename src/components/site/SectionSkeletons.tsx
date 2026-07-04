@@ -8,13 +8,20 @@ type CountProps = {
 };
 
 function SkeletonLine({ className = "" }: { className?: string }) {
-  return <div className={`rounded-full bg-muted ${className}`} aria-hidden="true" />;
+  return (
+    <div
+      className={`animate-pulse rounded-full bg-primary/15 ring-1 ring-primary/10 ${className}`}
+      data-skeleton="true"
+      aria-hidden="true"
+    />
+  );
 }
 
 function VisualSkeleton({ className = "" }: { className?: string }) {
   return (
     <div
-      className={`flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/10 via-background to-secondary text-primary/50 ${className}`}
+      className={`flex h-full w-full animate-pulse items-center justify-center border border-primary/10 bg-gradient-to-br from-primary/15 via-secondary to-primary/10 text-primary/60 ${className}`}
+      data-skeleton="true"
       aria-hidden="true"
     >
       <ImageIcon className="h-8 w-8" />
@@ -24,11 +31,33 @@ function VisualSkeleton({ className = "" }: { className?: string }) {
 
 export function SectionHeaderSkeleton() {
   return (
-    <div className="max-w-3xl space-y-4" aria-hidden="true">
+    <div className="max-w-3xl space-y-4" aria-busy="true">
       <SkeletonLine className="h-4 w-28" />
       <SkeletonLine className="h-10 w-4/5 md:h-14" />
       <SkeletonLine className="h-4 w-full" />
       <SkeletonLine className="h-4 w-2/3" />
+    </div>
+  );
+}
+
+export function HeroCopySkeleton({ withCta = false }: { withCta?: boolean }) {
+  return (
+    <div className="mx-auto max-w-2xl space-y-5 lg:mx-0" aria-busy="true">
+      <SkeletonLine className="mx-auto h-3 w-32 lg:mx-0" />
+      <div className="space-y-3">
+        <SkeletonLine className="h-12 w-full md:h-16" />
+        <SkeletonLine className="mx-auto h-12 w-3/4 md:h-16 lg:mx-0" />
+      </div>
+      <div className="space-y-3 pt-2">
+        <SkeletonLine className="h-4 w-full" />
+        <SkeletonLine className="mx-auto h-4 w-5/6 lg:mx-0" />
+      </div>
+      {withCta ? (
+        <div className="flex flex-wrap justify-center gap-3 pt-3 lg:justify-start">
+          <SkeletonLine className="h-12 w-40 rounded-none bg-primary/20" />
+          <SkeletonLine className="h-12 w-36 rounded-none" />
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -56,7 +85,7 @@ export function ProductCardSkeleton() {
 
 export function ProductCardSkeletonGrid({ count = 8 }: CountProps) {
   return (
-    <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4" aria-busy="true">
       {Array.from({ length: count }).map((_, index) => (
         <ProductCardSkeleton key={index} />
       ))}
@@ -321,7 +350,13 @@ export function BrandImageSkeleton() {
 }
 
 export function ContactRowSkeleton() {
-  return <span className="inline-block h-3 w-36 rounded-full bg-muted" aria-hidden="true" />;
+  return (
+    <span
+      className="inline-block h-3 w-36 animate-pulse rounded-full bg-primary/15 ring-1 ring-primary/10"
+      data-skeleton="true"
+      aria-hidden="true"
+    />
+  );
 }
 
 export function FaqSkeletonItems({ count = 4 }: CountProps) {

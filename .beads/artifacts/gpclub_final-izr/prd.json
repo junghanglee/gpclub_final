@@ -1,164 +1,164 @@
 {
-	"beadId": "gpclub_final-izr",
-	"prdName": "shared-skeleton-components-public-loading",
-	"tasks": [
-		{
-			"id": "component-1",
-			"category": "component",
-			"description": "Public routes have a reusable skeleton component set for section headers, product cards, event cards, contact rows, image slots, and detail panels.",
-			"steps": [
-				"`rtk npx eslint src/components/site/SectionSkeletons.tsx`",
-				"`rtk npx prettier --check src/components/site/SectionSkeletons.tsx`"
-			],
-			"passes": true,
-			"metadata": {
-				"depends_on": [],
-				"parallel": false,
-				"conflicts_with": [],
-				"files": ["src/components/site/SectionSkeletons.tsx"]
-			}
-		},
-		{
-			"id": "functional-2",
-			"category": "functional",
-			"description": "Product and catalog routes use shared skeletons while product rows, product details, catalog metadata, and catalog product selections are loading, and they do not create fake dynamic records.",
-			"steps": [
-				"`rtk npm run build`",
-				"`rtk npx eslint src/routes/products.tsx src/routes/products.$productId.tsx src/routes/catalog.index.tsx src/routes/catalog.$catalogId.tsx`",
-				"`rtk npx prettier --check src/routes/products.tsx src/routes/products.$productId.tsx src/routes/catalog.index.tsx src/routes/catalog.$catalogId.tsx`",
-				"`Select-String -Path src/routes/catalog.$catalogId.tsx -Pattern 'createCatalogPreview'` returns no matches"
-			],
-			"passes": true,
-			"metadata": {
-				"depends_on": ["Add shared public skeleton components"],
-				"parallel": true,
-				"conflicts_with": [],
-				"files": [
-					"src/routes/products.tsx",
-					"src/routes/products.$productId.tsx",
-					"src/routes/catalog.index.tsx",
-					"src/routes/catalog.$catalogId.tsx",
-					"src/lib/catalog-products.ts",
-					"src/lib/product-catalogs.ts"
-				]
-			}
-		},
-		{
-			"id": "functional-3",
-			"category": "functional",
-			"description": "Events, B2B, and contact routes keep static section framing visible while remote event rows, catalog-derived images, company settings, contact settings, and FAQs load through shared skeletons.",
-			"steps": [
-				"`rtk npm run build`",
-				"`rtk npx eslint src/routes/events.tsx src/routes/b2b.tsx src/routes/contact.tsx`",
-				"`rtk npx prettier --check src/routes/events.tsx src/routes/b2b.tsx src/routes/contact.tsx`",
-				"Dynamic skeletons in these routes contain no fake event, product, company, or FAQ copy"
-			],
-			"passes": true,
-			"metadata": {
-				"depends_on": ["Add shared public skeleton components"],
-				"parallel": true,
-				"conflicts_with": [],
-				"files": [
-					"src/routes/events.tsx",
-					"src/routes/b2b.tsx",
-					"src/routes/contact.tsx",
-					"src/lib/site-settings.tsx"
-				]
-			}
-		},
-		{
-			"id": "functional-4",
-			"category": "functional",
-			"description": "Homepage, brand, Gippy AI, and router pending behavior keep static UI visible and use skeletons only for remote dynamic sections that would otherwise block or fake data.",
-			"steps": [
-				"`rtk npm run build`",
-				"`rtk npx eslint src/routes/index.tsx src/routes/brand.tsx src/routes/gippy-ai.tsx src/router.tsx src/components/site/LoadingModal.tsx`",
-				"`rtk npx prettier --check src/routes/index.tsx src/routes/brand.tsx src/routes/gippy-ai.tsx src/router.tsx src/components/site/LoadingModal.tsx`"
-			],
-			"passes": true,
-			"metadata": {
-				"depends_on": ["Add shared public skeleton components"],
-				"parallel": true,
-				"conflicts_with": [],
-				"files": [
-					"src/routes/index.tsx",
-					"src/routes/brand.tsx",
-					"src/routes/gippy-ai.tsx",
-					"src/router.tsx",
-					"src/components/site/LoadingModal.tsx",
-					"src/lib/home-content.tsx",
-					"src/lib/page-content.tsx"
-				]
-			}
-		},
-		{
-			"id": "quality-5",
-			"category": "quality",
-			"description": "The completed implementation passes build and targeted lint, and public dynamic sections follow the skeleton-while-loading then empty-state-after-loading contract.",
-			"steps": [
-				"`rtk npm run build`",
-				"`rtk npx eslint src/components/site src/routes/products.tsx src/routes/products.$productId.tsx src/routes/catalog.index.tsx src/routes/catalog.$catalogId.tsx src/routes/events.tsx src/routes/b2b.tsx src/routes/contact.tsx src/routes/index.tsx src/routes/brand.tsx src/routes/gippy-ai.tsx`",
-				"Manual route check: `/products`, `/catalog`, `/events`, `/b2b`, and `/contact` show static shell immediately and skeletons only for dynamic sections while loading"
-			],
-			"passes": true,
-			"metadata": {
-				"depends_on": [
-					"Convert product and catalog dynamic loading to shared skeletons",
-					"Convert events, B2B, and contact dynamic loading to shared skeletons",
-					"Preserve static shells on remaining public pages"
-				],
-				"parallel": false,
-				"conflicts_with": [],
-				"files": [
-					"src/components/site/SectionSkeletons.tsx",
-					"src/routes/products.tsx",
-					"src/routes/products.$productId.tsx",
-					"src/routes/catalog.index.tsx",
-					"src/routes/catalog.$catalogId.tsx",
-					"src/routes/events.tsx",
-					"src/routes/b2b.tsx",
-					"src/routes/contact.tsx",
-					"src/routes/index.tsx",
-					"src/routes/brand.tsx",
-					"src/routes/gippy-ai.tsx"
-				]
-			}
-		}
-	],
-	"context": {
-		"patterns": [
-			"Static route framing should render immediately",
-			"Remote record/list/detail sections should show shared skeletons while loading",
-			"Empty states should render only after loading completes with no real data",
-			"Skeletons must be presentational and must not encode fake product, event, catalog, contact, or FAQ data"
-		],
-		"keyFiles": [
-			"src/components/site/SectionSkeletons.tsx",
-			"src/routes/products.tsx",
-			"src/routes/products.$productId.tsx",
-			"src/routes/catalog.index.tsx",
-			"src/routes/catalog.$catalogId.tsx",
-			"src/routes/events.tsx",
-			"src/routes/b2b.tsx",
-			"src/routes/contact.tsx",
-			"src/routes/index.tsx",
-			"src/routes/brand.tsx",
-			"src/routes/gippy-ai.tsx",
-			"src/router.tsx",
-			"src/components/site/LoadingModal.tsx"
-		],
-		"nonGoals": [
-			"Do not use fallback dynamic data to simulate loaded records",
-			"Do not redesign the app into a different router or SSR architecture",
-			"Do not add data sources or change public content models",
-			"Do not expand admin/editor loading behavior"
-		]
-	},
-	"beadMetadata": {
-		"depends_on": [],
-		"parallel": true,
-		"conflicts_with": [],
-		"blocks": [],
-		"estimated_hours": 6
-	}
+  "beadId": "gpclub_final-izr",
+  "prdName": "shared-skeleton-components-public-loading",
+  "tasks": [
+    {
+      "id": "component-1",
+      "category": "component",
+      "description": "Public routes have a reusable skeleton component set for section headers, product cards, event cards, contact rows, image slots, and detail panels.",
+      "steps": [
+        "`rtk npx eslint src/components/site/SectionSkeletons.tsx`",
+        "`rtk npx prettier --check src/components/site/SectionSkeletons.tsx`"
+      ],
+      "passes": true,
+      "metadata": {
+        "depends_on": [],
+        "parallel": false,
+        "conflicts_with": [],
+        "files": ["src/components/site/SectionSkeletons.tsx"]
+      }
+    },
+    {
+      "id": "functional-2",
+      "category": "functional",
+      "description": "Product and catalog routes use shared skeletons while product rows, product details, catalog metadata, and catalog product selections are loading, and they do not create fake dynamic records.",
+      "steps": [
+        "`rtk npm run build`",
+        "`rtk npx eslint src/routes/products.tsx src/routes/products.$productId.tsx src/routes/catalog.index.tsx src/routes/catalog.$catalogId.tsx`",
+        "`rtk npx prettier --check src/routes/products.tsx src/routes/products.$productId.tsx src/routes/catalog.index.tsx src/routes/catalog.$catalogId.tsx`",
+        "`Select-String -Path src/routes/catalog.$catalogId.tsx -Pattern 'createCatalogPreview'` returns no matches"
+      ],
+      "passes": true,
+      "metadata": {
+        "depends_on": ["Add shared public skeleton components"],
+        "parallel": true,
+        "conflicts_with": [],
+        "files": [
+          "src/routes/products.tsx",
+          "src/routes/products.$productId.tsx",
+          "src/routes/catalog.index.tsx",
+          "src/routes/catalog.$catalogId.tsx",
+          "src/lib/catalog-products.ts",
+          "src/lib/product-catalogs.ts"
+        ]
+      }
+    },
+    {
+      "id": "functional-3",
+      "category": "functional",
+      "description": "Events, B2B, and contact routes keep static section framing visible while remote event rows, catalog-derived images, company settings, contact settings, and FAQs load through shared skeletons.",
+      "steps": [
+        "`rtk npm run build`",
+        "`rtk npx eslint src/routes/events.tsx src/routes/b2b.tsx src/routes/contact.tsx`",
+        "`rtk npx prettier --check src/routes/events.tsx src/routes/b2b.tsx src/routes/contact.tsx`",
+        "Dynamic skeletons in these routes contain no fake event, product, company, or FAQ copy"
+      ],
+      "passes": true,
+      "metadata": {
+        "depends_on": ["Add shared public skeleton components"],
+        "parallel": true,
+        "conflicts_with": [],
+        "files": [
+          "src/routes/events.tsx",
+          "src/routes/b2b.tsx",
+          "src/routes/contact.tsx",
+          "src/lib/site-settings.tsx"
+        ]
+      }
+    },
+    {
+      "id": "functional-4",
+      "category": "functional",
+      "description": "Homepage, brand, Gippy AI, and router pending behavior keep static UI visible and use skeletons only for remote dynamic sections that would otherwise block or fake data.",
+      "steps": [
+        "`rtk npm run build`",
+        "`rtk npx eslint src/routes/index.tsx src/routes/brand.tsx src/routes/gippy-ai.tsx src/router.tsx src/components/site/LoadingModal.tsx`",
+        "`rtk npx prettier --check src/routes/index.tsx src/routes/brand.tsx src/routes/gippy-ai.tsx src/router.tsx src/components/site/LoadingModal.tsx`"
+      ],
+      "passes": true,
+      "metadata": {
+        "depends_on": ["Add shared public skeleton components"],
+        "parallel": true,
+        "conflicts_with": [],
+        "files": [
+          "src/routes/index.tsx",
+          "src/routes/brand.tsx",
+          "src/routes/gippy-ai.tsx",
+          "src/router.tsx",
+          "src/components/site/LoadingModal.tsx",
+          "src/lib/home-content.tsx",
+          "src/lib/page-content.tsx"
+        ]
+      }
+    },
+    {
+      "id": "quality-5",
+      "category": "quality",
+      "description": "The completed implementation passes build and targeted lint, and public dynamic sections follow the skeleton-while-loading then empty-state-after-loading contract.",
+      "steps": [
+        "`rtk npm run build`",
+        "`rtk npx eslint src/components/site src/routes/products.tsx src/routes/products.$productId.tsx src/routes/catalog.index.tsx src/routes/catalog.$catalogId.tsx src/routes/events.tsx src/routes/b2b.tsx src/routes/contact.tsx src/routes/index.tsx src/routes/brand.tsx src/routes/gippy-ai.tsx`",
+        "Manual route check: `/products`, `/catalog`, `/events`, `/b2b`, and `/contact` show static shell immediately and skeletons only for dynamic sections while loading"
+      ],
+      "passes": true,
+      "metadata": {
+        "depends_on": [
+          "Convert product and catalog dynamic loading to shared skeletons",
+          "Convert events, B2B, and contact dynamic loading to shared skeletons",
+          "Preserve static shells on remaining public pages"
+        ],
+        "parallel": false,
+        "conflicts_with": [],
+        "files": [
+          "src/components/site/SectionSkeletons.tsx",
+          "src/routes/products.tsx",
+          "src/routes/products.$productId.tsx",
+          "src/routes/catalog.index.tsx",
+          "src/routes/catalog.$catalogId.tsx",
+          "src/routes/events.tsx",
+          "src/routes/b2b.tsx",
+          "src/routes/contact.tsx",
+          "src/routes/index.tsx",
+          "src/routes/brand.tsx",
+          "src/routes/gippy-ai.tsx"
+        ]
+      }
+    }
+  ],
+  "context": {
+    "patterns": [
+      "Static route framing should render immediately",
+      "Remote record/list/detail sections should show shared skeletons while loading",
+      "Empty states should render only after loading completes with no real data",
+      "Skeletons must be presentational and must not encode fake product, event, catalog, contact, or FAQ data"
+    ],
+    "keyFiles": [
+      "src/components/site/SectionSkeletons.tsx",
+      "src/routes/products.tsx",
+      "src/routes/products.$productId.tsx",
+      "src/routes/catalog.index.tsx",
+      "src/routes/catalog.$catalogId.tsx",
+      "src/routes/events.tsx",
+      "src/routes/b2b.tsx",
+      "src/routes/contact.tsx",
+      "src/routes/index.tsx",
+      "src/routes/brand.tsx",
+      "src/routes/gippy-ai.tsx",
+      "src/router.tsx",
+      "src/components/site/LoadingModal.tsx"
+    ],
+    "nonGoals": [
+      "Do not use fallback dynamic data to simulate loaded records",
+      "Do not redesign the app into a different router or SSR architecture",
+      "Do not add data sources or change public content models",
+      "Do not expand admin/editor loading behavior"
+    ]
+  },
+  "beadMetadata": {
+    "depends_on": [],
+    "parallel": true,
+    "conflicts_with": [],
+    "blocks": [],
+    "estimated_hours": 6
+  }
 }

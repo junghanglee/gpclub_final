@@ -4,7 +4,11 @@ import { ArrowRight, Download, FlaskConical, Globe2, ShieldCheck, Sparkles } fro
 import { useRef, useState } from "react";
 import gippyMainHero from "@/assets/gippy-main-hero.png";
 import { B2BInquiryDialog } from "@/components/site/B2BInquiryDialog";
-import { ProductCardSkeletonGrid } from "@/components/site/SectionSkeletons";
+import {
+  HeroCopySkeleton,
+  ProductCardSkeletonGrid,
+  SectionHeaderSkeleton,
+} from "@/components/site/SectionSkeletons";
 import { Button } from "@/components/ui/button";
 import { getCoverImage, useCatalogProducts } from "@/lib/catalog-products";
 import { useHomeContent } from "@/lib/home-content";
@@ -221,55 +225,66 @@ function HomePage() {
             transition={{ duration: 0.8, ease: "easeOut" }}
             className="col-span-12 text-center lg:col-span-7 lg:text-left"
           >
-            <div className="inline-flex max-w-full items-center gap-2 border-b border-primary/40 pb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-primary sm:text-[11px] sm:tracking-[0.28em]">
-              <Sparkles className="h-3 w-3" /> {hero.kicker}
-            </div>
+            {homeContentLoading ? (
+              <>
+                <HeroCopySkeleton withCta />
+                <HomeStatsSkeleton />
+              </>
+            ) : (
+              <>
+                <div className="inline-flex max-w-full items-center gap-2 border-b border-primary/40 pb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-primary sm:text-[11px] sm:tracking-[0.28em]">
+                  <Sparkles className="h-3 w-3" /> {hero.kicker}
+                </div>
 
-            <h1 className="mt-6 font-display font-black leading-[1.05] tracking-[-0.025em] text-foreground text-[clamp(2.15rem,10vw,5rem)] sm:mt-7">
-              {heroTitleParts.length > 1 ? (
-                <>
-                  {heroTitleParts[0]}
-                  <span className="bg-gradient-pink bg-clip-text text-transparent">K-Beauty</span>
-                  {heroTitleParts.slice(1).join("K-Beauty")}
-                </>
-              ) : (
-                hero.title
-              )}
-            </h1>
-            <p className="mx-auto mt-5 max-w-xl text-[15px] font-semibold leading-relaxed text-foreground/80 md:text-lg lg:mx-0">
-              {hero.subtitle}
-            </p>
+                <h1 className="mt-6 font-display font-black leading-[1.05] tracking-[-0.025em] text-foreground text-[clamp(2.15rem,10vw,5rem)] sm:mt-7">
+                  {heroTitleParts.length > 1 ? (
+                    <>
+                      {heroTitleParts[0]}
+                      <span className="bg-gradient-pink bg-clip-text text-transparent">
+                        K-Beauty
+                      </span>
+                      {heroTitleParts.slice(1).join("K-Beauty")}
+                    </>
+                  ) : (
+                    hero.title
+                  )}
+                </h1>
+                <p className="mx-auto mt-5 max-w-xl text-[15px] font-semibold leading-relaxed text-foreground/80 md:text-lg lg:mx-0">
+                  {hero.subtitle}
+                </p>
 
-            <div className="mt-8 flex flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center lg:items-start lg:justify-start">
-              <Button
-                type="button"
-                size="lg"
-                onClick={() => setInquiryOpen(true)}
-                className="group h-12 w-full justify-center rounded-none bg-foreground px-5 text-xs font-bold uppercase tracking-[0.14em] text-background hover:bg-primary sm:w-auto sm:px-7 sm:text-sm sm:tracking-[0.18em]"
-              >
-                {hero.primaryCta}{" "}
-                <ArrowRight className="ml-2 h-4 w-4 transition group-hover:translate-x-1" />
-              </Button>
-              <Button
-                asChild
-                size="lg"
-                variant="outline"
-                className="group h-12 w-full justify-center rounded-none border-foreground px-5 text-xs font-bold uppercase tracking-[0.14em] text-foreground hover:border-primary hover:bg-primary hover:text-primary-foreground sm:w-auto sm:px-7 sm:text-sm sm:tracking-[0.18em]"
-              >
-                <Link
-                  to={downloadPath}
-                  target={downloadPath.startsWith("/catalog/") ? "_blank" : undefined}
-                >
-                  <Download className="mr-2 h-4 w-4" /> {hero.secondaryCta}
-                </Link>
-              </Button>
-            </div>
+                <div className="mt-8 flex flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center lg:items-start lg:justify-start">
+                  <Button
+                    type="button"
+                    size="lg"
+                    onClick={() => setInquiryOpen(true)}
+                    className="group h-12 w-full justify-center rounded-none bg-foreground px-5 text-xs font-bold uppercase tracking-[0.14em] text-background hover:bg-primary sm:w-auto sm:px-7 sm:text-sm sm:tracking-[0.18em]"
+                  >
+                    {hero.primaryCta}{" "}
+                    <ArrowRight className="ml-2 h-4 w-4 transition group-hover:translate-x-1" />
+                  </Button>
+                  <Button
+                    asChild
+                    size="lg"
+                    variant="outline"
+                    className="group h-12 w-full justify-center rounded-none border-foreground px-5 text-xs font-bold uppercase tracking-[0.14em] text-foreground hover:border-primary hover:bg-primary hover:text-primary-foreground sm:w-auto sm:px-7 sm:text-sm sm:tracking-[0.18em]"
+                  >
+                    <Link
+                      to={downloadPath}
+                      target={downloadPath.startsWith("/catalog/") ? "_blank" : undefined}
+                    >
+                      <Download className="mr-2 h-4 w-4" /> {hero.secondaryCta}
+                    </Link>
+                  </Button>
+                </div>
 
-            <div className="mt-10 grid w-full grid-cols-3 gap-3 text-sm text-foreground/70 sm:flex sm:flex-wrap sm:items-center sm:justify-center sm:gap-x-12 sm:gap-y-4 lg:justify-start">
-              <Stat value={hero.stats.masksValue} label={hero.stats.masks} />
-              <Stat value={hero.stats.countriesValue} label={hero.stats.countries} />
-              <Stat value={hero.stats.vietnamValue} label={hero.stats.vietnam} />
-            </div>
+                <div className="mt-10 grid w-full grid-cols-3 gap-3 text-sm text-foreground/70 sm:flex sm:flex-wrap sm:items-center sm:justify-center sm:gap-x-12 sm:gap-y-4 lg:justify-start">
+                  <Stat value={hero.stats.masksValue} label={hero.stats.masks} />
+                  <Stat value={hero.stats.countriesValue} label={hero.stats.countries} />
+                  <Stat value={hero.stats.vietnamValue} label={hero.stats.vietnam} />
+                </div>
+              </>
+            )}
           </motion.div>
 
           <motion.div
@@ -311,21 +326,27 @@ function HomePage() {
       <section className="border-t border-border bg-background py-16 md:py-28">
         <div className="mx-auto grid max-w-[1200px] gap-10 px-4 sm:px-6 md:grid-cols-12 lg:px-10">
           <div className="md:col-span-5">
-            <div className="text-[11px] font-bold uppercase tracking-[0.32em] text-primary">
-              {homeContent.partnerHook.kicker[lang]}
-            </div>
-            <h2 className="mt-4 font-display text-3xl font-black leading-[1.1] tracking-tight text-foreground sm:text-4xl md:text-5xl">
-              {homeContent.partnerHook.title[lang].replace(
-                homeContent.partnerHook.highlight[lang],
-                "",
-              )}
-              <span className="bg-gradient-pink bg-clip-text text-transparent">
-                {homeContent.partnerHook.highlight[lang]}
-              </span>
-            </h2>
-            <p className="mt-5 text-sm leading-relaxed text-foreground/65">
-              {homeContent.partnerHook.body[lang]}
-            </p>
+            {homeContentLoading ? (
+              <SectionHeaderSkeleton />
+            ) : (
+              <>
+                <div className="text-[11px] font-bold uppercase tracking-[0.32em] text-primary">
+                  {homeContent.partnerHook.kicker[lang]}
+                </div>
+                <h2 className="mt-4 font-display text-3xl font-black leading-[1.1] tracking-tight text-foreground sm:text-4xl md:text-5xl">
+                  {homeContent.partnerHook.title[lang].replace(
+                    homeContent.partnerHook.highlight[lang],
+                    "",
+                  )}
+                  <span className="bg-gradient-pink bg-clip-text text-transparent">
+                    {homeContent.partnerHook.highlight[lang]}
+                  </span>
+                </h2>
+                <p className="mt-5 text-sm leading-relaxed text-foreground/65">
+                  {homeContent.partnerHook.body[lang]}
+                </p>
+              </>
+            )}
           </div>
           <div className="grid gap-4 md:col-span-7">
             {partnerBenefits.map((item) => (
@@ -372,35 +393,47 @@ function HomePage() {
       <section className="bg-secondary py-16 md:py-32">
         <div className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-10">
           <div className="max-w-2xl">
-            <div className="text-[11px] font-bold uppercase tracking-[0.32em] text-primary">
-              {homeContent.trust.kicker[lang]}
-            </div>
-            <h2 className="mt-4 font-display text-3xl font-black leading-tight tracking-tight md:text-5xl">
-              {homeContent.trust.title[lang]}
-            </h2>
+            {homeContentLoading ? (
+              <SectionHeaderSkeleton />
+            ) : (
+              <>
+                <div className="text-[11px] font-bold uppercase tracking-[0.32em] text-primary">
+                  {homeContent.trust.kicker[lang]}
+                </div>
+                <h2 className="mt-4 font-display text-3xl font-black leading-tight tracking-tight md:text-5xl">
+                  {homeContent.trust.title[lang]}
+                </h2>
+              </>
+            )}
           </div>
           <div className="mt-10 grid gap-px overflow-hidden border border-border bg-border md:mt-14 md:grid-cols-3">
-            <Pillar
-              num="01"
-              icon={<ShieldCheck className="h-5 w-5" />}
-              eng={homeContent.pillars[0].eng[lang]}
-              title={homeContent.pillars[0].title[lang]}
-              text={homeContent.pillars[0].text[lang]}
-            />
-            <Pillar
-              num="02"
-              icon={<FlaskConical className="h-5 w-5" />}
-              eng={homeContent.pillars[1].eng[lang]}
-              title={homeContent.pillars[1].title[lang]}
-              text={homeContent.pillars[1].text[lang]}
-            />
-            <Pillar
-              num="03"
-              icon={<Globe2 className="h-5 w-5" />}
-              eng={homeContent.pillars[2].eng[lang]}
-              title={homeContent.pillars[2].title[lang]}
-              text={homeContent.pillars[2].text[lang]}
-            />
+            {homeContentLoading ? (
+              <HomePillarsSkeleton />
+            ) : (
+              <>
+                <Pillar
+                  num="01"
+                  icon={<ShieldCheck className="h-5 w-5" />}
+                  eng={homeContent.pillars[0].eng[lang]}
+                  title={homeContent.pillars[0].title[lang]}
+                  text={homeContent.pillars[0].text[lang]}
+                />
+                <Pillar
+                  num="02"
+                  icon={<FlaskConical className="h-5 w-5" />}
+                  eng={homeContent.pillars[1].eng[lang]}
+                  title={homeContent.pillars[1].title[lang]}
+                  text={homeContent.pillars[1].text[lang]}
+                />
+                <Pillar
+                  num="03"
+                  icon={<Globe2 className="h-5 w-5" />}
+                  eng={homeContent.pillars[2].eng[lang]}
+                  title={homeContent.pillars[2].title[lang]}
+                  text={homeContent.pillars[2].text[lang]}
+                />
+              </>
+            )}
           </div>
         </div>
       </section>
@@ -409,15 +442,21 @@ function HomePage() {
         <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-10">
           <div className="grid gap-10 lg:grid-cols-12">
             <div className="lg:col-span-5">
-              <div className="text-[11px] font-bold uppercase tracking-[0.32em] text-primary">
-                {homeContent.process.kicker[lang]}
-              </div>
-              <h2 className="mt-4 font-display text-3xl font-black leading-tight tracking-tight md:text-5xl">
-                {homeContent.process.title[lang]}
-              </h2>
-              <p className="mt-5 text-sm leading-relaxed text-foreground/65">
-                {homeContent.process.body[lang]}
-              </p>
+              {homeContentLoading ? (
+                <SectionHeaderSkeleton />
+              ) : (
+                <>
+                  <div className="text-[11px] font-bold uppercase tracking-[0.32em] text-primary">
+                    {homeContent.process.kicker[lang]}
+                  </div>
+                  <h2 className="mt-4 font-display text-3xl font-black leading-tight tracking-tight md:text-5xl">
+                    {homeContent.process.title[lang]}
+                  </h2>
+                  <p className="mt-5 text-sm leading-relaxed text-foreground/65">
+                    {homeContent.process.body[lang]}
+                  </p>
+                </>
+              )}
             </div>
             <div className="grid gap-px overflow-hidden border border-border bg-border lg:col-span-7">
               {partnerProcess.map((p) => (
@@ -442,26 +481,32 @@ function HomePage() {
       <section className="border-t border-border bg-background py-16 md:py-32">
         <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-10">
           <div className="flex flex-wrap items-end justify-between gap-6">
-            <div className="max-w-xl">
-              <div className="text-[11px] font-bold uppercase tracking-[0.32em] text-primary">
-                {homeContent.images.kicker[lang]}
-              </div>
-              <h2 className="mt-4 font-display text-3xl font-black leading-tight tracking-tight md:text-5xl">
-                {homeContent.images.title[lang]}
-              </h2>
-              <p className="mt-5 max-w-md text-[14px] leading-relaxed text-foreground/65">
-                {homeContent.images.body[lang]}
-              </p>
-            </div>
-            <Link
-              to="/products"
-              className="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-[0.22em] text-foreground transition hover:text-primary"
-            >
-              {homeContent.images.cta[lang]} <ArrowRight className="h-4 w-4" />
-            </Link>
+            {homeContentLoading ? (
+              <SectionHeaderSkeleton />
+            ) : (
+              <>
+                <div className="max-w-xl">
+                  <div className="text-[11px] font-bold uppercase tracking-[0.32em] text-primary">
+                    {homeContent.images.kicker[lang]}
+                  </div>
+                  <h2 className="mt-4 font-display text-3xl font-black leading-tight tracking-tight md:text-5xl">
+                    {homeContent.images.title[lang]}
+                  </h2>
+                  <p className="mt-5 max-w-md text-[14px] leading-relaxed text-foreground/65">
+                    {homeContent.images.body[lang]}
+                  </p>
+                </div>
+                <Link
+                  to="/products"
+                  className="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-[0.22em] text-foreground transition hover:text-primary"
+                >
+                  {homeContent.images.cta[lang]} <ArrowRight className="h-4 w-4" />
+                </Link>
+              </>
+            )}
           </div>
 
-          {catalogLoading ? (
+          {catalogLoading || homeContentLoading ? (
             <ProductCardSkeletonGrid />
           ) : (
             <div className="mt-10 grid gap-4 md:mt-14 md:grid-cols-3">
@@ -513,25 +558,31 @@ function HomePage() {
           className="pointer-events-none absolute inset-0 bg-gradient-to-tr from-primary/20 via-transparent to-primary/10"
         />
         <div className="relative mx-auto max-w-[1200px] px-4 text-center sm:px-6 lg:px-10">
-          <div className="text-[11px] font-bold uppercase tracking-[0.32em] text-primary">
-            {homeContent.cta.kicker[lang]}
-          </div>
-          <h2 className="mx-auto mt-4 max-w-3xl font-display text-3xl font-black leading-tight tracking-tight md:text-5xl">
-            {homeContent.cta.title[lang]}
-            <br />
-            <span className="text-primary">{homeContent.cta.highlight[lang]}</span>
-          </h2>
-          <p className="mx-auto mt-6 max-w-xl text-sm opacity-80 md:text-base">
-            {homeContent.cta.body[lang]}
-          </p>
-          <Button
-            type="button"
-            size="lg"
-            onClick={() => setInquiryOpen(true)}
-            className="mt-10 h-12 w-full justify-center rounded-none bg-primary px-6 text-xs font-bold uppercase tracking-[0.14em] text-primary-foreground hover:bg-primary/90 sm:w-auto sm:px-8 sm:text-sm sm:tracking-[0.18em]"
-          >
-            {homeContent.cta.button[lang]} <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
+          {homeContentLoading ? (
+            <HomeDarkCtaSkeleton />
+          ) : (
+            <>
+              <div className="text-[11px] font-bold uppercase tracking-[0.32em] text-primary">
+                {homeContent.cta.kicker[lang]}
+              </div>
+              <h2 className="mx-auto mt-4 max-w-3xl font-display text-3xl font-black leading-tight tracking-tight md:text-5xl">
+                {homeContent.cta.title[lang]}
+                <br />
+                <span className="text-primary">{homeContent.cta.highlight[lang]}</span>
+              </h2>
+              <p className="mx-auto mt-6 max-w-xl text-sm opacity-80 md:text-base">
+                {homeContent.cta.body[lang]}
+              </p>
+              <Button
+                type="button"
+                size="lg"
+                onClick={() => setInquiryOpen(true)}
+                className="mt-10 h-12 w-full justify-center rounded-none bg-primary px-6 text-xs font-bold uppercase tracking-[0.14em] text-primary-foreground hover:bg-primary/90 sm:w-auto sm:px-8 sm:text-sm sm:tracking-[0.18em]"
+              >
+                {homeContent.cta.button[lang]} <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </>
+          )}
         </div>
       </section>
       <B2BInquiryDialog
@@ -586,6 +637,55 @@ function Stat({ value, label }: { value: string; label: string }) {
       <div className="mt-1 break-words text-[9px] font-bold uppercase leading-snug tracking-[0.12em] text-muted-foreground sm:text-[10px] sm:tracking-[0.22em]">
         {label}
       </div>
+    </div>
+  );
+}
+
+function HomeStatsSkeleton() {
+  return (
+    <div
+      className="mt-10 grid w-full grid-cols-3 gap-3 sm:flex sm:flex-wrap sm:items-center sm:justify-center sm:gap-x-12 sm:gap-y-4 lg:justify-start"
+      aria-busy="true"
+    >
+      {Array.from({ length: 3 }).map((_, index) => (
+        <div key={index} className="min-w-0 space-y-2 text-center sm:text-left">
+          <div className="mx-auto h-7 w-14 animate-pulse rounded-full bg-primary/15 ring-1 ring-primary/10 sm:mx-0" />
+          <div className="mx-auto h-3 w-20 animate-pulse rounded-full bg-primary/15 ring-1 ring-primary/10 sm:mx-0" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function HomePillarsSkeleton() {
+  return (
+    <>
+      {Array.from({ length: 3 }).map((_, index) => (
+        <div key={index} className="bg-background p-6 sm:p-10" aria-busy="true">
+          <div className="flex items-start justify-between">
+            <div className="h-14 w-16 animate-pulse rounded-full bg-primary/10" />
+            <div className="h-11 w-11 animate-pulse rounded-full bg-primary/15 ring-1 ring-primary/10" />
+          </div>
+          <div className="mt-5 space-y-3">
+            <div className="h-3 w-28 animate-pulse rounded-full bg-primary/15 ring-1 ring-primary/10" />
+            <div className="h-7 w-3/4 animate-pulse rounded-full bg-primary/15 ring-1 ring-primary/10" />
+            <div className="h-4 w-full animate-pulse rounded-full bg-primary/15 ring-1 ring-primary/10" />
+            <div className="h-4 w-2/3 animate-pulse rounded-full bg-primary/15 ring-1 ring-primary/10" />
+          </div>
+        </div>
+      ))}
+    </>
+  );
+}
+
+function HomeDarkCtaSkeleton() {
+  return (
+    <div className="mx-auto max-w-3xl space-y-4" aria-busy="true">
+      <div className="mx-auto h-3 w-36 animate-pulse rounded-full bg-white/20 ring-1 ring-white/10" />
+      <div className="mx-auto h-12 w-4/5 animate-pulse rounded-full bg-white/18 ring-1 ring-white/10 md:h-14" />
+      <div className="mx-auto h-12 w-2/3 animate-pulse rounded-full bg-white/18 ring-1 ring-white/10 md:h-14" />
+      <div className="mx-auto h-4 w-3/4 animate-pulse rounded-full bg-white/18 ring-1 ring-white/10" />
+      <div className="mx-auto mt-10 h-12 w-44 animate-pulse bg-primary/35 ring-1 ring-primary/20" />
     </div>
   );
 }

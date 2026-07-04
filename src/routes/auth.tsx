@@ -6,7 +6,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/auth")({
@@ -28,6 +28,7 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [recoveryMode, setRecoveryMode] = useState(false);
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
   const emailRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -156,67 +157,69 @@ function AuthPage() {
               />
             </div>
             <Button onClick={updatePassword} disabled={loading} className="w-full rounded-full">
-              {loading ? "Please wait…" : "Update password"}
+              {loading ? "Please wait..." : "Update password"}
             </Button>
           </div>
         ) : (
-          <Tabs defaultValue="signin">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="signin">Sign In</TabsTrigger>
-              <TabsTrigger value="signup">Sign Up</TabsTrigger>
+          <Tabs value={mode} onValueChange={(value) => setMode(value as "signin" | "signup")}>
+            <TabsList className="grid w-full grid-cols-2 rounded-full">
+              <TabsTrigger value="signin" className="rounded-full">
+                Sign In
+              </TabsTrigger>
+              <TabsTrigger value="signup" className="rounded-full">
+                Sign Up
+              </TabsTrigger>
             </TabsList>
 
-            {(["signin", "signup"] as const).map((m) => (
-              <TabsContent key={m} value={m} className="mt-6 space-y-4">
-                <div>
-                  <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                    Email
-                  </Label>
-                  <Input
-                    ref={emailRef}
-                    className="mt-1.5 h-11"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    maxLength={200}
-                    autoComplete="email"
-                    inputMode="email"
-                    autoCapitalize="none"
-                    spellCheck={false}
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                    Password
-                  </Label>
-                  <Input
-                    className="mt-1.5 h-11"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    maxLength={100}
-                    autoComplete={m === "signin" ? "current-password" : "new-password"}
-                  />
-                </div>
-                <Button
-                  onClick={() => handle(m)}
+            <div className="mt-6 space-y-4">
+              <div>
+                <Label className="text-xs uppercase tracking-wider text-muted-foreground">
+                  Email
+                </Label>
+                <Input
+                  ref={emailRef}
+                  className="mt-1.5 h-11"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  maxLength={200}
+                  autoComplete="email"
+                  inputMode="email"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                />
+              </div>
+              <div>
+                <Label className="text-xs uppercase tracking-wider text-muted-foreground">
+                  Password
+                </Label>
+                <Input
+                  className="mt-1.5 h-11"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  maxLength={100}
+                  autoComplete={mode === "signin" ? "current-password" : "new-password"}
+                />
+              </div>
+              <Button
+                onClick={() => handle(mode)}
+                disabled={loading}
+                className="w-full rounded-full"
+              >
+                {loading ? "Please wait..." : mode === "signin" ? "Sign In" : "Create account"}
+              </Button>
+              {mode === "signin" && (
+                <button
+                  type="button"
+                  onClick={sendResetEmail}
                   disabled={loading}
-                  className="w-full rounded-full"
+                  className="w-full text-center text-xs text-muted-foreground underline-offset-4 hover:text-primary hover:underline"
                 >
-                  {loading ? "Please wait…" : m === "signin" ? "Sign In" : "Create account"}
-                </Button>
-                {m === "signin" && (
-                  <button
-                    type="button"
-                    onClick={sendResetEmail}
-                    disabled={loading}
-                    className="w-full text-center text-xs text-muted-foreground underline-offset-4 hover:text-primary hover:underline"
-                  >
-                    Forgot password?
-                  </button>
-                )}
-              </TabsContent>
-            ))}
+                  Forgot password?
+                </button>
+              )}
+            </div>
           </Tabs>
         )}
 

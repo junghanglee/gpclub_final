@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 import {
   Building2,
   Clock,
@@ -13,7 +13,11 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 import gippyContactHero from "@/assets/gippy-contact-hero.png";
-import { ContactRowSkeleton, FaqSkeletonItems } from "@/components/site/SectionSkeletons";
+import {
+  ContactRowSkeleton,
+  FaqSkeletonItems,
+  HeroCopySkeleton,
+} from "@/components/site/SectionSkeletons";
 import {
   Accordion,
   AccordionContent,
@@ -38,7 +42,7 @@ import {
 export const Route = createFileRoute("/contact")({
   head: () => ({
     meta: [
-      { title: "Contact — GPCLUB Vietnam" },
+      { title: "Contact â€” GPCLUB Vietnam" },
       {
         name: "description",
         content:
@@ -54,106 +58,61 @@ export const Route = createFileRoute("/contact")({
   component: ContactPage,
 });
 
-const FALLBACK_FAQS = [
-  {
-    question: "How do I become an authorized dealer?",
-    answer:
-      "Submit your application through our B2B inquiry form. Our partnership team reviews each application within 24 business hours.",
-  },
-  {
-    question: "Are your products 100% authentic?",
-    answer:
-      "Yes. GPCLUB is the official authorized distributor of JMsolution and Jmella in Vietnam, sourced directly from Korea.",
-  },
-  {
-    question: "What is the minimum order quantity (MOQ)?",
-    answer:
-      "Retail partners typically start at $1,000 USD per order, wholesale partners at $5,000 USD. Contact us for a tailored quote.",
-  },
-  {
-    question: "Do you provide marketing support?",
-    answer:
-      "Authorized partners receive product training, sample kits, and seasonal campaign materials.",
-  },
-];
-
 const contactText = {
   vi: {
-    heroA: "Cùng xây dựng",
-    heroB: "câu chuyện thành công làm đẹp tiếp theo tại Việt Nam.",
+    heroA: "CÃ¹ng xÃ¢y dá»±ng",
+    heroB: "cÃ¢u chuyá»‡n thÃ nh cÃ´ng lÃ m Ä‘áº¹p tiáº¿p theo táº¡i Viá»‡t Nam.",
     heroDesc:
-      "Nhà phân phối, nhà bán lẻ và đối tác OEM/ODM — hãy chia sẻ nhu cầu của bạn. Tư vấn viên chuyên trách sẽ phản hồi trong 24 giờ với đề xuất phù hợp.",
-    zaloDesc: "Kênh phản hồi nhanh cho đối tác Việt Nam",
-    openZalo: "Mở Zalo",
-    whatsappDesc: "Hỗ trợ đối tác quốc tế",
-    openWhatsapp: "Mở WhatsApp",
-    sendEmail: "Gửi email",
-    call: "Gọi ngay",
-    hq: "TP. Hồ Chí Minh — Trụ sở chính",
-    hours: "Thứ 2–Thứ 6 · 9:00–18:00",
-    maps: "Mở bằng Google Maps",
-    companyInfo: "Thông tin công ty",
-    legalName: "Tên pháp lý (VN)",
-    tax: "Mã số thuế",
-    rep: "Người đại diện pháp luật",
-    est: "Thành lập",
-    address: "Địa chỉ đăng ký",
-    type: "Loại hình doanh nghiệp",
-    status: "Trạng thái",
-    llc: "Công ty trách nhiệm hữu hạn",
-    active: "Đang hoạt động",
-    registry: "Xem đăng ký công khai",
-    faqTitle: "Câu hỏi thường gặp",
-    faqDesc: "Câu trả lời nhanh cho những câu hỏi đối tác thường hỏi nhất.",
-    chatZalo: "Chat trên Zalo",
-    emailUs: "Gửi email cho chúng tôi",
-    formKicker: "Gửi tin nhắn",
-    formTitle: "Cho chúng tôi biết bạn cần hỗ trợ gì",
-    name: "Họ và tên",
+      "NhÃ  phÃ¢n phá»‘i, nhÃ  bÃ¡n láº» vÃ  Ä‘á»‘i tÃ¡c OEM/ODM â€” hÃ£y chia sáº» nhu cáº§u cá»§a báº¡n. TÆ° váº¥n viÃªn chuyÃªn trÃ¡ch sáº½ pháº£n há»“i trong 24 giá» vá»›i Ä‘á» xuáº¥t phÃ¹ há»£p.",
+    zaloDesc: "KÃªnh pháº£n há»“i nhanh cho Ä‘á»‘i tÃ¡c Viá»‡t Nam",
+    openZalo: "Má»Ÿ Zalo",
+    whatsappDesc: "Há»— trá»£ Ä‘á»‘i tÃ¡c quá»‘c táº¿",
+    openWhatsapp: "Má»Ÿ WhatsApp",
+    sendEmail: "Gá»­i email",
+    call: "Gá»i ngay",
+    hq: "TP. Há»“ ChÃ­ Minh â€” Trá»¥ sá»Ÿ chÃ­nh",
+    hours: "Thá»© 2â€“Thá»© 6 Â· 9:00â€“18:00",
+    maps: "Má»Ÿ báº±ng Google Maps",
+    companyInfo: "ThÃ´ng tin cÃ´ng ty",
+    legalName: "TÃªn phÃ¡p lÃ½ (VN)",
+    tax: "MÃ£ sá»‘ thuáº¿",
+    rep: "NgÆ°á»i Ä‘áº¡i diá»‡n phÃ¡p luáº­t",
+    est: "ThÃ nh láº­p",
+    address: "Äá»‹a chá»‰ Ä‘Äƒng kÃ½",
+    type: "Loáº¡i hÃ¬nh doanh nghiá»‡p",
+    status: "Tráº¡ng thÃ¡i",
+    llc: "CÃ´ng ty trÃ¡ch nhiá»‡m há»¯u háº¡n",
+    active: "Äang hoáº¡t Ä‘á»™ng",
+    registry: "Xem Ä‘Äƒng kÃ½ cÃ´ng khai",
+    faqTitle: "CÃ¢u há»i thÆ°á»ng gáº·p",
+    faqDesc: "CÃ¢u tráº£ lá»i nhanh cho nhá»¯ng cÃ¢u há»i Ä‘á»‘i tÃ¡c thÆ°á»ng há»i nháº¥t.",
+    chatZalo: "Chat trÃªn Zalo",
+    emailUs: "Gá»­i email cho chÃºng tÃ´i",
+    formKicker: "Gá»­i tin nháº¯n",
+    formTitle: "Cho chÃºng tÃ´i biáº¿t báº¡n cáº§n há»— trá»£ gÃ¬",
+    name: "Há» vÃ  tÃªn",
     email: "Email",
-    phone: "Số điện thoại",
-    optional: "không bắt buộc",
-    subject: "Chủ đề",
-    message: "Nội dung",
-    sending: "Đang gửi…",
-    send: "Gửi tin nhắn",
-    thanks: "Cảm ơn! Chúng tôi sẽ phản hồi sớm.",
-    faqs: [
-      {
-        question: "Làm sao để trở thành đại lý ủy quyền?",
-        answer:
-          "Vui lòng gửi yêu cầu qua form B2B. Đội ngũ hợp tác sẽ xem xét và phản hồi trong vòng 24 giờ làm việc.",
-      },
-      {
-        question: "Sản phẩm có phải hàng chính hãng 100% không?",
-        answer:
-          "Có. GPCLUB là nhà phân phối ủy quyền chính thức của JMsolution và Jmella tại Việt Nam, nguồn hàng trực tiếp từ Hàn Quốc.",
-      },
-      {
-        question: "Số lượng đặt hàng tối thiểu là bao nhiêu?",
-        answer:
-          "Đối tác bán lẻ thường bắt đầu từ 1.000 USD/đơn hàng, đối tác bán sỉ từ 5.000 USD. Hãy liên hệ để nhận báo giá phù hợp.",
-      },
-      {
-        question: "Có hỗ trợ marketing không?",
-        answer:
-          "Đối tác ủy quyền được hỗ trợ đào tạo sản phẩm, bộ mẫu và tài liệu chiến dịch theo mùa.",
-      },
-    ],
+    phone: "Sá»‘ Ä‘iá»‡n thoáº¡i",
+    optional: "khÃ´ng báº¯t buá»™c",
+    subject: "Chá»§ Ä‘á»",
+    message: "Ná»™i dung",
+    sending: "Äang gá»­iâ€¦",
+    send: "Gá»­i tin nháº¯n",
+    thanks: "Cáº£m Æ¡n! ChÃºng tÃ´i sáº½ pháº£n há»“i sá»›m.",
   },
   en: {
     heroA: "Let's build Vietnam's",
     heroB: "next beauty success story.",
     heroDesc:
-      "Distributors, retailers, and OEM/ODM partners — tell us about your business. A dedicated consultant will reply within 24 hours with a tailored proposal.",
+      "Distributors, retailers, and OEM/ODM partners â€” tell us about your business. A dedicated consultant will reply within 24 hours with a tailored proposal.",
     zaloDesc: "Fastest channel for Vietnam partners",
     openZalo: "Open Zalo",
     whatsappDesc: "International partners welcome",
     openWhatsapp: "Open WhatsApp",
     sendEmail: "Send email",
     call: "Call us",
-    hq: "Ho Chi Minh City — Headquarters",
-    hours: "Mon–Fri · 9:00–18:00",
+    hq: "Ho Chi Minh City â€” Headquarters",
+    hours: "Monâ€“Fri Â· 9:00â€“18:00",
     maps: "Open in Google Maps",
     companyInfo: "Company information",
     legalName: "Legal name (VN)",
@@ -178,10 +137,9 @@ const contactText = {
     optional: "optional",
     subject: "Subject",
     message: "Message",
-    sending: "Sending…",
+    sending: "Sendingâ€¦",
     send: "Send message",
     thanks: "Thanks! We'll get back to you soon.",
-    faqs: FALLBACK_FAQS,
   },
 };
 
@@ -212,11 +170,9 @@ function ContactPage() {
     },
   ];
 
-  const [faqs, setFaqs] = useState<{ question: string; answer: string; category?: string }[]>(
-    t.faqs,
-  );
+  const [faqs, setFaqs] = useState<{ question: string; answer: string; category?: string }[]>([]);
   const [faqLang, setFaqLang] = useState<"ko" | "en" | "vi">(lang);
-  const [faqLoading, setFaqLoading] = useState(false);
+  const [faqLoading, setFaqLoading] = useState(true);
 
   useEffect(() => {
     setFaqLang(lang);
@@ -240,13 +196,13 @@ function ContactPage() {
 
         if (cancelled) return;
         if (error || !data || data.length === 0) {
-          setFaqs(t.faqs);
+          setFaqs([]);
           return;
         }
 
         setFaqs(data);
       } catch {
-        if (!cancelled) setFaqs(t.faqs);
+        if (!cancelled) setFaqs([]);
       } finally {
         if (!cancelled) setFaqLoading(false);
       }
@@ -256,7 +212,7 @@ function ContactPage() {
     return () => {
       cancelled = true;
     };
-  }, [t.faqs]);
+  }, []);
 
   const visibleFaqs = useMemo(() => {
     const byLang = faqs.filter((faq) => {
@@ -266,8 +222,8 @@ function ContactPage() {
       return !category.startsWith("EN | ") && !category.startsWith("VI | ");
     });
 
-    return byLang.length > 0 ? byLang : t.faqs;
-  }, [faqLang, faqs, t.faqs]);
+    return byLang;
+  }, [faqLang, faqs]);
 
   // Inquiry form state
   const [form, setForm] = useState({
@@ -300,18 +256,24 @@ function ContactPage() {
         />
         <div className="relative mx-auto grid max-w-[1100px] items-center gap-10 px-4 py-20 sm:px-6 md:py-28 lg:grid-cols-12 lg:px-10">
           <div className="text-center lg:col-span-7 lg:text-left">
-            <div className="text-[11px] font-bold uppercase tracking-[0.32em] text-primary">
-              {page.kicker[lang]}
-            </div>
-            <h1 className="mt-5 max-w-3xl font-display text-4xl font-black leading-[1.05] tracking-tight md:text-6xl">
-              {page.title[lang]}{" "}
-              <span className="bg-gradient-pink bg-clip-text text-transparent">
-                {page.highlight[lang]}
-              </span>
-            </h1>
-            <p className="mx-auto mt-7 max-w-2xl text-[15px] leading-relaxed text-foreground/75 lg:mx-0">
-              {page.description[lang]}
-            </p>
+            {pageLoading ? (
+              <HeroCopySkeleton />
+            ) : (
+              <>
+                <div className="text-[11px] font-bold uppercase tracking-[0.32em] text-primary">
+                  {page.kicker[lang]}
+                </div>
+                <h1 className="mt-5 max-w-3xl font-display text-4xl font-black leading-[1.05] tracking-tight md:text-6xl">
+                  {page.title[lang]}{" "}
+                  <span className="bg-gradient-pink bg-clip-text text-transparent">
+                    {page.highlight[lang]}
+                  </span>
+                </h1>
+                <p className="mx-auto mt-7 max-w-2xl text-[15px] leading-relaxed text-foreground/75 lg:mx-0">
+                  {page.description[lang]}
+                </p>
+              </>
+            )}
           </div>
           <div className="flex justify-center lg:col-span-5 lg:justify-end">
             <img
@@ -367,43 +329,47 @@ function ContactPage() {
       {/* Office + Map + Company info */}
       <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
         <div className="grid gap-8 lg:grid-cols-2">
-          {offices.map((o) => (
-            <article
-              key={o.city}
-              className="overflow-hidden rounded-3xl border border-border/60 bg-card shadow-soft"
-            >
-              <div className="aspect-[16/9] w-full overflow-hidden bg-muted">
-                <iframe
-                  title={`Map of ${o.city}`}
-                  src={`https://www.google.com/maps?q=${encodeURIComponent(o.mapsQuery)}&output=embed`}
-                  loading="lazy"
-                  className="h-full w-full border-0"
-                  referrerPolicy="no-referrer-when-downgrade"
-                />
-              </div>
-              <div className="p-6 md:p-7">
-                <div className="font-display text-2xl">{o.city}</div>
-                <div className="mt-4 space-y-2.5 text-sm">
-                  <Line icon={<MapPin className="h-4 w-4" />}>{o.address}</Line>
-                  <Line icon={<Phone className="h-4 w-4" />}>
-                    <a href={`tel:${o.phone.replace(/\s/g, "")}`} className="hover:text-primary">
-                      {o.phone}
-                    </a>
-                  </Line>
-                  <Line icon={<Clock className="h-4 w-4" />}>{o.hours}</Line>
+          {companyLoading ? (
+            <ContactOfficeSkeleton />
+          ) : (
+            offices.map((o) => (
+              <article
+                key={o.city}
+                className="overflow-hidden rounded-3xl border border-border/60 bg-card shadow-soft"
+              >
+                <div className="aspect-[16/9] w-full overflow-hidden bg-muted">
+                  <iframe
+                    title={`Map of ${o.city}`}
+                    src={`https://www.google.com/maps?q=${encodeURIComponent(o.mapsQuery)}&output=embed`}
+                    loading="lazy"
+                    className="h-full w-full border-0"
+                    referrerPolicy="no-referrer-when-downgrade"
+                  />
                 </div>
-                <Button asChild variant="outline" size="sm" className="mt-5 rounded-full">
-                  <a
-                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(o.mapsQuery)}`}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    {t.maps} <ExternalLink className="ml-1 h-3.5 w-3.5" />
-                  </a>
-                </Button>
-              </div>
-            </article>
-          ))}
+                <div className="p-6 md:p-7">
+                  <div className="font-display text-2xl">{o.city}</div>
+                  <div className="mt-4 space-y-2.5 text-sm">
+                    <Line icon={<MapPin className="h-4 w-4" />}>{o.address}</Line>
+                    <Line icon={<Phone className="h-4 w-4" />}>
+                      <a href={`tel:${o.phone.replace(/\s/g, "")}`} className="hover:text-primary">
+                        {o.phone}
+                      </a>
+                    </Line>
+                    <Line icon={<Clock className="h-4 w-4" />}>{o.hours}</Line>
+                  </div>
+                  <Button asChild variant="outline" size="sm" className="mt-5 rounded-full">
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(o.mapsQuery)}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {t.maps} <ExternalLink className="ml-1 h-3.5 w-3.5" />
+                    </a>
+                  </Button>
+                </div>
+              </article>
+            ))
+          )}
 
           {/* Legal company info */}
           <article className="overflow-hidden rounded-3xl border border-border/60 bg-card p-6 shadow-soft md:p-7">
@@ -415,7 +381,9 @@ function ContactPage() {
                 <div className="text-xs font-semibold uppercase tracking-[0.24em] text-gold">
                   {t.companyInfo}
                 </div>
-                <div className="font-display text-2xl">{COMPANY.legalName}</div>
+                <div className="font-display text-2xl">
+                  {companyLoading ? <ContactRowSkeleton /> : COMPANY.legalName}
+                </div>
               </div>
             </div>
             <dl className="mt-6 divide-y divide-border/60 text-sm">
@@ -451,9 +419,9 @@ function ContactPage() {
 
           <div className="mt-8 flex flex-wrap justify-center gap-2">
             {[
-              { value: "ko", label: "한국어" },
+              { value: "ko", label: "í•œêµ­ì–´" },
               { value: "en", label: "English" },
-              { value: "vi", label: "Tiếng Việt" },
+              { value: "vi", label: "Tiáº¿ng Viá»‡t" },
             ].map((option) => (
               <button
                 key={option.value}
@@ -477,6 +445,8 @@ function ContactPage() {
           >
             {faqLoading ? (
               <FaqSkeletonItems />
+            ) : visibleFaqs.length === 0 ? (
+              <ContactFaqEmptyState />
             ) : (
               visibleFaqs.map((f, i) => (
                 <AccordionItem key={i} value={`item-${i}`} className="px-4">
@@ -616,7 +586,7 @@ function ChannelCard({
         <div className="font-display text-xl">{title}</div>
         {loading ? <ContactRowSkeleton /> : <p className="text-sm text-muted-foreground">{desc}</p>}
       </div>
-      <div className="text-sm font-medium text-primary">{cta} →</div>
+      <div className="text-sm font-medium text-primary">{cta} â†’</div>
     </a>
   );
 }
@@ -639,6 +609,40 @@ function Row({ label, value, loading }: { label: string; value: string; loading?
       <dd className="text-sm font-medium text-foreground sm:text-right">
         {loading ? <ContactRowSkeleton /> : value}
       </dd>
+    </div>
+  );
+}
+
+function ContactOfficeSkeleton() {
+  return (
+    <article
+      className="overflow-hidden rounded-3xl border border-border/60 bg-card shadow-soft"
+      aria-busy="true"
+    >
+      <div className="aspect-[16/9] w-full overflow-hidden bg-primary/5">
+        <div
+          className="h-full w-full animate-pulse bg-gradient-to-br from-primary/15 via-secondary to-primary/10"
+          data-skeleton="true"
+          aria-hidden="true"
+        />
+      </div>
+      <div className="p-6 md:p-7">
+        <div className="h-7 w-36 animate-pulse rounded-full bg-primary/15 ring-1 ring-primary/10" />
+        <div className="mt-4 space-y-3">
+          <div className="h-4 w-full animate-pulse rounded-full bg-primary/15 ring-1 ring-primary/10" />
+          <div className="h-4 w-48 animate-pulse rounded-full bg-primary/15 ring-1 ring-primary/10" />
+          <div className="h-4 w-56 animate-pulse rounded-full bg-primary/15 ring-1 ring-primary/10" />
+        </div>
+        <div className="mt-5 h-9 w-28 animate-pulse rounded-full bg-primary/15 ring-1 ring-primary/10" />
+      </div>
+    </article>
+  );
+}
+
+function ContactFaqEmptyState() {
+  return (
+    <div className="px-5 py-8 text-center text-sm text-muted-foreground">
+      FAQ entries will appear here once they are published.
     </div>
   );
 }

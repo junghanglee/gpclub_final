@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Briefcase, MessageCircle, Package, Sparkle, Sparkles } from "lucide-react";
 import gippyAiHero from "@/assets/gippy-ai-hero.png";
+import { HeroCopySkeleton } from "@/components/site/SectionSkeletons";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
 import { usePageContent } from "@/lib/page-content";
@@ -70,7 +71,7 @@ function GippyAIPage() {
 
   return (
     <main className="min-h-[calc(100vh-5rem)] bg-gradient-to-b from-background via-background to-secondary/30">
-      <GippyHeroSection page={page} />
+      <GippyHeroSection page={page} loading={pageLoading} />
       <section
         id="gippy-guide"
         className="border-t border-border/60 bg-background/90 py-10 md:py-14"
@@ -123,8 +124,44 @@ function GippyAIPage() {
 
 /* ---------- pieces ---------- */
 
-function GippyHeroSection({ page }: { page: ReturnType<typeof usePageContent>["content"] }) {
+function GippyHeroSection({
+  page,
+  loading,
+}: {
+  page: ReturnType<typeof usePageContent>["content"];
+  loading: boolean;
+}) {
   const { lang } = useI18n();
+  if (loading) {
+    return (
+      <section className="relative isolate overflow-hidden border-b border-border/60 bg-gradient-luxe">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -top-36 right-[-12%] h-[520px] w-[520px] rounded-full bg-primary/10 blur-3xl"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -bottom-44 -left-24 h-[420px] w-[420px] rounded-full bg-accent/60 blur-3xl"
+        />
+        <div className="relative mx-auto grid w-full max-w-[1200px] grid-cols-1 items-center gap-8 px-4 py-12 sm:px-6 md:py-16 lg:grid-cols-12 lg:px-10">
+          <div className="text-center lg:col-span-7 lg:text-left">
+            <HeroCopySkeleton withCta />
+          </div>
+          <div className="relative flex justify-center lg:col-span-5 lg:justify-end">
+            <div className="relative aspect-[4/5] w-full max-w-[342px] sm:max-w-[342px]">
+              <img
+                src={gippyAiHero}
+                alt="Gippy AI K-Beauty partner consultant mascot"
+                loading="eager"
+                decoding="async"
+                className="relative z-10 h-full w-full object-contain"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
   return (
     <section className="relative isolate overflow-hidden border-b border-border/60 bg-gradient-luxe">
       <div

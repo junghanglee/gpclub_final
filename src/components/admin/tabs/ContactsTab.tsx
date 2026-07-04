@@ -1,6 +1,8 @@
 import { RefreshCw, Trash2 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { type ADMIN_I18N, type AdminLang, statusText, tx } from "@/components/admin/admin-i18n";
+import { CHATBOT_RECORD_LIMIT } from "@/components/admin/admin-shared";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -22,17 +24,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { type AdminLang, ADMIN_I18N, statusText, tx } from "@/components/admin/admin-i18n";
-import { CHATBOT_RECORD_LIMIT } from "@/components/admin/admin-shared";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 
 type ChatbotRecordRow = Database["public"]["Tables"]["chatbot_records"]["Row"];
 type ChatbotRecordPatch = Database["public"]["Tables"]["chatbot_records"]["Update"];
 const CONTACT_STATUSES = ["new", "replied", "closed"] as const;
-
-type ChatbotRecordRow = Database["public"]["Tables"]["chatbot_records"]["Row"];
-type ChatbotRecordPatch = Database["public"]["Tables"]["chatbot_records"]["Update"];
 
 type ContactSessionGroup = {
   sessionId: string;
@@ -48,7 +45,7 @@ export default function ContactsTab({ lang }: { lang: AdminLang }) {
   const [date, setDate] = useState("");
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     let query = supabase
       .from("chatbot_records")
@@ -65,10 +62,10 @@ export default function ContactsTab({ lang }: { lang: AdminLang }) {
     if (error) toast.error(error.message);
     else setRows(data ?? []);
     setLoading(false);
-  };
+  }, [date]);
   useEffect(() => {
     load();
-  }, [date]);
+  }, [load]);
 
   const sessionGroups = useMemo(() => {
     const map = new Map<string, ContactSessionGroup>();

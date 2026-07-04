@@ -12,9 +12,7 @@ function RoutePending() {
       <div className="h-0.5 w-full overflow-hidden bg-border/70">
         <div className="h-full w-1/3 animate-pulse bg-primary" />
       </div>
-      <div className="absolute right-4 top-3 rounded-full border border-border/70 bg-background/90 px-3 py-1 text-xs font-semibold text-foreground shadow-soft backdrop-blur">
-        Loading page...
-      </div>
+      <span className="sr-only">Loading page</span>
     </div>
   );
 }

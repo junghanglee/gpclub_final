@@ -1,6 +1,8 @@
 import { Pencil, Plus, RefreshCw, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { type ADMIN_I18N, type AdminLang, statusText, tx } from "@/components/admin/admin-i18n";
+import { CHATBOT_RECORD_LIMIT } from "@/components/admin/admin-shared";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,8 +31,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { type AdminLang, ADMIN_I18N, statusText, tx } from "@/components/admin/admin-i18n";
-import { CHATBOT_RECORD_LIMIT } from "@/components/admin/admin-shared";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 import { chunkText } from "@/lib/chatbot-training";
