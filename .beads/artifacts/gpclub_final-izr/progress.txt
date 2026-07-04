@@ -47,3 +47,11 @@ Started: 2026-07-04
 - Home product showcase now renders shared product skeleton cards while catalog products load; static home image slots appear only after catalog loading completes and no product rows are available.
 - Router pending UI remains a non-blocking top progress indicator, and `LoadingModal` remains opt-in for true blocking flows.
 - Verification: `rtk npx eslint src/routes/index.tsx src/routes/brand.tsx src/routes/gippy-ai.tsx src/router.tsx src/components/site/LoadingModal.tsx src/lib/home-content.tsx src/lib/page-content.tsx` completed with 0 errors and 4 existing `react-refresh/only-export-components` warnings; `rtk npx prettier --check ...` passed; `rtk npm run build` passed.
+
+## 2026-07-04 - Task 5 final quality gate
+
+- Ran final build, scoped lint, scoped Prettier, stale-helper search, route smoke checks, and review for the public skeleton loading contract.
+- Final build passed for client and SSR. Scoped ESLint completed with 0 errors and 4 existing `react-refresh/only-export-components` warnings in `src/lib/home-content.tsx` and `src/router.tsx`.
+- Scoped Prettier passed. Contract search found no stale fake-loading helpers or text loading fallbacks such as `createCatalogPreview`, route-local shell helpers, `Loading product`, `Loading catalog`, or `Loading events`.
+- Local route smoke checks against `http://localhost:8080` returned 200 and shell HTML for `/products`, `/catalog`, `/events`, `/b2b`, and `/contact`.
+- Review noted possible concern about catalog nested loading and default page copy; both were treated as non-blocking because catalog product areas keep a nested shared skeleton while products load, and default page copy is the static shell copy intentionally rendered immediately by the PRD contract.
