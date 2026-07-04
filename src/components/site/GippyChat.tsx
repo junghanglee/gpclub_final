@@ -11,9 +11,9 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import gippyCelebrate from "@/assets/gippy-celebrate.png";
-import gippyChatImg from "@/assets/gippy-chat.png";
-import gippyFront from "@/assets/gippy-front.png";
+import gippyCelebrate from "@/assets/gippy-celebrate.webp";
+import gippyChatImg from "@/assets/gippy-chat.webp";
+import gippyFront from "@/assets/gippy-front.webp";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import {
