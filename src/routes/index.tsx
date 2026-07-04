@@ -4,6 +4,7 @@ import { ArrowRight, Download, FlaskConical, Globe2, ShieldCheck, Sparkles } fro
 import { useRef, useState } from "react";
 import gippyMainHero from "@/assets/gippy-main-hero.png";
 import { B2BInquiryDialog } from "@/components/site/B2BInquiryDialog";
+import { ProductCardSkeletonGrid } from "@/components/site/SectionSkeletons";
 import { Button } from "@/components/ui/button";
 import { getCoverImage, useCatalogProducts } from "@/lib/catalog-products";
 import { useHomeContent } from "@/lib/home-content";
@@ -162,7 +163,7 @@ const partnerProcess: {
 function HomePage() {
   const { lang } = useI18n();
   const { content: homeContent, loading: homeContentLoading } = useHomeContent();
-  const { rows: catalogProducts } = useCatalogProducts();
+  const { rows: catalogProducts, loading: catalogLoading } = useCatalogProducts();
   const { downloadPath } = useRepresentativeCatalog();
   const homeProducts = catalogProducts
     .filter((p) => p.is_featured || p.is_new || p.is_popular)
@@ -199,10 +200,6 @@ function HomePage() {
   const headlineY = useTransform(smooth, [0, 1], [0, 80]);
   const headlineOpacity = useTransform(smooth, [0, 0.8], [1, 0]);
   const [inquiryOpen, setInquiryOpen] = useState(false);
-
-  if (homeContentLoading) {
-    return <main className="min-h-[60vh] bg-background" />;
-  }
 
   return (
     <>
@@ -464,45 +461,49 @@ function HomePage() {
             </Link>
           </div>
 
-          <div className="mt-10 grid gap-4 md:mt-14 md:grid-cols-3">
-            {(homeProducts.length > 0 ? homeProducts : []).map((product) => (
-              <Link
-                key={product.id}
-                to="/products/$productId"
-                params={{ productId: product.id }}
-                className="group overflow-hidden border border-border bg-card transition hover:-translate-y-1 hover:shadow-soft"
-              >
-                {getCoverImage(product) ? (
-                  <img
-                    src={getCoverImage(product)}
-                    alt={product.product_name}
-                    className="aspect-[4/3] w-full object-cover transition duration-500 group-hover:scale-105"
-                    loading="lazy"
-                  />
-                ) : (
-                  <ImagePlaceholder label={product.product_name} />
-                )}
-                <div className="p-5">
-                  <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary">
-                    {product.brand_name}
+          {catalogLoading ? (
+            <ProductCardSkeletonGrid />
+          ) : (
+            <div className="mt-10 grid gap-4 md:mt-14 md:grid-cols-3">
+              {homeProducts.map((product) => (
+                <Link
+                  key={product.id}
+                  to="/products/$productId"
+                  params={{ productId: product.id }}
+                  className="group overflow-hidden border border-border bg-card transition hover:-translate-y-1 hover:shadow-soft"
+                >
+                  {getCoverImage(product) ? (
+                    <img
+                      src={getCoverImage(product)}
+                      alt={product.product_name}
+                      className="aspect-[4/3] w-full object-cover transition duration-500 group-hover:scale-105"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <ImagePlaceholder label={product.product_name} />
+                  )}
+                  <div className="p-5">
+                    <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary">
+                      {product.brand_name}
+                    </div>
+                    <h3 className="mt-2 font-display text-xl font-black">{product.product_name}</h3>
+                    <p className="mt-2 line-clamp-2 text-sm text-foreground/65">
+                      {product.short_intro}
+                    </p>
                   </div>
-                  <h3 className="mt-2 font-display text-xl font-black">{product.product_name}</h3>
-                  <p className="mt-2 line-clamp-2 text-sm text-foreground/65">
-                    {product.short_intro}
-                  </p>
-                </div>
-              </Link>
-            ))}
-            {homeProducts.length === 0 &&
-              homeContent.images.labels[lang].map((label, index) => (
-                <ImagePlaceholder
-                  key={`${label}-${index}`}
-                  label={label}
-                  src={homeContent.images.urls[index]}
-                  alt={homeContent.images.alts[lang][index] || label}
-                />
+                </Link>
               ))}
-          </div>
+              {homeProducts.length === 0 &&
+                homeContent.images.labels[lang].map((label, index) => (
+                  <ImagePlaceholder
+                    key={`${label}-${index}`}
+                    label={label}
+                    src={homeContent.images.urls[index]}
+                    alt={homeContent.images.alts[lang][index] || label}
+                  />
+                ))}
+            </div>
+          )}
         </div>
       </section>
 

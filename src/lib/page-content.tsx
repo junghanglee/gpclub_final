@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { withPublicDataTimeout } from "@/lib/public-data-timeout";
 
 export type SiteLang = "vi" | "en";
 export type PageContentKey = "brand" | "products" | "gippy-ai" | "events" | "b2b" | "contact";
@@ -138,12 +139,17 @@ export function usePageContent(key: PageContentKey) {
     setContent(DEFAULT_PAGE_CONTENT[key]);
     (async () => {
       try {
-        const { data } = await supabase
-          .from("home_content")
-          .select("value")
-          .eq("key", pageContentStorageKey(key))
-          .maybeSingle();
+        const { data } = await withPublicDataTimeout(
+          supabase
+            .from("home_content")
+            .select("value")
+            .eq("key", pageContentStorageKey(key))
+            .maybeSingle(),
+          `page content ${key}`,
+        );
         if (!cancelled) setContent(mergePageContent(key, data?.value));
+      } catch {
+        if (!cancelled) setContent(DEFAULT_PAGE_CONTENT[key]);
       } finally {
         if (!cancelled) setLoading(false);
       }

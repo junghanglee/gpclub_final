@@ -182,10 +182,6 @@ function BrandPage() {
   const { content: page, loading: pageLoading } = usePageContent("brand");
   const pick = (copy: LocalText) => copy[lang];
 
-  if (pageLoading) {
-    return <main className="min-h-[60vh] bg-background" />;
-  }
-
   return (
     <>
       <section className="relative overflow-hidden bg-gradient-luxe">

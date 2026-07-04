@@ -68,10 +68,6 @@ function GippyAIPage() {
   const { content: page, loading: pageLoading } = usePageContent("gippy-ai");
   const pick = (text: { vi: string; en: string }) => text[lang];
 
-  if (pageLoading) {
-    return <main className="min-h-[60vh] bg-background" />;
-  }
-
   return (
     <main className="min-h-[calc(100vh-5rem)] bg-gradient-to-b from-background via-background to-secondary/30">
       <GippyHeroSection page={page} />

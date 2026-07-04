@@ -40,3 +40,10 @@ Started: 2026-07-04
 - Removed route-local loading skeleton helpers for event timelines, new-product spotlight loading, B2B catalog-derived images, B2B image slots, and FAQ rows.
 - Event media without remote media now uses a data-free media skeleton, and B2B/contact loading sections no longer render fake product, brand, company, or FAQ copy.
 - Verification: `rtk npx eslint src/components/site/SectionSkeletons.tsx src/routes/events.tsx src/routes/b2b.tsx src/routes/contact.tsx` passed with no issues; `rtk npx prettier --check ...` passed; `rtk npm run build` passed. `Select-String` found no matches for removed Task 3 local helper names or fake loading labels.
+
+## 2026-07-04 - Task 4 remaining public pages/router check
+
+- Removed remaining blank page gates from Home, Brand, and Gippy AI so static page framing renders immediately from default content while remote page content resolves.
+- Home product showcase now renders shared product skeleton cards while catalog products load; static home image slots appear only after catalog loading completes and no product rows are available.
+- Router pending UI remains a non-blocking top progress indicator, and `LoadingModal` remains opt-in for true blocking flows.
+- Verification: `rtk npx eslint src/routes/index.tsx src/routes/brand.tsx src/routes/gippy-ai.tsx src/router.tsx src/components/site/LoadingModal.tsx src/lib/home-content.tsx src/lib/page-content.tsx` completed with 0 errors and 4 existing `react-refresh/only-export-components` warnings; `rtk npx prettier --check ...` passed; `rtk npm run build` passed.

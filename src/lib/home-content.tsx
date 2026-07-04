@@ -1,5 +1,6 @@
 ﻿import { createContext, type ReactNode, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { withPublicDataTimeout } from "@/lib/public-data-timeout";
 
 export type LocalizedText = { vi: string; en: string };
 
@@ -230,12 +231,13 @@ export function HomeContentProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     (async () => {
       try {
-        const { data } = await supabase
-          .from("home_content")
-          .select("value")
-          .eq("key", "home")
-          .maybeSingle();
+        const { data } = await withPublicDataTimeout(
+          supabase.from("home_content").select("value").eq("key", "home").maybeSingle(),
+          "home content",
+        );
         if (!cancelled) setContent(mergeHomeContent(data?.value));
+      } catch {
+        if (!cancelled) setContent(DEFAULT_HOME_CONTENT);
       } finally {
         if (!cancelled) setLoading(false);
       }
