@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Search, Sparkles, Star } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import gippyProductsHero from "@/assets/gippy-products-hero.png";
 import { B2BInquiryDialog } from "@/components/site/B2BInquiryDialog";
 import { Badge } from "@/components/ui/badge";
@@ -89,12 +89,13 @@ const productText = {
 
 function ProductsPage() {
   const { lang } = useI18n();
-  const { content: page, loading: pageLoading } = usePageContent("products");
+  const { content: page } = usePageContent("products");
   const t = productText[lang];
-  const { rows, loading } = useCatalogProducts();
+  const { rows, loading, error } = useCatalogProducts();
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("All");
   const [brand, setBrand] = useState("All");
+  const [visibleCount, setVisibleCount] = useState(40);
   const [selected, setSelected] = useState<CatalogProduct | null>(null);
   const [inquiryOpen, setInquiryOpen] = useState(false);
 
@@ -140,14 +141,16 @@ function ProductsPage() {
     });
   }, [rows, q, cat, brand]);
 
+  useEffect(() => {
+    setVisibleCount(40);
+  }, [q, cat, brand]);
+
+  const visibleProducts = useMemo(() => filtered.slice(0, visibleCount), [filtered, visibleCount]);
+
   const openInquiry = () => {
     if (!selected) return;
     setInquiryOpen(true);
   };
-
-  if (pageLoading) {
-    return <main className="min-h-[60vh] bg-background" />;
-  }
 
   return (
     <>
@@ -243,62 +246,86 @@ function ProductsPage() {
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         {loading ? (
           <p className="py-16 text-center text-muted-foreground">Loading...</p>
+        ) : error ? (
+          <div className="mx-auto max-w-xl rounded-2xl border border-destructive/20 bg-destructive/5 p-6 text-center">
+            <p className="font-semibold text-foreground">
+              Product data is temporarily unavailable.
+            </p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Please refresh the page and try again.
+            </p>
+          </div>
         ) : filtered.length === 0 ? (
           <p className="py-16 text-center text-muted-foreground">{t.empty}</p>
         ) : (
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-            {filtered.map((p) => (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => setSelected(p)}
-                className={`group overflow-hidden rounded-2xl border bg-card text-left transition hover:-translate-y-1 hover:shadow-soft ${
-                  p.is_featured ? "border-primary/50 ring-2 ring-primary/10" : "border-border/60"
-                }`}
-              >
-                <div className="relative aspect-square overflow-hidden bg-muted">
-                  {getCoverImage(p) ? (
-                    <img
-                      src={getCoverImage(p)}
-                      alt={p.product_name}
-                      loading="lazy"
-                      className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                    />
-                  ) : null}
-                  <div className="absolute left-3 top-3 flex flex-wrap gap-1">
-                    {p.is_new ? (
-                      <Badge className="gap-1 bg-primary text-primary-foreground">
-                        <Sparkles className="h-3 w-3" />
-                        {t.new}
-                      </Badge>
+          <>
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+              {visibleProducts.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => setSelected(p)}
+                  className={`group overflow-hidden rounded-2xl border bg-card text-left transition hover:-translate-y-1 hover:shadow-soft ${
+                    p.is_featured ? "border-primary/50 ring-2 ring-primary/10" : "border-border/60"
+                  }`}
+                >
+                  <div className="relative aspect-square overflow-hidden bg-muted">
+                    {getCoverImage(p) ? (
+                      <img
+                        src={getCoverImage(p)}
+                        alt={p.product_name}
+                        loading="lazy"
+                        className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                      />
                     ) : null}
-                    {p.is_popular ? (
-                      <Badge className="gap-1 bg-foreground text-background">
-                        <Star className="h-3 w-3" />
-                        {t.popular}
-                      </Badge>
-                    ) : null}
-                  </div>
-                </div>
-                <div className="p-4">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="truncate text-[10px] font-semibold uppercase tracking-widest text-gold">
-                      {p.brand_name}
+                    <div className="absolute left-3 top-3 flex flex-wrap gap-1">
+                      {p.is_new ? (
+                        <Badge className="gap-1 bg-primary text-primary-foreground">
+                          <Sparkles className="h-3 w-3" />
+                          {t.new}
+                        </Badge>
+                      ) : null}
+                      {p.is_popular ? (
+                        <Badge className="gap-1 bg-foreground text-background">
+                          <Star className="h-3 w-3" />
+                          {t.popular}
+                        </Badge>
+                      ) : null}
                     </div>
-                    <Badge variant="secondary" className="max-w-[45%] truncate text-[10px]">
-                      {p.product_type}
-                    </Badge>
                   </div>
-                  <h3 className="mt-1 line-clamp-2 text-sm font-medium">{p.product_name}</h3>
-                  <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{p.short_intro}</p>
-                  <span className="mt-4 inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-widest text-primary">
-                    {t.details}{" "}
-                    <ArrowRight className="h-3 w-3 transition group-hover:translate-x-1" />
-                  </span>
-                </div>
-              </button>
-            ))}
-          </div>
+                  <div className="p-4">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="truncate text-[10px] font-semibold uppercase tracking-widest text-gold">
+                        {p.brand_name}
+                      </div>
+                      <Badge variant="secondary" className="max-w-[45%] truncate text-[10px]">
+                        {p.product_type}
+                      </Badge>
+                    </div>
+                    <h3 className="mt-1 line-clamp-2 text-sm font-medium">{p.product_name}</h3>
+                    <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                      {p.short_intro}
+                    </p>
+                    <span className="mt-4 inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-widest text-primary">
+                      {t.details}{" "}
+                      <ArrowRight className="h-3 w-3 transition group-hover:translate-x-1" />
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+            {visibleCount < filtered.length ? (
+              <div className="mt-8 flex justify-center">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setVisibleCount((n) => n + 40)}
+                >
+                  Load more
+                </Button>
+              </div>
+            ) : null}
+          </>
         )}
       </section>
 

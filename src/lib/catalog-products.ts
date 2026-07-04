@@ -70,7 +70,7 @@ export function productSearchText(p: CatalogProduct) {
   );
 }
 
-export async function fetchPublishedCatalogProducts(limit = 120) {
+export async function fetchPublishedCatalogProducts(limit = 120, signal?: AbortSignal) {
   let query = supabase
     .from("admin_products")
     .select(CATALOG_PRODUCT_LIST_COLUMNS)
@@ -79,6 +79,7 @@ export async function fetchPublishedCatalogProducts(limit = 120) {
     .order("created_at", { ascending: false });
 
   if (limit > 0) query = query.limit(limit);
+  if (signal) query = query.abortSignal(signal);
 
   const { data, error } = await query;
 
@@ -111,7 +112,19 @@ export async function fetchPublishedCatalogProductById(id: string) {
 export function useCatalogProducts(options: { enabled?: boolean } = {}) {
   const query = useQuery({
     queryKey: catalogProductsQueryKey,
-    queryFn: () => fetchPublishedCatalogProducts(),
+    queryFn: async ({ signal }) => {
+      const controller = new AbortController();
+      const timeoutId = globalThis.setTimeout(() => controller.abort(), 8000);
+      const onAbort = () => controller.abort();
+      signal.addEventListener("abort", onAbort, { once: true });
+
+      try {
+        return await fetchPublishedCatalogProducts(120, controller.signal);
+      } finally {
+        globalThis.clearTimeout(timeoutId);
+        signal.removeEventListener("abort", onAbort);
+      }
+    },
     staleTime: 5 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
     retry: 1,
@@ -130,7 +143,7 @@ export function useCatalogProducts(options: { enabled?: boolean } = {}) {
     [rows],
   );
 
-  return { rows, loading, source, types, brands };
+  return { rows, loading, error: query.error, source, types, brands };
 }
 
 export function getCoverImage(p: CatalogProduct) {
