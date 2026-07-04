@@ -67,3 +67,4 @@ docs/generated/
 .opencode/memory.db-shm
 .opencode/memory.db-wal
 .zcode/memory.db
+.vercel
