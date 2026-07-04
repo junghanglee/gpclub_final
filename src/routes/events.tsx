@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { usePageContent } from "@/lib/page-content";
+import { sanitizeProductDetailHtml } from "@/lib/product-detail-html";
 
 export const Route = createFileRoute("/events")({
   head: () => ({ meta: [{ title: "Event — GPCLUB Vietnam" }] }),
@@ -246,9 +247,14 @@ function EventsPage() {
                 </p>
               )}
               {(featured.body_vi || featured.body_en) && (
-                <p className="mt-4 whitespace-pre-line text-sm leading-relaxed text-foreground/75">
-                  {lang === "vi" ? featured.body_vi : featured.body_en}
-                </p>
+                <div
+                  className="mt-4 text-sm leading-relaxed text-foreground/75 [&_a]:font-semibold [&_a]:text-primary [&_a]:underline [&_h2]:mb-3 [&_h2]:text-2xl [&_h2]:font-black [&_h3]:mb-2 [&_h3]:text-xl [&_h3]:font-bold [&_img]:my-4 [&_img]:max-h-[320px] [&_img]:rounded-xl [&_img]:border [&_li]:mb-1 [&_ol]:list-decimal [&_ol]:pl-6 [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-6"
+                  dangerouslySetInnerHTML={{
+                    __html: sanitizeProductDetailHtml(
+                      lang === "vi" ? featured.body_vi : featured.body_en,
+                    ),
+                  }}
+                />
               )}
               {featured.cta_url && (
                 <Button asChild className="mt-6 w-fit rounded-full">
