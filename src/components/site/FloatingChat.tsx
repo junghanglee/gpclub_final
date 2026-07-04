@@ -1,5 +1,4 @@
 import { MessageCircle, Phone } from "lucide-react";
-import { useCompanyInfo } from "@/lib/site-settings";
 
 /**
  * Floating quick-contact stack (bottom-right).
@@ -7,11 +6,11 @@ import { useCompanyInfo } from "@/lib/site-settings";
  * (no cart). Mobile-friendly tap targets.
  */
 export function FloatingChat() {
-  const COMPANY = useCompanyInfo();
   // Open Zalo profile/add-friend flow by phone number.
   // Do not append ?msg= because that can route desktop users to Zalo web login/chat.
+  const zaloVnPhone = "0703321243";
   const zaloEn = "https://zalo.me/0911412309";
-  const zaloVn = "https://zalo.me/0703321243";
+  const zaloVn = `https://zalo.me/${zaloVnPhone}`;
 
   return (
     <div className="pointer-events-none fixed bottom-5 left-5 z-40 flex flex-col items-start gap-2.5 sm:bottom-6 sm:left-6">
@@ -42,14 +41,14 @@ export function FloatingChat() {
         <span className="hidden sm:inline">ZALO(vn)</span>
       </a>
       <a
-        href={`tel:${COMPANY.phoneTel}`}
+        href={`tel:${zaloVnPhone}`}
         aria-label="Call us"
         className="pointer-events-auto group flex items-center gap-2 rounded-full bg-foreground px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] text-background shadow-lg transition hover:scale-[1.04] hover:bg-primary hover:text-primary-foreground"
       >
         <span className="grid h-7 w-7 place-items-center rounded-full bg-white/15">
           <Phone className="h-3.5 w-3.5" strokeWidth={2} />
         </span>
-        <span className="hidden sm:inline">Call</span>
+        <span className="hidden sm:inline">070 332 1243</span>
       </a>
     </div>
   );

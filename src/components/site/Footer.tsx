@@ -1,14 +1,18 @@
 import { Link } from "@tanstack/react-router";
 import { Mail, MapPin, MessageCircle, Phone, Facebook, Instagram, Music2 } from "lucide-react";
-import { useCompanyInfo, buildZaloLink, buildWhatsappLink } from "@/lib/site-settings";
+import { useCompanyInfo, buildZaloLink } from "@/lib/site-settings";
 import gpclubLogo from "@/assets/gpclub-logo-dark.png";
 import { useI18n } from "@/lib/i18n";
+
+const ZALO_EN_PHONE = "0911412309";
+const ZALO_VN_PHONE = "0703321243";
+const ZALO_VN_DISPLAY = "070 332 1243";
 
 export function Footer() {
   const COMPANY = useCompanyInfo();
   const { t, lang } = useI18n();
-  const zaloLink = () => buildZaloLink(COMPANY.zaloPhone);
-  const whatsappLink = () => buildWhatsappLink(COMPANY.whatsappPhone);
+  const zaloVnLink = () => buildZaloLink(ZALO_VN_PHONE);
+  const zaloEnLink = () => buildZaloLink(ZALO_EN_PHONE);
   return (
     <footer className="mt-24 border-t border-border bg-background">
       {/* Top hot-pink ribbon (AHC-style accent) */}
@@ -88,22 +92,22 @@ export function Footer() {
           <ul className="mt-4 space-y-3 text-sm text-muted-foreground">
             <li>
               <a
-                href={zaloLink()}
+                href={zaloVnLink()}
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex items-center gap-2 hover:text-primary"
               >
-                <MessageCircle className="h-4 w-4" /> Zalo
+                <MessageCircle className="h-4 w-4" /> Zalo VN
               </a>
             </li>
             <li>
               <a
-                href={whatsappLink()}
+                href={zaloEnLink()}
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex items-center gap-2 hover:text-primary"
               >
-                <MessageCircle className="h-4 w-4" /> WhatsApp
+                <MessageCircle className="h-4 w-4" /> Zalo EN
               </a>
             </li>
             <li>
@@ -116,10 +120,10 @@ export function Footer() {
             </li>
             <li>
               <a
-                href={`tel:${COMPANY.phoneTel}`}
+                href={`tel:${ZALO_VN_PHONE}`}
                 className="inline-flex items-center gap-2 hover:text-primary"
               >
-                <Phone className="h-4 w-4" /> {COMPANY.phone}
+                <Phone className="h-4 w-4" /> {ZALO_VN_DISPLAY}
               </a>
             </li>
           </ul>

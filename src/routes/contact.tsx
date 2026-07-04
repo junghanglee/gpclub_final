@@ -26,7 +26,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { usePageContent } from "@/lib/page-content";
-import { buildZaloLink, useCompanyInfo, useCompanyInfoLoading } from "@/lib/site-settings";
+import { buildZaloLink, useCompanyInfo } from "@/lib/site-settings";
 
 const ZALO_EN_PHONE = "0911412309";
 const ZALO_VN_PHONE = "0703321243";
@@ -50,7 +50,7 @@ const FAQ_TOPIC_FALLBACK: Record<string, { vi: string; ko: string; en: string }>
 };
 
 function normalizeFaqLang(appLang: "vi" | "en"): FaqLang {
-  return appLang === "vi" ? "vi" : "en";
+  return appLang === "vi" ? "vi" : "ko";
 }
 
 function splitCategory(category?: string) {
@@ -96,24 +96,75 @@ export const Route = createFileRoute("/contact")({
 
 const FALLBACK_FAQS = [
   {
+    question: "Làm sao để trở thành đại lý ủy quyền?",
+    answer:
+      "Vui lòng gửi yêu cầu qua form B2B hoặc Zalo VN/EN. Đội ngũ hợp tác sẽ xem xét và phản hồi với hướng dẫn phù hợp.",
+    category: "VI | Dealer / Partnership",
+  },
+  {
+    question: "Sản phẩm có phải hàng chính hãng 100% không?",
+    answer:
+      "Có. GPCLUB Vietnam là đối tác phân phối chính thức của các thương hiệu Hàn Quốc như JMsolution và Jmella tại Việt Nam.",
+    category: "VI | Products / Authenticity",
+  },
+  {
+    question: "Số lượng đặt hàng tối thiểu hoặc báo giá được xác nhận ở đâu?",
+    answer:
+      "Điều kiện có thể thay đổi theo sản phẩm và kênh bán. Vui lòng gửi yêu cầu B2B hoặc nhắn Zalo để nhận thông tin chính xác.",
+    category: "VI | Orders / MOQ",
+  },
+  {
+    question: "Có hỗ trợ marketing hoặc đào tạo bán hàng không?",
+    answer:
+      "Đối tác chính thức có thể nhận tài liệu sản phẩm, hướng dẫn chiến dịch và điểm bán hàng theo từng thương hiệu.",
+    category: "VI | Marketing / Support",
+  },
+  {
+    question: "공식 대리점은 어떻게 신청하나요?",
+    answer: "B2B 문의 양식 또는 Zalo VN/EN으로 사업 정보를 보내주시면 담당자가 검토 후 안내합니다.",
+    category: "KO | Dealer / Partnership",
+  },
+  {
+    question: "상품은 정품인가요?",
+    answer:
+      "GPCLUB Vietnam은 JMsolution, Jmella 등 한국 브랜드의 공식 유통 파트너로 정품 공급 기준을 따릅니다.",
+    category: "KO | Products / Authenticity",
+  },
+  {
+    question: "최소 주문 수량이나 견적은 어디서 확인하나요?",
+    answer:
+      "상품과 채널에 따라 조건이 달라질 수 있으므로 B2B 문의 또는 Zalo 상담을 통해 확인하는 것이 가장 정확합니다.",
+    category: "KO | Orders / MOQ",
+  },
+  {
+    question: "마케팅 자료나 판매 교육도 지원하나요?",
+    answer:
+      "공식 파트너에게는 상품 자료, 캠페인 안내, 판매 포인트 등 필요한 지원 자료를 제공합니다.",
+    category: "KO | Marketing / Support",
+  },
+  {
     question: "How do I become an authorized dealer?",
     answer:
       "Submit your application through our B2B inquiry form. Our partnership team reviews each application within 24 business hours.",
+    category: "EN | Dealer / Partnership",
   },
   {
     question: "Are your products 100% authentic?",
     answer:
       "Yes. GPCLUB is the official authorized distributor of JMsolution and Jmella in Vietnam, sourced directly from Korea.",
+    category: "EN | Products / Authenticity",
   },
   {
     question: "What is the minimum order quantity (MOQ)?",
     answer:
       "Retail partners typically start at $1,000 USD per order, wholesale partners at $5,000 USD. Contact us for a tailored quote.",
+    category: "EN | Orders / MOQ",
   },
   {
     question: "Do you provide marketing support?",
     answer:
       "Authorized partners receive product training, sample kits, and seasonal campaign materials.",
+    category: "EN | Marketing / Support",
   },
 ];
 
@@ -160,28 +211,7 @@ const contactText = {
     sending: "Đang gửi…",
     send: "Gửi tin nhắn",
     thanks: "Cảm ơn! Chúng tôi sẽ phản hồi sớm.",
-    faqs: [
-      {
-        question: "Làm sao để trở thành đại lý ủy quyền?",
-        answer:
-          "Vui lòng gửi yêu cầu qua form B2B. Đội ngũ hợp tác sẽ xem xét và phản hồi trong vòng 24 giờ làm việc.",
-      },
-      {
-        question: "Sản phẩm có phải hàng chính hãng 100% không?",
-        answer:
-          "Có. GPCLUB là nhà phân phối ủy quyền chính thức của JMsolution và Jmella tại Việt Nam, nguồn hàng trực tiếp từ Hàn Quốc.",
-      },
-      {
-        question: "Số lượng đặt hàng tối thiểu là bao nhiêu?",
-        answer:
-          "Đối tác bán lẻ thường bắt đầu từ 1.000 USD/đơn hàng, đối tác bán sỉ từ 5.000 USD. Hãy liên hệ để nhận báo giá phù hợp.",
-      },
-      {
-        question: "Có hỗ trợ marketing không?",
-        answer:
-          "Đối tác ủy quyền được hỗ trợ đào tạo sản phẩm, bộ mẫu và tài liệu chiến dịch theo mùa.",
-      },
-    ],
+    faqs: FALLBACK_FAQS,
   },
   en: {
     heroA: "Let's build Vietnam's",
@@ -239,9 +269,8 @@ const inquirySchema = z.object({
 
 function ContactPage() {
   const { lang } = useI18n();
-  const { content: page, loading: pageLoading } = usePageContent("contact");
+  const { content: page } = usePageContent("contact");
   const COMPANY = useCompanyInfo();
-  const companyLoading = useCompanyInfoLoading();
   const t = contactText[lang];
   const zaloEnLink = () => buildZaloLink(ZALO_EN_PHONE);
   const zaloVnLink = () => buildZaloLink(ZALO_VN_PHONE);
@@ -341,10 +370,6 @@ function ContactPage() {
     toast.success(t.thanks);
     setForm({ name: "", email: "", phone: "", subject: "", message: "" });
   };
-
-  if (pageLoading || companyLoading) {
-    return <main className="min-h-[60vh] bg-background" />;
-  }
 
   return (
     <>

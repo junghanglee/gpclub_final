@@ -1,5 +1,5 @@
-export const ZALO_PHONE = "84906840149";
-export const WHATSAPP_PHONE = "84906840149";
+export const ZALO_PHONE = "0703321243";
+export const WHATSAPP_PHONE = "0703321243";
 
 export const COMPANY = {
   legalName: "GPCLUB VIETNAM CO., LTD",
@@ -9,8 +9,8 @@ export const COMPANY = {
   established: "2022-06-03",
   address: "27-29 Nguyen Cuu Van, Gia Dinh Ward, Ho Chi Minh City, Vietnam",
   addressShort: "27-29 Nguyen Cuu Van, Gia Dinh Ward, HCMC",
-  phone: "+84 90 684 0149",
-  phoneTel: "+84906840149",
+  phone: "070 332 1243",
+  phoneTel: "0703321243",
   email: "hello@gpclub.vn",
   mapsQuery: "27-29 Nguyen Cuu Van, Gia Dinh Ward, Ho Chi Minh City",
 } as const;
