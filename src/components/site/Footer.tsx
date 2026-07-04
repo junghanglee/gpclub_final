@@ -1,18 +1,26 @@
 import { Link } from "@tanstack/react-router";
-import { Mail, MapPin, MessageCircle, Phone, Facebook, Instagram, Music2 } from "lucide-react";
-import { useCompanyInfo, buildZaloLink } from "@/lib/site-settings";
+import {
+  Facebook,
+  Instagram,
+  Link as LinkIcon,
+  Mail,
+  MapPin,
+  MessageCircle,
+  Music2,
+  Phone,
+  Youtube,
+} from "lucide-react";
+import { useBrandSocials, useCompanyInfo, useFooterInfo, buildZaloLink } from "@/lib/site-settings";
 import gpclubLogo from "@/assets/gpclub-logo-dark.png";
 import { useI18n } from "@/lib/i18n";
 
-const ZALO_EN_PHONE = "0911412309";
-const ZALO_VN_PHONE = "0703321243";
-const ZALO_VN_DISPLAY = "070 332 1243";
-
 export function Footer() {
   const COMPANY = useCompanyInfo();
+  const footer = useFooterInfo();
+  const brandSocials = useBrandSocials();
   const { t, lang } = useI18n();
-  const zaloVnLink = () => buildZaloLink(ZALO_VN_PHONE);
-  const zaloEnLink = () => buildZaloLink(ZALO_EN_PHONE);
+  const zaloVnLink = () => buildZaloLink(footer.zaloVnPhone);
+  const zaloEnLink = () => buildZaloLink(footer.zaloEnPhone);
   return (
     <footer className="mt-24 border-t border-border bg-background">
       {/* Top hot-pink ribbon (AHC-style accent) */}
@@ -29,9 +37,7 @@ export function Footer() {
         <div className="md:col-span-2">
           <img src={gpclubLogo} alt="GPCLUB" className="h-9 w-auto select-none" draggable={false} />
           <p className="mt-5 max-w-md text-sm leading-relaxed text-muted-foreground">
-            {lang === "vi"
-              ? "Nền tảng đối tác chính thức cho JMsolution, Jmella và Trois Touch tại Việt Nam — hỗ trợ nguồn hàng, bán sỉ và tăng trưởng kênh phân phối."
-              : "Official partner platform for JMsolution, Jmella and Trois Touch in Vietnam — supporting supply, wholesale and channel growth."}
+            {lang === "vi" ? footer.taglineVi : footer.taglineEn}
           </p>
           <dl className="mt-6 space-y-2 text-[12px] leading-relaxed text-muted-foreground">
             <div className="flex gap-2">
@@ -120,10 +126,10 @@ export function Footer() {
             </li>
             <li>
               <a
-                href={`tel:${ZALO_VN_PHONE}`}
+                href={`tel:${footer.zaloVnPhone}`}
                 className="inline-flex items-center gap-2 hover:text-primary"
               >
-                <Phone className="h-4 w-4" /> {ZALO_VN_DISPLAY}
+                <Phone className="h-4 w-4" /> {footer.displayPhone}
               </a>
             </li>
           </ul>
@@ -133,18 +139,9 @@ export function Footer() {
       {/* Brand social channels */}
       <div className="border-t border-border bg-secondary/40">
         <div className="mx-auto grid max-w-[1400px] gap-8 px-4 py-10 sm:px-6 md:grid-cols-2 lg:px-10">
-          <SocialBlock
-            brand="Jmella Vietnam"
-            facebook="https://www.facebook.com/share/18aaeXRVWN/?mibextid=wwXIfr"
-            instagram="https://www.instagram.com/jmella.vn?igsh=MTkwZm90N2x1dXI1dw=="
-            tiktok="https://www.tiktok.com/@jmellavn_official?lang=vi-VN"
-          />
-          <SocialBlock
-            brand="JMsolution Vietnam"
-            facebook="https://www.facebook.com/share/1aSGGcEqEU/?mibextid=wwXIfr"
-            instagram="https://www.instagram.com/jmsolution.vn?igsh=M200a2VuMGEzb3Y5"
-            tiktok="https://www.tiktok.com/@jmsolutionvn_official?lang=vi-VN"
-          />
+          {brandSocials.map((brand) => (
+            <SocialBlock key={brand.id} brand={brand.brand} links={brand.links} />
+          ))}
         </div>
       </div>
 
@@ -152,9 +149,9 @@ export function Footer() {
         <div className="mx-auto flex max-w-[1400px] flex-col items-center justify-between gap-2 px-4 py-6 text-[11px] uppercase tracking-[0.18em] text-muted-foreground sm:flex-row sm:px-6 lg:px-10">
           <div>
             © {new Date().getFullYear()} GPCLUB Vietnam.{" "}
-            {lang === "vi" ? "Đã đăng ký bản quyền." : "All rights reserved."}
+            {lang === "vi" ? footer.copyrightVi : footer.copyrightEn}
           </div>
-          <div>JMsolution - Jmella - Trois Touch</div>
+          <div>{footer.brandLine}</div>
         </div>
       </div>
 
@@ -174,14 +171,10 @@ export function Footer() {
 
 function SocialBlock({
   brand,
-  facebook,
-  instagram,
-  tiktok,
+  links,
 }: {
   brand: string;
-  facebook: string;
-  instagram: string;
-  tiktok: string;
+  links: { id: string; type: string; label: string; url: string }[];
 }) {
   return (
     <div className="flex flex-col gap-3">
@@ -189,29 +182,24 @@ function SocialBlock({
         {brand}
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <SocialBtn href={facebook} label="Facebook">
-          <Facebook className="h-4 w-4" />
-        </SocialBtn>
-        <SocialBtn href={instagram} label="Instagram">
-          <Instagram className="h-4 w-4" />
-        </SocialBtn>
-        <SocialBtn href={tiktok} label="TikTok">
-          <Music2 className="h-4 w-4" />
-        </SocialBtn>
+        {links.map((link) => (
+          <SocialBtn key={link.id} href={link.url} label={link.label} type={link.type} />
+        ))}
       </div>
     </div>
   );
 }
 
-function SocialBtn({
-  href,
-  label,
-  children,
-}: {
-  href: string;
-  label: string;
-  children: React.ReactNode;
-}) {
+function SocialIcon({ type }: { type: string }) {
+  const normalized = type.toLowerCase();
+  if (normalized === "facebook") return <Facebook className="h-4 w-4" />;
+  if (normalized === "instagram") return <Instagram className="h-4 w-4" />;
+  if (normalized === "tiktok") return <Music2 className="h-4 w-4" />;
+  if (normalized === "youtube") return <Youtube className="h-4 w-4" />;
+  return <LinkIcon className="h-4 w-4" />;
+}
+
+function SocialBtn({ href, label, type }: { href: string; label: string; type: string }) {
   return (
     <a
       href={href}
@@ -220,7 +208,7 @@ function SocialBtn({
       aria-label={label}
       className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition hover:border-primary hover:text-primary"
     >
-      {children}
+      <SocialIcon type={type} />
       <span>{label}</span>
     </a>
   );
