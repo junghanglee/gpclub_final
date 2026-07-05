@@ -1,0 +1,26 @@
+{
+  "intent": "",
+  "state": "active",
+  "files": {
+    "modified": {},
+    "created": [
+      "C:\\Users\\PC\\Documents\\Project\\gpclub_final\\src\\components\\admin\\admin-shared.tsx",
+      "C:\\Users\\PC\\Documents\\Project\\gpclub_final\\src\\components\\admin\\tabs\\StatsTab.tsx",
+      "C:\\Users\\PC\\Documents\\Project\\gpclub_final\\src\\components\\admin\\tabs\\HomeEditorTab.tsx",
+      "C:\\Users\\PC\\Documents\\Project\\gpclub_final\\src\\components\\admin\\tabs\\DealersTab.tsx",
+      "C:\\Users\\PC\\Documents\\Project\\gpclub_final\\src\\components\\admin\\tabs\\ContactsTab.tsx",
+      "C:\\Users\\PC\\Documents\\Project\\gpclub_final\\src\\components\\admin\\tabs\\FaqsTab.tsx",
+      "C:\\Users\\PC\\Documents\\Project\\gpclub_final\\src\\components\\admin\\tabs\\PopupsTab.tsx",
+      "C:\\Users\\PC\\Documents\\Project\\gpclub_final\\src\\components\\admin\\tabs\\EventsTab.tsx",
+      "C:\\Users\\PC\\Documents\\Project\\gpclub_final\\src\\components\\admin\\tabs\\SettingsTab.tsx",
+      "C:\\Users\\PC\\Documents\\Project\\gpclub_final\\src\\components\\admin\\tabs\\ProductCatalogsTab.tsx",
+      "C:\\Users\\PC\\Documents\\Project\\gpclub_final\\src\\components\\admin\\AdminPage.tsx"
+    ],
+    "read": {
+      "C:\\Users\\PC\\Documents\\Project\\gpclub_final\\src\\components\\admin\\AdminPage.tsx": "",
+      "C:\\Users\\PC\\Documents\\Project\\gpclub_final\\tsconfig.json": ""
+    }
+  },
+  "decisions": [],
+  "nextSteps": []
+}

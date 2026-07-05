@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { productDetailTextFromHtml } from "@/lib/product-detail-html";
+import { withPublicDataTimeout } from "@/lib/public-data-timeout";
 
 export type ProductFlag = "new" | "popular" | "featured";
 export type ProductMedia = {
@@ -37,7 +38,7 @@ export type CatalogProduct = {
 };
 
 const CATALOG_PRODUCT_LIST_COLUMNS =
-  "id,brand_name,product_name,product_type,short_intro,media,conditions,cover_image_url,sort_order,published,is_new,is_popular,is_featured,created_at,updated_at";
+  "id,brand_name,product_name,product_type,short_intro,cover_image_url,sort_order,published,is_new,is_popular,is_featured,created_at,updated_at";
 export const catalogProductsQueryKey = ["catalog-products", "published"] as const;
 const EMPTY_CATALOG_PRODUCTS: CatalogProduct[] = [];
 
@@ -65,9 +66,32 @@ export function productSearchText(p: CatalogProduct) {
       p.product_type,
       p.short_intro,
       productDetailTextFromHtml(p.detail_html),
-      p.conditions.map((c) => `${c.label} ${c.value}`).join(" "),
+      (p.conditions ?? []).map((c) => `${c.label} ${c.value}`).join(" "),
     ].join(" "),
   );
+}
+
+function normalizeCatalogProductRow(row: Partial<CatalogProduct>): CatalogProduct {
+  return {
+    id: row.id || "",
+    brand_name: row.brand_name || "",
+    product_name: row.product_name || "",
+    product_type: row.product_type || "",
+    short_intro: row.short_intro || "",
+    detail_html: row.detail_html ?? null,
+    media: Array.isArray(row.media) ? row.media : [],
+    conditions: Array.isArray(row.conditions) ? row.conditions : [],
+    cover_image_url: row.cover_image_url ?? null,
+    sort_order: Number.isFinite(row.sort_order) ? Number(row.sort_order) : 0,
+    published: row.published ?? true,
+    is_new: row.is_new ?? false,
+    is_popular: row.is_popular ?? false,
+    is_featured: row.is_featured ?? false,
+    skin_types: Array.isArray(row.skin_types) ? row.skin_types : [],
+    concerns: Array.isArray(row.concerns) ? row.concerns : [],
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+  };
 }
 
 export async function fetchPublishedCatalogProducts(limit = 120) {
@@ -80,38 +104,35 @@ export async function fetchPublishedCatalogProducts(limit = 120) {
 
   if (limit > 0) query = query.limit(limit);
 
-  const { data, error } = await query;
+  try {
+    const { data, error } = await withPublicDataTimeout(query, "catalog products");
 
-  if (error) throw error;
-  // Normalize fallbacks for skin_types/concerns so rows created before the
-  // migration never surface `undefined` to the Gippy chat recommender.
-  return (data || []).map((row) => ({
-    ...(row as CatalogProduct),
-    skin_types: Array.isArray((row as CatalogProduct).skin_types)
-      ? (row as CatalogProduct).skin_types
-      : [],
-    concerns: Array.isArray((row as CatalogProduct).concerns)
-      ? (row as CatalogProduct).concerns
-      : [],
-  }));
+    if (error) throw error;
+    return (data || []).map((row) => normalizeCatalogProductRow(row as Partial<CatalogProduct>));
+  } catch {
+    return EMPTY_CATALOG_PRODUCTS;
+  }
 }
 
 export async function fetchPublishedCatalogProductById(id: string) {
-  const { data, error } = await supabase
-    .from("admin_products")
-    .select("*")
-    .eq("published", true)
-    .eq("id", id)
-    .maybeSingle();
+  try {
+    const { data, error } = await withPublicDataTimeout(
+      supabase.from("admin_products").select("*").eq("published", true).eq("id", id).maybeSingle(),
+      "catalog product detail",
+    );
 
-  if (error) throw error;
-  return (data ?? null) as CatalogProduct | null;
+    if (error) throw error;
+    return (data ?? null) as CatalogProduct | null;
+  } catch {
+    return null;
+  }
 }
 
-export function useCatalogProducts(options: { enabled?: boolean } = {}) {
+export function useCatalogProducts(options: { enabled?: boolean; limit?: number } = {}) {
+  const limit = options.limit ?? 48;
   const query = useQuery({
-    queryKey: catalogProductsQueryKey,
-    queryFn: () => fetchPublishedCatalogProducts(),
+    queryKey: [...catalogProductsQueryKey, limit],
+    queryFn: () => fetchPublishedCatalogProducts(limit),
     staleTime: 5 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
     retry: 1,
@@ -134,7 +155,7 @@ export function useCatalogProducts(options: { enabled?: boolean } = {}) {
 }
 
 export function getCoverImage(p: CatalogProduct) {
-  return p.cover_image_url || p.media.find((m) => m.type === "image")?.url || "";
+  return p.cover_image_url || (p.media ?? []).find((m) => m.type === "image")?.url || "";
 }
 
 /**

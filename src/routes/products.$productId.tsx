@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, CheckCircle, Image as ImageIcon, Video } from "lucide-react";
+import { ArrowLeft, CheckCircle, Video } from "lucide-react";
 import { useEffect, useState } from "react";
 import { B2BInquiryDialog } from "@/components/site/B2BInquiryDialog";
+import { ProductDetailSkeleton, ProductImageSkeleton } from "@/components/site/SectionSkeletons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -70,9 +71,7 @@ function ProductDetailPage() {
     };
   }, [productId]);
 
-  if (loading) {
-    return <main className="min-h-[60vh] bg-background" />;
-  }
+  if (loading) return <ProductDetailSkeleton backLabel={t.back} />;
 
   if (!product) {
     return (
@@ -105,7 +104,9 @@ function ProductDetailPage() {
                 alt={product.product_name}
                 className="aspect-square w-full object-cover"
               />
-            ) : null}
+            ) : (
+              <ProductImageSkeleton />
+            )}
           </div>
           {product.media.length > 0 ? (
             <div className="mt-4 grid grid-cols-3 gap-3">
@@ -131,7 +132,18 @@ function ProductDetailPage() {
                 </a>
               ))}
             </div>
-          ) : null}
+          ) : (
+            <div className="mt-4 grid grid-cols-3 gap-3">
+              {Array.from({ length: 3 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="overflow-hidden rounded-2xl border border-dashed border-border bg-card"
+                >
+                  <ProductImageSkeleton small />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="lg:col-span-6">

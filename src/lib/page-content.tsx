@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  fetchCachedPublicData,
+  readPublicDataCache,
+  withPublicDataTimeout,
+} from "@/lib/public-data-timeout";
 
 export type SiteLang = "vi" | "en";
 export type PageContentKey = "brand" | "products" | "gippy-ai" | "events" | "b2b" | "contact";
@@ -128,22 +133,42 @@ export function mergePageContent(key: PageContentKey, value: unknown): PageEdita
 
 export const pageContentStorageKey = (key: PageContentKey) => `page:${key}`;
 
+const pageContentCacheKey = (key: PageContentKey) => `page-content:${key}`;
+
+async function fetchPageContent(key: PageContentKey) {
+  return fetchCachedPublicData(pageContentCacheKey(key), async () => {
+    const { data } = await withPublicDataTimeout(
+      supabase
+        .from("home_content")
+        .select("value")
+        .eq("key", pageContentStorageKey(key))
+        .maybeSingle(),
+      `page content ${key}`,
+    );
+    return mergePageContent(key, data?.value);
+  });
+}
+
 export function usePageContent(key: PageContentKey) {
-  const [content, setContent] = useState<PageEditableContent>(() => DEFAULT_PAGE_CONTENT[key]);
-  const [loading, setLoading] = useState(true);
+  const cachedContent = readPublicDataCache<PageEditableContent>(pageContentCacheKey(key));
+  const [content, setContent] = useState<PageEditableContent>(
+    () => cachedContent ?? DEFAULT_PAGE_CONTENT[key],
+  );
+  const [loading, setLoading] = useState(!cachedContent);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    setContent(DEFAULT_PAGE_CONTENT[key]);
+    setContent(
+      readPublicDataCache<PageEditableContent>(pageContentCacheKey(key)) ??
+        DEFAULT_PAGE_CONTENT[key],
+    );
     (async () => {
       try {
-        const { data } = await supabase
-          .from("home_content")
-          .select("value")
-          .eq("key", pageContentStorageKey(key))
-          .maybeSingle();
-        if (!cancelled) setContent(mergePageContent(key, data?.value));
+        const nextContent = await fetchPageContent(key);
+        if (!cancelled) setContent(nextContent);
+      } catch {
+        if (!cancelled) setContent(DEFAULT_PAGE_CONTENT[key]);
       } finally {
         if (!cancelled) setLoading(false);
       }

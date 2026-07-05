@@ -1,6 +1,8 @@
 import { ImagePlus, Pencil, Plus, RefreshCw, Trash2, UploadCloud } from "lucide-react";
 import { type DragEvent, useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { type ADMIN_I18N, type AdminLang, tx } from "@/components/admin/admin-i18n";
+import { ADMIN_PAGE_SIZE, PaginationControls, pageRange } from "@/components/admin/admin-shared";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,8 +24,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { type AdminLang, ADMIN_I18N, tx } from "@/components/admin/admin-i18n";
-import { ADMIN_PAGE_SIZE, pageRange, PaginationControls } from "@/components/admin/admin-shared";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -221,10 +221,10 @@ export default function PopupsTab({ lang }: { lang: AdminLang }) {
           <TableHeader>
             <TableRow>
               <TableHead>{t("title")}</TableHead>
-              <TableHead>{t("image")}</TableHead>
+              <TableHead>Image</TableHead>
               <TableHead>{t("status")}</TableHead>
               <TableHead>{t("priority")}</TableHead>
-              <TableHead>{t("schedule")}</TableHead>
+              <TableHead>Schedule</TableHead>
               <TableHead>{t("active")}</TableHead>
               <TableHead></TableHead>
             </TableRow>

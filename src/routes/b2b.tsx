@@ -23,9 +23,12 @@ import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import jmellaImg from "@/assets/brand-jmella.jpg";
-import jmsolutionImg from "@/assets/brand-jmsolution.jpg";
 import gippyB2BHero from "@/assets/gippy-b2b-hero.png";
+import {
+  BrandImageSkeleton,
+  HeroCopySkeleton,
+  ImageSlotSkeletonGrid,
+} from "@/components/site/SectionSkeletons";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -87,7 +90,6 @@ type Value = {
 };
 type BrandSellingPoint = {
   name: string;
-  fallbackImage: string;
   copy: LocalText;
 };
 const tx = (vi: string, en: string): LocalText => ({ vi, en });
@@ -193,7 +195,6 @@ const VALUES: Value[] = [
 const BRAND_SELLING_POINTS: BrandSellingPoint[] = [
   {
     name: "JMsolution",
-    fallbackImage: jmsolutionImg,
     copy: tx(
       "Giải pháp chăm sóc da chuyên sâu, nổi bật với nền tảng JOR R&D, hoạt chất chọn lọc và cột mốc hơn 3 tỷ mặt nạ bán ra toàn cầu.",
       "Advanced skincare powered by JOR R&D, selected active ingredients, and the global milestone of over 3 billion masks sold.",
@@ -201,7 +202,6 @@ const BRAND_SELLING_POINTS: BrandSellingPoint[] = [
   },
   {
     name: "Jmella",
-    fallbackImage: jmellaImg,
     copy: tx(
       "Chăm sóc tóc và cơ thể kết hợp nghệ thuật hương thơm Pháp, biến sản phẩm thiết yếu hằng ngày thành nghi thức nuông chiều bản thân.",
       "Hair and body care blended with French fragrance artistry, turning everyday essentials into a self-care ritual.",
@@ -374,7 +374,7 @@ function B2BPage() {
   const [step, setStep] = useState(0);
   const [done, setDone] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const { rows: catalogRows } = useCatalogProducts();
+  const { rows: catalogRows, loading: catalogLoading } = useCatalogProducts();
 
   const brandProductImages = useMemo(() => {
     const map = new Map<string, string>();
@@ -495,10 +495,6 @@ function B2BPage() {
 
   const progress = ((step + 1) / steps.length) * 100;
 
-  if (pageLoading) {
-    return <main className="min-h-[60vh] bg-background" />;
-  }
-
   return (
     <>
       <section className="relative overflow-hidden bg-gradient-luxe">
@@ -506,29 +502,35 @@ function B2BPage() {
           aria-hidden
           className="pointer-events-none absolute -top-20 right-0 h-[420px] w-[420px] rounded-full bg-primary/10 blur-3xl"
         />
-        <div className="relative mx-auto grid max-w-[1200px] items-center gap-12 px-4 py-20 sm:px-6 md:py-28 lg:grid-cols-12 lg:px-10">
+        <div className="relative mx-auto grid min-h-[560px] max-w-[1200px] items-center gap-12 px-4 py-20 sm:min-h-[620px] sm:px-6 md:py-28 lg:min-h-[640px] lg:grid-cols-12 lg:px-10">
           <div className="text-center lg:col-span-7 lg:text-left">
-            <div className="text-[11px] font-bold uppercase tracking-[0.32em] text-primary">
-              {page.kicker[lang]}
-            </div>
-            <h1 className="mt-5 max-w-4xl font-display text-4xl font-black leading-[1.05] tracking-tight md:text-6xl">
-              {page.title[lang]}{" "}
-              <span className="bg-gradient-pink bg-clip-text text-transparent">
-                {page.highlight[lang]}
-              </span>
-            </h1>
-            <p className="mx-auto mt-8 max-w-2xl text-[15px] leading-relaxed text-foreground/75 lg:mx-0">
-              {page.description[lang]}
-            </p>
-            <Button
-              asChild
-              size="lg"
-              className="mt-9 h-12 rounded-none bg-primary px-8 text-sm font-bold uppercase tracking-[0.18em] text-primary-foreground hover:bg-primary/90"
-            >
-              <a href="#partner-form">
-                {page.primaryCta[lang] || t.start} <ArrowRight className="ml-2 h-4 w-4" />
-              </a>
-            </Button>
+            {pageLoading ? (
+              <HeroCopySkeleton withCta />
+            ) : (
+              <>
+                <div className="text-[11px] font-bold uppercase tracking-[0.32em] text-primary">
+                  {page.kicker[lang]}
+                </div>
+                <h1 className="mt-5 max-w-4xl font-display text-4xl font-black leading-[1.05] tracking-tight md:text-6xl">
+                  {page.title[lang]}{" "}
+                  <span className="bg-gradient-pink bg-clip-text text-transparent">
+                    {page.highlight[lang]}
+                  </span>
+                </h1>
+                <p className="mx-auto mt-8 max-w-2xl text-[15px] leading-relaxed text-foreground/75 lg:mx-0">
+                  {page.description[lang]}
+                </p>
+                <Button
+                  asChild
+                  size="lg"
+                  className="mt-9 h-12 rounded-none bg-primary px-8 text-sm font-bold uppercase tracking-[0.18em] text-primary-foreground hover:bg-primary/90"
+                >
+                  <a href="#partner-form">
+                    {page.primaryCta[lang] || t.start} <ArrowRight className="ml-2 h-4 w-4" />
+                  </a>
+                </Button>
+              </>
+            )}
           </div>
           <div className="flex justify-center lg:col-span-5 lg:justify-end">
             <img
@@ -637,12 +639,10 @@ function B2BPage() {
                 key={brand.name}
                 className="grid items-center gap-6 border border-border p-6 md:grid-cols-5 md:p-8"
               >
-                <img
-                  src={
-                    brandProductImages.get(brand.name.trim().toLowerCase()) || brand.fallbackImage
-                  }
-                  alt={brand.name}
-                  className="aspect-square w-full rounded-sm object-cover shadow-sm md:col-span-2"
+                <BrandProductImage
+                  brandName={brand.name}
+                  imageSrc={brandProductImages.get(brand.name.trim().toLowerCase())}
+                  loading={catalogLoading}
                 />
                 <div className="md:col-span-3">
                   <div className="font-display text-2xl font-black tracking-tight">
@@ -697,35 +697,39 @@ function B2BPage() {
             <p className="mt-3 text-sm text-foreground/60">{t.imagesDesc}</p>
           </div>
           <div className="mt-10 grid gap-5 md:grid-cols-3">
-            {t.slots.map((slot, index) => {
-              const sample = sampleProductImages[index];
-              return (
-                <div
-                  key={slot}
-                  className="group relative overflow-hidden border border-border bg-background"
-                >
-                  {sample ? (
-                    <img
-                      src={sample.src}
-                      alt={sample.alt}
-                      className="aspect-[4/3] w-full object-cover transition duration-500 group-hover:scale-105"
-                    />
-                  ) : (
-                    <div className="grid aspect-[4/3] place-items-center border border-dashed border-primary/40 bg-primary/5 p-6 text-center">
-                      <ImagePlus className="h-8 w-8 text-primary" />
-                    </div>
-                  )}
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent p-5 text-white">
-                    <div className="text-xs font-bold uppercase tracking-[0.2em]">{slot}</div>
+            {catalogLoading ? (
+              <ImageSlotSkeletonGrid slots={t.slots} />
+            ) : (
+              t.slots.map((slot, index) => {
+                const sample = sampleProductImages[index];
+                return (
+                  <div
+                    key={slot}
+                    className="group relative overflow-hidden border border-border bg-background"
+                  >
                     {sample ? (
-                      <p className="mt-2 line-clamp-1 text-xs text-white/75">{sample.alt}</p>
+                      <img
+                        src={sample.src}
+                        alt={sample.alt}
+                        className="aspect-[4/3] w-full object-cover transition duration-500 group-hover:scale-105"
+                      />
                     ) : (
-                      <p className="mt-2 text-xs text-white/75">{t.replace}</p>
+                      <div className="grid aspect-[4/3] place-items-center border border-dashed border-primary/40 bg-primary/5 p-6 text-center">
+                        <ImagePlus className="h-8 w-8 text-primary" />
+                      </div>
                     )}
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent p-5 text-white">
+                      <div className="text-xs font-bold uppercase tracking-[0.2em]">{slot}</div>
+                      {sample ? (
+                        <p className="mt-2 line-clamp-1 text-xs text-white/75">{sample.alt}</p>
+                      ) : (
+                        <p className="mt-2 text-xs text-white/75">{t.replace}</p>
+                      )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
         </div>
       </section>
@@ -894,6 +898,35 @@ function B2BPage() {
         </div>
       </section>
     </>
+  );
+}
+
+function BrandProductImage({
+  brandName,
+  imageSrc,
+  loading,
+}: {
+  brandName: string;
+  imageSrc?: string;
+  loading: boolean;
+}) {
+  if (loading) return <BrandImageSkeleton />;
+
+  if (imageSrc) {
+    return (
+      <img
+        src={imageSrc}
+        alt={brandName}
+        className="aspect-square w-full rounded-sm object-cover shadow-sm md:col-span-2"
+      />
+    );
+  }
+
+  return (
+    <div className="grid aspect-square w-full place-items-center rounded-sm border border-dashed border-primary/30 bg-primary/5 text-primary/60 shadow-sm md:col-span-2">
+      <ImagePlus className="h-8 w-8" aria-hidden="true" />
+      <span className="sr-only">Brand image unavailable</span>
+    </div>
   );
 }
 

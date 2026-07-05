@@ -18,6 +18,7 @@ import jmellaImg from "@/assets/brand-jmella.jpg";
 import jmsolutionImg from "@/assets/brand-jmsolution.jpg";
 import labImg from "@/assets/brand-lab.jpg";
 import gippyBrandHero from "@/assets/gippy-brand-hero.png";
+import { HeroCopySkeleton } from "@/components/site/SectionSkeletons";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
 import { usePageContent } from "@/lib/page-content";
@@ -182,10 +183,6 @@ function BrandPage() {
   const { content: page, loading: pageLoading } = usePageContent("brand");
   const pick = (copy: LocalText) => copy[lang];
 
-  if (pageLoading) {
-    return <main className="min-h-[60vh] bg-background" />;
-  }
-
   return (
     <>
       <section className="relative overflow-hidden bg-gradient-luxe">
@@ -193,39 +190,45 @@ function BrandPage() {
           aria-hidden
           className="pointer-events-none absolute -top-40 right-[-10%] h-[520px] w-[520px] rounded-full bg-primary/10 blur-3xl"
         />
-        <div className="relative mx-auto grid max-w-[1200px] items-center gap-12 px-4 py-20 sm:px-6 md:py-28 lg:grid-cols-12 lg:px-10">
+        <div className="relative mx-auto grid min-h-[560px] max-w-[1200px] items-center gap-12 px-4 py-20 sm:min-h-[620px] sm:px-6 md:py-28 lg:min-h-[640px] lg:grid-cols-12 lg:px-10">
           <div className="text-center lg:col-span-7 lg:text-left">
-            <div className="text-[11px] font-bold uppercase tracking-[0.32em] text-primary">
-              {page.kicker[lang]}
-            </div>
-            <h1 className="mt-5 font-display text-4xl font-black leading-[1.05] tracking-tight md:text-6xl">
-              {page.title[lang]}{" "}
-              <span className="bg-gradient-pink bg-clip-text text-transparent">
-                {page.highlight[lang]}
-              </span>
-            </h1>
-            <p className="mx-auto mt-8 max-w-2xl text-[16px] leading-relaxed text-foreground/75 lg:mx-0">
-              {page.description[lang]}
-            </p>
-            <div className="mt-10 flex flex-wrap justify-center gap-3 lg:justify-start">
-              <Button
-                asChild
-                size="lg"
-                className="h-12 rounded-none bg-primary px-8 text-sm font-bold uppercase tracking-[0.18em] text-primary-foreground hover:bg-primary/90"
-              >
-                <Link to="/b2b">
-                  {page.primaryCta[lang]} <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-              <Button
-                asChild
-                variant="outline"
-                size="lg"
-                className="h-12 rounded-none px-8 text-sm font-bold uppercase tracking-[0.18em]"
-              >
-                <Link to="/products">{page.secondaryCta[lang]}</Link>
-              </Button>
-            </div>
+            {pageLoading ? (
+              <HeroCopySkeleton withCta />
+            ) : (
+              <>
+                <div className="text-[11px] font-bold uppercase tracking-[0.32em] text-primary">
+                  {page.kicker[lang]}
+                </div>
+                <h1 className="mt-5 font-display text-4xl font-black leading-[1.05] tracking-tight md:text-6xl">
+                  {page.title[lang]}{" "}
+                  <span className="bg-gradient-pink bg-clip-text text-transparent">
+                    {page.highlight[lang]}
+                  </span>
+                </h1>
+                <p className="mx-auto mt-8 max-w-2xl text-[16px] leading-relaxed text-foreground/75 lg:mx-0">
+                  {page.description[lang]}
+                </p>
+                <div className="mt-10 flex flex-wrap justify-center gap-3 lg:justify-start">
+                  <Button
+                    asChild
+                    size="lg"
+                    className="h-12 rounded-none bg-primary px-8 text-sm font-bold uppercase tracking-[0.18em] text-primary-foreground hover:bg-primary/90"
+                  >
+                    <Link to="/b2b">
+                      {page.primaryCta[lang]} <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
+                  </Button>
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="lg"
+                    className="h-12 rounded-none px-8 text-sm font-bold uppercase tracking-[0.18em]"
+                  >
+                    <Link to="/products">{page.secondaryCta[lang]}</Link>
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
           <div className="lg:col-span-5">
             <img

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { CatalogProduct } from "@/lib/catalog-products";
+import { fetchCachedPublicData, withPublicDataTimeout } from "@/lib/public-data-timeout";
 
 export type ProductCatalog = {
   id: string;
@@ -42,15 +43,21 @@ function normalizeCatalogs(value: unknown) {
   return value.map((item) => normalizeCatalog(item as Partial<ProductCatalog>));
 }
 
-export async function fetchProductCatalogs() {
-  const { data, error } = await supabase
-    .from("home_content")
-    .select("value")
-    .eq("key", PRODUCT_CATALOGS_KEY)
-    .maybeSingle();
+export async function fetchProductCatalogs(options: { fallbackOnError?: boolean } = {}) {
+  try {
+    return await fetchCachedPublicData("product-catalogs", async () => {
+      const { data, error } = await withPublicDataTimeout(
+        supabase.from("home_content").select("value").eq("key", PRODUCT_CATALOGS_KEY).maybeSingle(),
+        "product catalogs",
+      );
 
-  if (error) throw error;
-  return normalizeCatalogs(data?.value);
+      if (error) throw error;
+      return normalizeCatalogs(data?.value);
+    });
+  } catch (error) {
+    if (options.fallbackOnError) return [];
+    throw error;
+  }
 }
 
 export async function saveProductCatalogs(catalogs: ProductCatalog[]) {
@@ -67,12 +74,12 @@ export async function saveProductCatalogs(catalogs: ProductCatalog[]) {
 }
 
 export async function fetchRepresentativeCatalog() {
-  const catalogs = await fetchProductCatalogs();
+  const catalogs = await fetchProductCatalogs({ fallbackOnError: true });
   return catalogs.find((catalog) => catalog.is_representative) || catalogs[0] || null;
 }
 
 export async function fetchCatalogById(id: string) {
-  const catalogs = await fetchProductCatalogs();
+  const catalogs = await fetchProductCatalogs({ fallbackOnError: true });
   return catalogs.find((catalog) => catalog.id === id) || null;
 }
 

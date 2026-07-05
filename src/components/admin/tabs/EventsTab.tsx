@@ -1,6 +1,12 @@
 import { ImagePlus, PackageOpen, Pencil, Plus, RefreshCw, Trash2, UploadCloud } from "lucide-react";
-import { type DragEvent, type RefObject, useEffect, useRef, useState } from "react";
+import { type DragEvent, type Ref, type RefObject, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { type ADMIN_I18N, type AdminLang, tx } from "@/components/admin/admin-i18n";
+import { pageRange } from "@/components/admin/admin-shared";
+import {
+  ProductDetailEditor,
+  type ProductDetailEditorHandle,
+} from "@/components/admin/product-detail-editor";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,12 +36,6 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { type AdminLang, ADMIN_I18N, tx } from "@/components/admin/admin-i18n";
-import { pageRange } from "@/components/admin/admin-shared";
-import {
-  ProductDetailEditor,
-  type ProductDetailEditorHandle,
-} from "@/components/admin/product-detail-editor";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -180,7 +180,11 @@ export default function EventsTab({ lang }: { lang: AdminLang }) {
       return;
     }
     const { data } = supabase.storage.from(EVENT_MEDIA_BUCKET).getPublicUrl(path);
-    setEditing({ ...editing, media_url: data.publicUrl, media_type: inferMediaType(file) });
+    setEditing({
+      ...editing,
+      media_url: data.publicUrl,
+      media_type: inferMediaType(file),
+    });
     setUploading(false);
     toast.success("Media uploaded.");
   };
@@ -519,7 +523,11 @@ function LanguageFields({
       </div>
       <div>
         <Label className="mb-1.5 block">{bodyLabel}</Label>
-        <ProductDetailEditor ref={editorRef} value={body} onChange={onBodyChange} />
+        <ProductDetailEditor
+          ref={editorRef as Ref<ProductDetailEditorHandle>}
+          value={body}
+          onChange={onBodyChange}
+        />
       </div>
     </div>
   );

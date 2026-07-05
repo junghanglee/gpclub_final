@@ -1,5 +1,10 @@
 ﻿import { createContext, type ReactNode, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  fetchCachedPublicData,
+  readPublicDataCache,
+  withPublicDataTimeout,
+} from "@/lib/public-data-timeout";
 
 export type LocalizedText = { vi: string; en: string };
 
@@ -196,10 +201,6 @@ export const DEFAULT_HOME_CONTENT: HomeAdminContent = {
     button: { vi: "Gửi yêu cầu B2B", en: "Start B2B inquiry" },
   },
 };
-
-const CACHE_KEY = "gpclub:home-content:v1";
-const CACHE_MAX_AGE_MS = 5 * 60 * 1000;
-
 function isObj(v: unknown): v is Record<string, unknown> {
   return !!v && typeof v === "object" && !Array.isArray(v);
 }
@@ -218,52 +219,39 @@ export function mergeHomeContent(value: unknown): HomeAdminContent {
   return deepMerge(DEFAULT_HOME_CONTENT, value);
 }
 
-function readCachedHomeContent(): HomeAdminContent {
-  if (typeof window === "undefined") return DEFAULT_HOME_CONTENT;
-  try {
-    const cached = window.localStorage.getItem(CACHE_KEY);
-    if (!cached) return DEFAULT_HOME_CONTENT;
-    const parsed = JSON.parse(cached) as { savedAt?: number; value?: unknown };
-    if (!parsed.savedAt || Date.now() - parsed.savedAt > CACHE_MAX_AGE_MS) {
-      return DEFAULT_HOME_CONTENT;
-    }
-    return mergeHomeContent(parsed.value);
-  } catch {
-    return DEFAULT_HOME_CONTENT;
-  }
-}
-
-function writeCachedHomeContent(value: unknown) {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(CACHE_KEY, JSON.stringify({ savedAt: Date.now(), value }));
-  } catch {
-    // Ignore storage failures; default content keeps the homepage usable.
-  }
-}
-
 type HomeContentContextValue = { content: HomeAdminContent; loading: boolean };
+
+const HOME_CONTENT_CACHE_KEY = "home-content:home";
+
+async function fetchHomeContent() {
+  return fetchCachedPublicData(HOME_CONTENT_CACHE_KEY, async () => {
+    const { data } = await withPublicDataTimeout(
+      supabase.from("home_content").select("value").eq("key", "home").maybeSingle(),
+      "home content",
+    );
+    return mergeHomeContent(data?.value);
+  });
+}
 
 const Ctx = createContext<HomeContentContextValue>({
   content: DEFAULT_HOME_CONTENT,
-  loading: false,
+  loading: true,
 });
 
 export function HomeContentProvider({ children }: { children: ReactNode }) {
-  const [content, setContent] = useState<HomeAdminContent>(() => readCachedHomeContent());
-  const [loading, setLoading] = useState(false);
+  const cachedContent = readPublicDataCache<HomeAdminContent>(HOME_CONTENT_CACHE_KEY);
+  const [content, setContent] = useState<HomeAdminContent>(cachedContent ?? DEFAULT_HOME_CONTENT);
+  const [loading, setLoading] = useState(!cachedContent);
 
   useEffect(() => {
     let cancelled = false;
+    setLoading(true);
     (async () => {
       try {
-        const { data } = await supabase
-          .from("home_content")
-          .select("value")
-          .eq("key", "home")
-          .maybeSingle();
-        writeCachedHomeContent(data?.value);
-        if (!cancelled) setContent(mergeHomeContent(data?.value));
+        const nextContent = await fetchHomeContent();
+        if (!cancelled) setContent(nextContent);
+      } catch {
+        if (!cancelled) setContent(DEFAULT_HOME_CONTENT);
       } finally {
         if (!cancelled) setLoading(false);
       }

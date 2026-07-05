@@ -1,16 +1,24 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
 import { Download, Sparkles } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useEffect, useMemo, useState } from "react";
+import {
+  CatalogCoverSkeleton,
+  CatalogProductSkeleton,
+  ProductImageSkeleton,
+} from "@/components/site/SectionSkeletons";
 import { Badge } from "@/components/ui/badge";
-import { getCoverImage, useCatalogProducts, type CatalogProduct } from "@/lib/catalog-products";
-import { fetchCatalogById, sortCatalogProducts, type ProductCatalog } from "@/lib/product-catalogs";
+import { Button } from "@/components/ui/button";
+import { type CatalogProduct, getCoverImage, useCatalogProducts } from "@/lib/catalog-products";
+import { fetchCatalogById, type ProductCatalog, sortCatalogProducts } from "@/lib/product-catalogs";
 
 export const Route = createFileRoute("/catalog/$catalogId")({
   head: () => ({
     meta: [
       { title: "GPCLUB Vietnam Product Catalog" },
-      { name: "description", content: "Printable GPCLUB Vietnam product catalog." },
+      {
+        name: "description",
+        content: "Printable GPCLUB Vietnam product catalog.",
+      },
     ],
   }),
   component: CatalogPdfPage,
@@ -38,53 +46,95 @@ function CatalogPdfPage() {
     [catalog, products],
   );
 
-  if (loading || productsLoading) {
+  if (loading) {
     return (
-      <div className="min-h-screen bg-white p-10 text-sm text-slate-500">Loading catalog...</div>
+      <main className="min-h-screen bg-[#f6efe9] text-slate-950 print:bg-white">
+        <style>{printStyles}</style>
+        <CatalogPrintToolbar />
+        <section className="catalog-page mx-auto max-w-6xl bg-white shadow-2xl print:shadow-none">
+          <CatalogCoverSkeleton />
+          <div className="catalog-section grid gap-6 px-8 py-10 md:grid-cols-2 print:grid-cols-2 print:px-0 print:py-0">
+            <CatalogProductSkeleton />
+          </div>
+        </section>
+      </main>
     );
   }
 
   if (!catalog) {
     return (
-      <div className="min-h-screen bg-white p-10 text-sm text-slate-500">Catalog not found.</div>
+      <main className="min-h-screen bg-[#f6efe9] text-slate-950 print:bg-white">
+        <style>{printStyles}</style>
+        <CatalogPrintToolbar />
+        <section className="catalog-page mx-auto max-w-6xl bg-white shadow-2xl print:shadow-none">
+          <div className="catalog-section px-8 py-10 print:px-0 print:py-0">
+            <div className="rounded-3xl border border-dashed border-slate-300 p-10 text-center text-slate-500">
+              Catalog not found.
+            </div>
+          </div>
+        </section>
+      </main>
     );
   }
 
   return (
     <main className="min-h-screen bg-[#f6efe9] text-slate-950 print:bg-white">
       <style>{printStyles}</style>
-      <div className="no-print sticky top-0 z-20 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3">
-          <div>
-            <div className="text-xs font-bold uppercase tracking-[0.28em] text-pink-600">
-              PDF Catalog Preview
-            </div>
-            <div className="text-sm text-slate-500">Click download, then choose Save as PDF.</div>
-          </div>
-          <Button
-            onClick={() => window.print()}
-            className="rounded-none bg-slate-950 text-white hover:bg-pink-600"
-          >
-            <Download className="mr-2 h-4 w-4" /> Download PDF
-          </Button>
-        </div>
-      </div>
+      <CatalogPrintToolbar />
 
       <section className="catalog-page mx-auto max-w-6xl bg-white shadow-2xl print:shadow-none">
-        <CatalogCover catalog={catalog} products={catalogProducts} />
-        <CatalogProductsSection catalog={catalog} products={catalogProducts} />
+        <CatalogCover
+          catalog={catalog}
+          products={catalogProducts}
+          productsLoading={productsLoading}
+        />
+        <CatalogProductsSection
+          catalog={catalog}
+          products={catalogProducts}
+          loading={productsLoading}
+        />
       </section>
     </main>
+  );
+}
+
+function CatalogPrintToolbar() {
+  return (
+    <div className="no-print sticky top-0 z-20 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3">
+        <div>
+          <div className="text-xs font-bold uppercase tracking-[0.28em] text-pink-600">
+            PDF Catalog Preview
+          </div>
+          <div className="text-sm text-slate-500">Click download, then choose Save as PDF.</div>
+        </div>
+        <Button
+          onClick={() => window.print()}
+          className="rounded-none bg-slate-950 text-white hover:bg-pink-600"
+        >
+          <Download className="mr-2 h-4 w-4" /> Download PDF
+        </Button>
+      </div>
+    </div>
   );
 }
 
 function CatalogProductsSection({
   catalog,
   products,
+  loading = false,
 }: {
   catalog: ProductCatalog;
   products: CatalogProduct[];
+  loading?: boolean;
 }) {
+  if (loading && products.length === 0) {
+    return (
+      <div className="catalog-section grid gap-6 px-8 py-10 md:grid-cols-2 print:grid-cols-2 print:px-0 print:py-0">
+        <CatalogProductSkeleton />
+      </div>
+    );
+  }
   if (products.length === 0) {
     return (
       <div className="catalog-section px-8 py-10 print:px-0 print:py-0">
@@ -124,9 +174,11 @@ function CatalogProductsSection({
 function CatalogCover({
   catalog,
   products,
+  productsLoading = false,
 }: {
   catalog: ProductCatalog;
   products: CatalogProduct[];
+  productsLoading?: boolean;
 }) {
   const heroProduct = products[0];
   const heroImage = heroProduct ? getCoverImage(heroProduct) : "";
@@ -140,26 +192,37 @@ function CatalogCover({
             <Sparkles className="h-4 w-4" /> GPCLUB Vietnam
           </div>
           <h1 className="mt-10 font-display text-5xl font-black leading-[0.95] tracking-tight md:text-7xl print:text-6xl">
-            {catalog.title || "Product Catalog"}
+            {catalog.title}
           </h1>
-          <p className="mt-6 max-w-xl text-xl font-semibold leading-relaxed text-white/82">
-            {catalog.subtitle ||
-              "Curated K-Beauty product portfolio for Vietnam retail and B2B partners."}
-          </p>
+          {catalog.subtitle ? (
+            <p className="mt-6 max-w-xl text-xl font-semibold leading-relaxed text-white/82">
+              {catalog.subtitle}
+            </p>
+          ) : null}
           {catalog.description ? (
             <p className="mt-5 max-w-xl text-sm leading-7 text-white/68">{catalog.description}</p>
           ) : null}
         </div>
         <div className="mt-12 grid grid-cols-3 gap-3 text-center">
           <div className="border border-white/20 bg-white/10 p-4 backdrop-blur">
-            <div className="text-3xl font-black">{products.length}</div>
+            <div className="text-3xl font-black">
+              {productsLoading ? (
+                <span className="inline-block h-8 w-14 rounded-full bg-white/20" />
+              ) : (
+                products.length
+              )}
+            </div>
             <div className="mt-1 text-[10px] uppercase tracking-[0.22em] text-white/60">
               Products
             </div>
           </div>
           <div className="border border-white/20 bg-white/10 p-4 backdrop-blur">
             <div className="text-3xl font-black">
-              {new Set(products.map((p) => p.brand_name)).size}
+              {productsLoading ? (
+                <span className="inline-block h-8 w-14 rounded-full bg-white/20" />
+              ) : (
+                new Set(products.map((p) => p.brand_name)).size
+              )}
             </div>
             <div className="mt-1 text-[10px] uppercase tracking-[0.22em] text-white/60">Brands</div>
           </div>
@@ -180,8 +243,8 @@ function CatalogCover({
             className="relative h-full min-h-[620px] w-full rounded-[2.5rem] object-cover shadow-2xl print:min-h-[760px]"
           />
         ) : (
-          <div className="relative flex h-full min-h-[620px] items-center justify-center rounded-[2.5rem] border border-white/20 bg-white/10 text-center text-white/60 print:min-h-[760px]">
-            Product Visual
+          <div className="relative h-full min-h-[620px] overflow-hidden rounded-[2.5rem] border border-white/20 bg-white/10 print:min-h-[760px]">
+            <ProductImageSkeleton />
           </div>
         )}
       </div>
@@ -200,7 +263,9 @@ function ProductCard({ product, index }: { product: CatalogProduct; index: numbe
       <div className="relative aspect-[4/3] overflow-hidden bg-[#f6efe9]">
         {image ? (
           <img src={image} alt={product.product_name} className="h-full w-full object-cover" />
-        ) : null}
+        ) : (
+          <ProductImageSkeleton />
+        )}
         <div className="absolute left-4 top-4 rounded-full bg-white/92 px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-pink-600 shadow-sm">
           {String(index + 1).padStart(2, "0")}
         </div>
@@ -232,7 +297,9 @@ function ProductCard({ product, index }: { product: CatalogProduct; index: numbe
               </div>
             ))}
           </div>
-        ) : null}
+        ) : (
+          <ProductImageSkeleton small />
+        )}
       </div>
     </article>
   );
@@ -253,7 +320,9 @@ function CompactProductRow({ product, index }: { product: CatalogProduct; index:
             alt={product.product_name}
             className="h-full min-h-[76px] w-full object-cover print:min-h-[52px]"
           />
-        ) : null}
+        ) : (
+          <ProductImageSkeleton />
+        )}
       </div>
       <div className="min-w-0">
         <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.16em] text-pink-600">

@@ -10,7 +10,9 @@
       "C:\\Users\\PC\\Documents\\Project\\gpclub_final\\src\\components\\admin\\AdminPage.tsx": "/** Tag-style editor for string[] fields (skin_types / concerns) on a product. *"
     },
     "created": [
-      "C:\\Users\\PC\\Documents\\Project\\gpclub_final\\src\\routes\\admin.tsx"
+      "C:\\Users\\PC\\Documents\\Project\\gpclub_final\\src\\routes\\admin.tsx",
+      "C:\\Users\\PC\\Documents\\Project\\gpclub_final\\src\\components\\admin\\tabs\\ChatbotTab.tsx",
+      "C:\\Users\\PC\\Documents\\Project\\gpclub_final\\src\\components\\admin\\tabs\\ProductsTab.tsx"
     ],
     "read": {
       "C:\\Users\\PC\\Documents\\Project\\gpclub_final\\.gitignore": "",
@@ -20,7 +22,8 @@
       "C:\\Users\\PC\\Documents\\Project\\gpclub_final\\src\\components\\admin\\product-detail-editor.tsx": "",
       "C:\\Users\\PC\\Documents\\Project\\gpclub_final\\src\\components\\admin\\AdminPage.tsx": "",
       "C:\\Users\\PC\\Documents\\Project\\gpclub_final\\.opencode\\.gitignore": "",
-      "C:\\Users\\PC\\Documents\\Project\\gpclub_final\\.zcode\\state\\session-summary.md": ""
+      "C:\\Users\\PC\\Documents\\Project\\gpclub_final\\.zcode\\state\\session-summary.md": "",
+      "C:\\Users\\PC\\Documents\\Project\\gpclub_final\\package.json": ""
     }
   },
   "decisions": [],

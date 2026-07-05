@@ -5,6 +5,11 @@ import {
   ZALO_PHONE as DEFAULT_ZALO,
   COMPANY as DEFAULTS,
 } from "@/lib/contact";
+import {
+  fetchCachedPublicData,
+  readPublicDataCache,
+  withPublicDataTimeout,
+} from "@/lib/public-data-timeout";
 
 export type SeoInfo = {
   siteName: string;
@@ -137,6 +142,7 @@ const DEFAULT_BRAND_SOCIALS: BrandSocial[] = [
 ];
 
 const CACHE_KEY = "gpclub:site-settings:v1";
+const DATA_CACHE_KEY = "site-settings";
 const CACHE_MAX_AGE_MS = 5 * 60 * 1000;
 
 type Stored = Partial<{
@@ -159,6 +165,19 @@ type StoredSettings = {
 };
 
 export const SITE_SETTING_KEYS = ["contact", "seo", "footer", "brand_socials"] as const;
+
+async function fetchSiteSettings() {
+  return fetchCachedPublicData(DATA_CACHE_KEY, async () => {
+    const { data } = await withPublicDataTimeout(
+      supabase
+        .from("site_settings")
+        .select("key,value")
+        .in("key", SITE_SETTING_KEYS as unknown as string[]),
+      "site settings",
+    );
+    return Object.fromEntries((data ?? []).map((row) => [row.key, row.value])) as StoredSettings;
+  });
+}
 
 function merge(stored: Stored | null): CompanyInfo {
   if (!stored) return FALLBACK;
@@ -306,23 +325,23 @@ const Ctx = createContext<SiteSettingsContextValue>({
 });
 
 export function SiteSettingsProvider({ children }: { children: ReactNode }) {
-  const [info, setInfo] = useState<CompanyInfo>(() => readCachedInfo());
-  const [seo, setSeo] = useState<SeoInfo>(DEFAULT_SEO);
-  const [footer, setFooter] = useState<FooterInfo>(DEFAULT_FOOTER);
-  const [brandSocials, setBrandSocials] = useState<BrandSocial[]>(DEFAULT_BRAND_SOCIALS);
+  const cachedSettings = readPublicDataCache<StoredSettings>(DATA_CACHE_KEY);
+  const [info, setInfo] = useState<CompanyInfo>(() =>
+    cachedSettings ? merge(cachedSettings.contact ?? null) : readCachedInfo(),
+  );
+  const [seo, setSeo] = useState<SeoInfo>(() => mergeSeo(cachedSettings?.seo));
+  const [footer, setFooter] = useState<FooterInfo>(() => mergeFooter(cachedSettings?.footer));
+  const [brandSocials, setBrandSocials] = useState<BrandSocial[]>(() =>
+    mergeBrandSocials(cachedSettings?.brand_socials),
+  );
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
+    setLoading(true);
     (async () => {
       try {
-        const { data } = await supabase
-          .from("site_settings")
-          .select("key,value")
-          .in("key", SITE_SETTING_KEYS as unknown as string[]);
-        const settings = Object.fromEntries(
-          (data ?? []).map((row) => [row.key, row.value]),
-        ) as StoredSettings;
+        const settings = await fetchSiteSettings();
         const contact = settings.contact ?? null;
         const nextSeo = mergeSeo(settings.seo);
         writeCachedInfo(contact);

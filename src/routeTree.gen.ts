@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as RadixSmokeRouteImport } from './routes/radix-smoke'
 import { Route as ProductsRouteImport } from './routes/products'
 import { Route as GippyAiRouteImport } from './routes/gippy-ai'
 import { Route as EventsRouteImport } from './routes/events'
@@ -23,6 +24,11 @@ import { Route as ProductsProductIdRouteImport } from './routes/products.$produc
 import { Route as CatalogCatalogIdRouteImport } from './routes/catalog.$catalogId'
 import { Route as BrandBrandKeyRouteImport } from './routes/brand.$brandKey'
 
+const RadixSmokeRoute = RadixSmokeRouteImport.update({
+  id: '/radix-smoke',
+  path: '/radix-smoke',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProductsRoute = ProductsRouteImport.update({
   id: '/products',
   path: '/products',
@@ -99,6 +105,7 @@ export interface FileRoutesByFullPath {
   '/events': typeof EventsRoute
   '/gippy-ai': typeof GippyAiRoute
   '/products': typeof ProductsRouteWithChildren
+  '/radix-smoke': typeof RadixSmokeRoute
   '/brand/$brandKey': typeof BrandBrandKeyRoute
   '/catalog/$catalogId': typeof CatalogCatalogIdRoute
   '/products/$productId': typeof ProductsProductIdRoute
@@ -114,6 +121,7 @@ export interface FileRoutesByTo {
   '/events': typeof EventsRoute
   '/gippy-ai': typeof GippyAiRoute
   '/products': typeof ProductsRouteWithChildren
+  '/radix-smoke': typeof RadixSmokeRoute
   '/brand/$brandKey': typeof BrandBrandKeyRoute
   '/catalog/$catalogId': typeof CatalogCatalogIdRoute
   '/products/$productId': typeof ProductsProductIdRoute
@@ -130,6 +138,7 @@ export interface FileRoutesById {
   '/events': typeof EventsRoute
   '/gippy-ai': typeof GippyAiRoute
   '/products': typeof ProductsRouteWithChildren
+  '/radix-smoke': typeof RadixSmokeRoute
   '/brand/$brandKey': typeof BrandBrandKeyRoute
   '/catalog/$catalogId': typeof CatalogCatalogIdRoute
   '/products/$productId': typeof ProductsProductIdRoute
@@ -147,6 +156,7 @@ export interface FileRouteTypes {
     | '/events'
     | '/gippy-ai'
     | '/products'
+    | '/radix-smoke'
     | '/brand/$brandKey'
     | '/catalog/$catalogId'
     | '/products/$productId'
@@ -162,6 +172,7 @@ export interface FileRouteTypes {
     | '/events'
     | '/gippy-ai'
     | '/products'
+    | '/radix-smoke'
     | '/brand/$brandKey'
     | '/catalog/$catalogId'
     | '/products/$productId'
@@ -177,6 +188,7 @@ export interface FileRouteTypes {
     | '/events'
     | '/gippy-ai'
     | '/products'
+    | '/radix-smoke'
     | '/brand/$brandKey'
     | '/catalog/$catalogId'
     | '/products/$productId'
@@ -193,12 +205,20 @@ export interface RootRouteChildren {
   EventsRoute: typeof EventsRoute
   GippyAiRoute: typeof GippyAiRoute
   ProductsRoute: typeof ProductsRouteWithChildren
+  RadixSmokeRoute: typeof RadixSmokeRoute
   CatalogCatalogIdRoute: typeof CatalogCatalogIdRoute
   CatalogIndexRoute: typeof CatalogIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/radix-smoke': {
+      id: '/radix-smoke'
+      path: '/radix-smoke'
+      fullPath: '/radix-smoke'
+      preLoaderRoute: typeof RadixSmokeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/products': {
       id: '/products'
       path: '/products'
@@ -325,6 +345,7 @@ const rootRouteChildren: RootRouteChildren = {
   EventsRoute: EventsRoute,
   GippyAiRoute: GippyAiRoute,
   ProductsRoute: ProductsRouteWithChildren,
+  RadixSmokeRoute: RadixSmokeRoute,
   CatalogCatalogIdRoute: CatalogCatalogIdRoute,
   CatalogIndexRoute: CatalogIndexRoute,
 }

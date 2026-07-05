@@ -1,0 +1,9 @@
+.beads
+.codegraph
+.opencode
+.zcode
+src/components/admin/.zcode
+test-results
+node_modules
+dist
+*.log

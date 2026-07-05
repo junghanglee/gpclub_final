@@ -1,0 +1,63 @@
+﻿# Progress Log
+
+Bead: gpclub_final-izr
+Started: 2026-07-04
+
+## Codebase Patterns
+
+- Router pending UI is centralized in `src/router.tsx`.
+- Static route framing should render immediately without waiting for remote data.
+- Remote record/list/detail sections should use shared skeleton components while loading.
+- Dynamic loading must not use fallback product, catalog, event, company, contact, FAQ, or product-image data to look populated.
+- Empty states should appear only after the relevant loading flag is false.
+- `LoadingModal` is a fullscreen overlay and should be reserved for true blocking flows.
+
+---
+
+<!-- Task logs below - APPEND ONLY -->
+
+## 2026-07-04 - Scope correction
+
+- Updated bead direction to Option B: shared skeleton components.
+- Replaced fallback-first language with a skeleton contract: static UI renders immediately, dynamic data sections render skeletons while loading, and empty states render only after loading completes.
+- Added `src/components/site/SectionSkeletons.tsx` as the canonical component home for public skeletons.
+
+## 2026-07-04 - Task 1 component skeletons
+
+- Added `src/components/site/SectionSkeletons.tsx` with data-free shared skeleton components for section headers, product cards/details, catalog tabs/products, event cards/timelines, B2B image slots, contact rows, and FAQ rows.
+- Verification: `rtk npx eslint src/components/site/SectionSkeletons.tsx` passed with no issues after formatting; `rtk npx prettier --check src/components/site/SectionSkeletons.tsx` passed.
+
+## 2026-07-04 - Task 2 product/catalog conversion
+
+- Converted product list, product detail, catalog index, and catalog detail loading states to shared skeletons from `src/components/site/SectionSkeletons.tsx`.
+- Removed route-local product/catalog skeleton helpers and removed `createCatalogPreview`, so catalog metadata loading no longer creates a fake dynamic catalog record.
+- Product/catalog image gaps now preserve card shape with shared image skeletons instead of text labels or blank media panels.
+- Verification: `rtk npx eslint src/components/site/SectionSkeletons.tsx src/routes/products.tsx 'src/routes/products.$productId.tsx' src/routes/catalog.index.tsx 'src/routes/catalog.$catalogId.tsx'` passed with no issues; `rtk npx prettier --check ...` passed; `rtk npm run build` passed. `Select-String` found no matches for the removed fake-loading helper names or `createCatalogPreview`.
+
+## 2026-07-04 - Task 3 events/B2B/contact conversion
+
+- Converted events, B2B, and contact dynamic loading states to shared skeletons from `src/components/site/SectionSkeletons.tsx`.
+- Removed route-local loading skeleton helpers for event timelines, new-product spotlight loading, B2B catalog-derived images, B2B image slots, and FAQ rows.
+- Event media without remote media now uses a data-free media skeleton, and B2B/contact loading sections no longer render fake product, brand, company, or FAQ copy.
+- Verification: `rtk npx eslint src/components/site/SectionSkeletons.tsx src/routes/events.tsx src/routes/b2b.tsx src/routes/contact.tsx` passed with no issues; `rtk npx prettier --check ...` passed; `rtk npm run build` passed. `Select-String` found no matches for removed Task 3 local helper names or fake loading labels.
+
+## 2026-07-04 - Task 4 remaining public pages/router check
+
+- Removed remaining blank page gates from Home, Brand, and Gippy AI so static page framing renders immediately from default content while remote page content resolves.
+- Home product showcase now renders shared product skeleton cards while catalog products load; static home image slots appear only after catalog loading completes and no product rows are available.
+- Router pending UI remains a non-blocking top progress indicator, and `LoadingModal` remains opt-in for true blocking flows.
+- Verification: `rtk npx eslint src/routes/index.tsx src/routes/brand.tsx src/routes/gippy-ai.tsx src/router.tsx src/components/site/LoadingModal.tsx src/lib/home-content.tsx src/lib/page-content.tsx` completed with 0 errors and 4 existing `react-refresh/only-export-components` warnings; `rtk npx prettier --check ...` passed; `rtk npm run build` passed.
+
+## 2026-07-04 - Task 5 final quality gate
+
+- Ran final build, scoped lint, scoped Prettier, stale-helper search, route smoke checks, and review for the public skeleton loading contract.
+- Final build passed for client and SSR. Scoped ESLint completed with 0 errors and 4 existing `react-refresh/only-export-components` warnings in `src/lib/home-content.tsx` and `src/router.tsx`.
+- Scoped Prettier passed. Contract search found no stale fake-loading helpers or text loading fallbacks such as `createCatalogPreview`, route-local shell helpers, `Loading product`, `Loading catalog`, or `Loading events`.
+- Local route smoke checks against `http://localhost:8080` returned 200 and shell HTML for `/products`, `/catalog`, `/events`, `/b2b`, and `/contact`.
+- Review noted possible concern about catalog nested loading and default page copy; both were treated as non-blocking because catalog product areas keep a nested shared skeleton while products load, and default page copy is the static shell copy intentionally rendered immediately by the PRD contract.
+
+## 2026-07-04 - Review follow-up
+
+- A follow-up verify pass flagged `src/routes/b2b.tsx` under full `tsc --noEmit` because `PackageCheck` was still used by a static B2B card after the skeleton refactor but the import had been removed.
+- Restored the `PackageCheck` import. `rtk npx eslint src/routes/b2b.tsx` passed with no issues, `rtk npx prettier --check src/routes/b2b.tsx` passed, and `rtk npm run build` passed.
+- `rtk tsc --noEmit --pretty false` no longer reports `src/routes/b2b.tsx`; remaining TypeScript errors are pre-existing admin-scope issues in `src/components/admin/tabs/ChatbotTab.tsx` and `src/components/admin/tabs/ContactsTab.tsx`.

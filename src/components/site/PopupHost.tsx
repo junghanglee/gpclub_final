@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchCachedPublicData } from "@/lib/public-data-timeout";
 
 type Popup = {
   id: string;
@@ -18,6 +19,24 @@ type Popup = {
 
 const DISMISS_KEY = (id: string) => `gpclub.popup.dismissed.${id}`;
 
+async function fetchActivePopups() {
+  return fetchCachedPublicData("popups:active", async () => {
+    const nowIso = new Date().toISOString();
+    const { data, error } = await supabase
+      .from("popups")
+      .select("id,title,content,image_url,cta_label,cta_url,active,priority,starts_at,ends_at")
+      .eq("active", true)
+      .or(`starts_at.is.null,starts_at.lte.${nowIso}`)
+      .or(`ends_at.is.null,ends_at.gte.${nowIso}`)
+      .order("priority", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(8);
+
+    if (error) throw error;
+    return (data ?? []) as Popup[];
+  });
+}
+
 export function PopupHost() {
   const [popup, setPopup] = useState<Popup | null>(null);
   const [open, setOpen] = useState(false);
@@ -25,18 +44,8 @@ export function PopupHost() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const nowIso = new Date().toISOString();
-      const { data, error } = await supabase
-        .from("popups")
-        .select("id,title,content,image_url,cta_label,cta_url,active,priority,starts_at,ends_at")
-        .eq("active", true)
-        .or(`starts_at.is.null,starts_at.lte.${nowIso}`)
-        .or(`ends_at.is.null,ends_at.gte.${nowIso}`)
-        .order("priority", { ascending: false })
-        .order("created_at", { ascending: false })
-        .limit(8);
-      if (cancelled || error || !data) return;
-      const popups = (data ?? []) as Popup[];
+      const popups = await fetchActivePopups();
+      if (cancelled) return;
       const eligible = popups.find((p) => {
         if (typeof window !== "undefined" && localStorage.getItem(DISMISS_KEY(p.id))) return false;
         return true;

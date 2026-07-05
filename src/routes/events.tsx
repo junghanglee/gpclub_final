@@ -2,12 +2,18 @@ import { createFileRoute } from "@tanstack/react-router";
 import { CalendarDays, ExternalLink, PackageOpen, PlayCircle, Sparkles } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import gippyEventHero from "@/assets/gippy-event-hero.png";
+import {
+  EventCardSkeleton,
+  EventMediaSkeleton,
+  EventTimelineSkeleton,
+  HeroCopySkeleton,
+} from "@/components/site/SectionSkeletons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { usePageContent } from "@/lib/page-content";
-import { sanitizeProductDetailHtml } from "@/lib/product-detail-html";
+import { fetchCachedPublicData, withPublicDataTimeout } from "@/lib/public-data-timeout";
 
 export const Route = createFileRoute("/events")({
   head: () => ({ meta: [{ title: "Event — GPCLUB Vietnam" }] }),
@@ -33,23 +39,38 @@ type EventRow = {
   post_type?: "event" | "new_product" | null;
 };
 
+async function fetchPublishedEvents() {
+  return fetchCachedPublicData("events:published", async () => {
+    const { data } = await withPublicDataTimeout(
+      supabase
+        .from("events")
+        .select("*")
+        .eq("published", true)
+        .order("featured", { ascending: false })
+        .order("sort_order", { ascending: false })
+        .order("event_date", { ascending: false })
+        .order("created_at", { ascending: false }),
+      "events",
+    );
+
+    return (data ?? []) as EventRow[];
+  });
+}
+
 function isEmbeddable(url: string) {
   return url.includes("youtube.com/embed/") || url.includes("player.vimeo.com/");
 }
 
 function MediaPreview({ item }: { item: EventRow }) {
   if (!item.media_url) {
-    return (
-      <div className="grid aspect-video place-items-center rounded-[1.75rem] bg-gradient-to-br from-primary/15 via-gold/15 to-secondary text-sm font-bold uppercase tracking-[0.2em] text-foreground/50">
-        {item.post_type === "new_product" ? "New Product" : "GPCLUB Event"}
-      </div>
-    );
+    return <EventMediaSkeleton className="rounded-[1.75rem]" />;
   }
   if (item.media_type === "video") {
     return (
       <video
         src={item.media_url}
         controls
+        preload="metadata"
         className="aspect-video w-full rounded-[1.75rem] bg-black object-cover"
       />
     );
@@ -59,6 +80,7 @@ function MediaPreview({ item }: { item: EventRow }) {
       <iframe
         src={item.media_url}
         title={item.title_en}
+        loading="lazy"
         className="aspect-video w-full rounded-[1.75rem] bg-black"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowFullScreen
@@ -69,6 +91,8 @@ function MediaPreview({ item }: { item: EventRow }) {
     <img
       src={item.media_url}
       alt={item.title_en}
+      loading="lazy"
+      decoding="async"
       className="aspect-video w-full rounded-[1.75rem] object-cover"
     />
   );
@@ -81,19 +105,21 @@ function EventsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let alive = true;
     (async () => {
-      setLoading(true);
-      const { data } = await supabase
-        .from("events")
-        .select("*")
-        .eq("published", true)
-        .order("featured", { ascending: false })
-        .order("sort_order", { ascending: false })
-        .order("event_date", { ascending: false })
-        .order("created_at", { ascending: false });
-      setRows((data ?? []) as EventRow[]);
-      setLoading(false);
+      try {
+        setLoading(true);
+        const data = await fetchPublishedEvents();
+        if (alive) setRows(data);
+      } catch {
+        if (alive) setRows([]);
+      } finally {
+        if (alive) setLoading(false);
+      }
     })();
+    return () => {
+      alive = false;
+    };
   }, []);
 
   const newProducts = useMemo(
@@ -103,10 +129,6 @@ function EventsPage() {
   const eventRows = useMemo(() => rows.filter((r) => r.post_type !== "new_product"), [rows]);
   const featured = useMemo(() => eventRows.find((r) => r.featured) ?? eventRows[0], [eventRows]);
   const rest = useMemo(() => eventRows.filter((r) => r.id !== featured?.id), [eventRows, featured]);
-
-  if (pageLoading) {
-    return <main className="min-h-[60vh] bg-background" />;
-  }
 
   return (
     <main className="overflow-hidden bg-background">
@@ -119,20 +141,26 @@ function EventsPage() {
           aria-hidden
           className="pointer-events-none absolute -bottom-40 -left-24 h-[420px] w-[420px] rounded-full bg-accent/50 blur-3xl"
         />
-        <div className="relative mx-auto grid max-w-[1200px] items-center gap-12 px-4 py-20 sm:px-6 md:py-28 lg:grid-cols-12 lg:px-10">
+        <div className="relative mx-auto grid min-h-[560px] max-w-[1200px] items-center gap-12 px-4 py-20 sm:min-h-[620px] sm:px-6 md:py-28 lg:min-h-[640px] lg:grid-cols-12 lg:px-10">
           <div className="text-center lg:col-span-7 lg:text-left">
-            <div className="text-[11px] font-bold uppercase tracking-[0.32em] text-primary">
-              {page.kicker[lang]}
-            </div>
-            <h1 className="mt-5 font-display text-4xl font-black leading-[1.05] tracking-tight md:text-6xl">
-              {page.title[lang]}{" "}
-              <span className="bg-gradient-pink bg-clip-text text-transparent">
-                {page.highlight[lang]}
-              </span>
-            </h1>
-            <p className="mx-auto mt-8 max-w-2xl text-[16px] leading-relaxed text-foreground/75 lg:mx-0">
-              {page.description[lang]}
-            </p>
+            {pageLoading ? (
+              <HeroCopySkeleton />
+            ) : (
+              <>
+                <div className="text-[11px] font-bold uppercase tracking-[0.32em] text-primary">
+                  {page.kicker[lang]}
+                </div>
+                <h1 className="mt-5 font-display text-4xl font-black leading-[1.05] tracking-tight md:text-6xl">
+                  {page.title[lang]}{" "}
+                  <span className="bg-gradient-pink bg-clip-text text-transparent">
+                    {page.highlight[lang]}
+                  </span>
+                </h1>
+                <p className="mx-auto mt-8 max-w-2xl text-[16px] leading-relaxed text-foreground/75 lg:mx-0">
+                  {page.description[lang]}
+                </p>
+              </>
+            )}
           </div>
           <div className="flex justify-center lg:col-span-5 lg:justify-end">
             <img
@@ -146,24 +174,28 @@ function EventsPage() {
         </div>
       </section>
 
-      {!loading && newProducts.length > 0 && (
-        <section className="border-b border-border/60 bg-secondary/35">
-          <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
-            <div className="mb-8">
-              <div className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.28em] text-primary">
-                <Sparkles className="h-4 w-4" /> New Product Spotlight
-              </div>
-              <h2 className="mt-3 font-display text-3xl font-black tracking-tight md:text-5xl">
-                {lang === "vi" ? "Sản phẩm mới trong tháng" : "This month’s new arrivals"}
-              </h2>
-              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-foreground/65 md:text-base">
-                {lang === "vi"
-                  ? "Các sản phẩm mới do quản trị viên cập nhật sẽ được ưu tiên hiển thị tại đây."
-                  : "Admin-selected launches are highlighted here so visitors can see the latest 2–3 products immediately."}
-              </p>
+      <section className="border-b border-border/60 bg-secondary/35">
+        <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+          <div className="mb-8">
+            <div className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.28em] text-primary">
+              <Sparkles className="h-4 w-4" /> New Product Spotlight
             </div>
-            <div className="grid gap-5 md:grid-cols-3">
-              {newProducts.map((item) => (
+            <h2 className="mt-3 font-display text-3xl font-black tracking-tight md:text-5xl">
+              {lang === "vi" ? "Sản phẩm mới trong tháng" : "This month’s new arrivals"}
+            </h2>
+            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-foreground/65 md:text-base">
+              {lang === "vi"
+                ? "Các sản phẩm mới do quản trị viên cập nhật sẽ được ưu tiên hiển thị tại đây."
+                : "Admin-selected launches are highlighted here so visitors can see the latest 2–3 products immediately."}
+            </p>
+          </div>
+          <div className="grid gap-5 md:grid-cols-3">
+            {loading ? (
+              <EventCardSkeleton count={3} />
+            ) : newProducts.length === 0 ? (
+              <NewProductSpotlightEmpty />
+            ) : (
+              newProducts.map((item) => (
                 <article
                   key={item.id}
                   className="overflow-hidden rounded-[1.75rem] border border-border/60 bg-card shadow-soft transition hover:-translate-y-1 hover:shadow-lg"
@@ -199,19 +231,13 @@ function EventsPage() {
                     )}
                   </div>
                 </article>
-              ))}
-            </div>
+              ))
+            )}
           </div>
-        </section>
-      )}
+        </div>
+      </section>
 
       <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
-        {loading && (
-          <div className="rounded-3xl border border-dashed border-border/70 p-16 text-center text-muted-foreground">
-            Loading events…
-          </div>
-        )}
-
         {!loading && rows.length === 0 && (
           <div className="rounded-3xl border border-dashed border-border/70 p-16 text-center">
             <h2 className="font-display text-2xl">
@@ -225,7 +251,9 @@ function EventsPage() {
           </div>
         )}
 
-        {featured && (
+        {loading && <EventTimelineSkeleton />}
+
+        {!loading && featured && (
           <article className="grid gap-8 rounded-[2rem] border border-border/60 bg-card p-4 shadow-soft lg:grid-cols-[1.15fr_0.85fr] lg:p-6">
             <MediaPreview item={featured} />
             <div className="flex flex-col justify-center p-3 lg:p-6">
@@ -247,14 +275,9 @@ function EventsPage() {
                 </p>
               )}
               {(featured.body_vi || featured.body_en) && (
-                <div
-                  className="mt-4 text-sm leading-relaxed text-foreground/75 [&_a]:font-semibold [&_a]:text-primary [&_a]:underline [&_h2]:mb-3 [&_h2]:text-2xl [&_h2]:font-black [&_h3]:mb-2 [&_h3]:text-xl [&_h3]:font-bold [&_img]:my-4 [&_img]:max-h-[320px] [&_img]:rounded-xl [&_img]:border [&_li]:mb-1 [&_ol]:list-decimal [&_ol]:pl-6 [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-6"
-                  dangerouslySetInnerHTML={{
-                    __html: sanitizeProductDetailHtml(
-                      lang === "vi" ? featured.body_vi : featured.body_en,
-                    ),
-                  }}
-                />
+                <p className="mt-4 whitespace-pre-line text-sm leading-relaxed text-foreground/75">
+                  {lang === "vi" ? featured.body_vi : featured.body_en}
+                </p>
               )}
               {featured.cta_url && (
                 <Button asChild className="mt-6 w-fit rounded-full">
@@ -270,7 +293,7 @@ function EventsPage() {
           </article>
         )}
 
-        {rest.length > 0 && (
+        {!loading && rest.length > 0 && (
           <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
             {rest.map((item) => (
               <article
@@ -316,5 +339,25 @@ function EventsPage() {
         )}
       </section>
     </main>
+  );
+}
+
+function NewProductSpotlightEmpty() {
+  return (
+    <>
+      {Array.from({ length: 3 }).map((_, index) => (
+        <article
+          key={index}
+          className="overflow-hidden rounded-[1.75rem] border border-dashed border-border/70 bg-card shadow-soft"
+        >
+          <EventMediaSkeleton className="rounded-[1.75rem]" />
+          <div className="p-6">
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+              New launches will appear here once published.
+            </p>
+          </div>
+        </article>
+      ))}
+    </>
   );
 }

@@ -1,6 +1,13 @@
 import { type QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { createRootRouteWithContext, Link, Outlet, useRouter } from "@tanstack/react-router";
-import { lazy, type ReactNode, Suspense, useEffect, useState } from "react";
+import {
+  createRootRouteWithContext,
+  HeadContent,
+  Link,
+  Outlet,
+  Scripts,
+  useRouter,
+} from "@tanstack/react-router";
+import { lazy, type ReactNode, Suspense } from "react";
 import { FloatingChat } from "@/components/site/FloatingChat";
 import { Footer } from "@/components/site/Footer";
 import { Header } from "@/components/site/Header";
@@ -132,19 +139,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
-      {
-        rel: "preconnect",
-        href: "https://fonts.googleapis.com",
-      },
-      {
-        rel: "preconnect",
-        href: "https://fonts.gstatic.com",
-        crossOrigin: "anonymous",
-      },
-      {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Be+Vietnam+Pro:wght@300;400;500;600;700&display=swap",
-      },
     ],
   }),
   component: RootComponent,
@@ -193,31 +187,27 @@ function RootComponent() {
 }
 
 function PublicEngagementLayer() {
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    const load = () => setReady(true);
-    if ("requestIdleCallback" in window) {
-      const id = window.requestIdleCallback(load, { timeout: 2500 });
-      return () => window.cancelIdleCallback(id);
-    }
-    const id = window.setTimeout(load, 1200);
-    return () => window.clearTimeout(id);
-  }, []);
-
-  if (!ready) return null;
-
   return (
     <>
+      <FloatingChat />
       <Suspense fallback={null}>
         <GippyChat />
         <PopupHost />
       </Suspense>
-      <FloatingChat />
     </>
   );
 }
 
 function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
-  return <>{children}</>;
+  return (
+    <html lang="vi">
+      <head>
+        <HeadContent />
+      </head>
+      <body>
+        {children}
+        <Scripts />
+      </body>
+    </html>
+  );
 }

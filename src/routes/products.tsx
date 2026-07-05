@@ -1,8 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Search, Sparkles, Star } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { ArrowRight, ChevronDown, Search, Sparkles, Star } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import gippyProductsHero from "@/assets/gippy-products-hero.png";
 import { B2BInquiryDialog } from "@/components/site/B2BInquiryDialog";
+import {
+  HeroCopySkeleton,
+  ProductCardSkeletonGrid,
+  ProductImageSkeleton,
+} from "@/components/site/SectionSkeletons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,16 +17,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   type CatalogProduct,
+  fetchPublishedCatalogProductById,
   getCoverImage,
   normalizeBrandText,
   productSearchText,
@@ -87,17 +93,23 @@ const productText = {
   },
 };
 
+const INITIAL_PRODUCT_COUNT = 8;
+const PRODUCT_BATCH_SIZE = 16;
+
 function ProductsPage() {
   const { lang } = useI18n();
-  const { content: page } = usePageContent("products");
+  const { content: page, loading: pageLoading } = usePageContent("products");
   const t = productText[lang];
-  const { rows, loading, error } = useCatalogProducts();
+  const { rows, loading } = useCatalogProducts();
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("All");
   const [brand, setBrand] = useState("All");
-  const [visibleCount, setVisibleCount] = useState(40);
+  const [visibleCount, setVisibleCount] = useState(INITIAL_PRODUCT_COUNT);
   const [selected, setSelected] = useState<CatalogProduct | null>(null);
+  const [selectedDetail, setSelectedDetail] = useState<CatalogProduct | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
   const [inquiryOpen, setInquiryOpen] = useState(false);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
   const brandOptions = useMemo(() => {
     const byKey = new Map<string, string>();
@@ -142,10 +154,53 @@ function ProductsPage() {
   }, [rows, q, cat, brand]);
 
   useEffect(() => {
-    setVisibleCount(40);
+    setVisibleCount(INITIAL_PRODUCT_COUNT);
   }, [q, cat, brand]);
 
-  const visibleProducts = useMemo(() => filtered.slice(0, visibleCount), [filtered, visibleCount]);
+  useEffect(() => {
+    if (!selected?.id) {
+      setSelectedDetail(null);
+      setDetailLoading(false);
+      return;
+    }
+
+    let active = true;
+    setSelectedDetail(null);
+    setDetailLoading(true);
+
+    fetchPublishedCatalogProductById(selected.id)
+      .then((detail) => {
+        if (active) setSelectedDetail(detail);
+      })
+      .finally(() => {
+        if (active) setDetailLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [selected?.id]);
+
+  useEffect(() => {
+    if (loading) return;
+    const node = loadMoreRef.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry?.isIntersecting) return;
+        setVisibleCount((current) => Math.min(current + PRODUCT_BATCH_SIZE, filtered.length));
+      },
+      { rootMargin: "720px 0px" },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [filtered.length, loading]);
+
+  const visibleProducts = filtered.slice(0, visibleCount);
+  const hasMoreProducts = visibleProducts.length < filtered.length;
+  const dialogProduct = selectedDetail ?? selected;
+
+  const showProductShells = loading && filtered.length === 0;
 
   const openInquiry = () => {
     if (!selected) return;
@@ -163,24 +218,33 @@ function ProductsPage() {
           aria-hidden
           className="pointer-events-none absolute -bottom-40 -left-24 h-[420px] w-[420px] rounded-full bg-accent/50 blur-3xl"
         />
-        <div className="relative mx-auto grid max-w-[1200px] items-center gap-12 px-4 py-20 sm:px-6 md:py-28 lg:grid-cols-12 lg:px-10">
+        <div className="relative mx-auto grid min-h-[560px] max-w-[1200px] items-center gap-12 px-4 py-20 sm:min-h-[620px] sm:px-6 md:py-28 lg:min-h-[640px] lg:grid-cols-12 lg:px-10">
           <div className="text-center lg:col-span-7 lg:text-left">
-            <div className="text-[11px] font-bold uppercase tracking-[0.32em] text-primary">
-              {page.kicker[lang]}
-            </div>
-            <h1 className="mt-5 font-display text-4xl font-black leading-[1.05] tracking-tight md:text-6xl">
-              {page.title[lang]}{" "}
-              <span className="bg-gradient-pink bg-clip-text text-transparent">
-                {page.highlight[lang]}
-              </span>
-            </h1>
-            <p className="mx-auto mt-8 max-w-2xl text-[16px] leading-relaxed text-foreground/75 lg:mx-0">
-              {page.description[lang]}{" "}
-              <Link to="/b2b" className="font-bold text-primary underline-offset-4 hover:underline">
-                {page.primaryCta[lang] || t.introLink}
-              </Link>
-              {t.introB}
-            </p>
+            {pageLoading ? (
+              <HeroCopySkeleton />
+            ) : (
+              <>
+                <div className="text-[11px] font-bold uppercase tracking-[0.32em] text-primary">
+                  {page.kicker[lang]}
+                </div>
+                <h1 className="mt-5 font-display text-4xl font-black leading-[1.05] tracking-tight md:text-6xl">
+                  {page.title[lang]}{" "}
+                  <span className="bg-gradient-pink bg-clip-text text-transparent">
+                    {page.highlight[lang]}
+                  </span>
+                </h1>
+                <p className="mx-auto mt-8 max-w-2xl text-[16px] leading-relaxed text-foreground/75 lg:mx-0">
+                  {page.description[lang]}{" "}
+                  <Link
+                    to="/b2b"
+                    className="font-bold text-primary underline-offset-4 hover:underline"
+                  >
+                    {page.primaryCta[lang] || t.introLink}
+                  </Link>
+                  {t.introB}
+                </p>
+              </>
+            )}
           </div>
           <div className="flex justify-center lg:col-span-5 lg:justify-end">
             <img
@@ -196,167 +260,114 @@ function ProductsPage() {
 
       <section className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-8">
         <div className="rounded-3xl border border-border/60 bg-card p-4 shadow-soft">
-          <div className="grid gap-3 lg:grid-cols-[auto_180px_220px_1fr] lg:items-center">
-            <div className="text-sm font-bold text-foreground">
-              {t.totalRegistered}: <span className="text-primary">{rows.length}</span>
-              <span className="ml-3 text-muted-foreground">
-                {t.showing}: {filtered.length}
-              </span>
-            </div>
-            <Select value={brand} onValueChange={setBrand}>
-              <SelectTrigger>
-                <SelectValue placeholder={t.brandFilter} />
-              </SelectTrigger>
-              <SelectContent>
-                {brandOptions.map((b) => (
-                  <SelectItem key={b} value={b}>
-                    {b === "All"
+          {loading ? (
+            <ProductFilterSkeleton />
+          ) : (
+            <div className="grid gap-3 lg:grid-cols-[auto_180px_220px_1fr] lg:items-center">
+              <div className="text-sm font-bold text-foreground">
+                {t.totalRegistered}: <span className="text-primary">{rows.length}</span>
+                <span className="ml-3 text-muted-foreground">
+                  {t.showing}: {filtered.length}
+                </span>
+              </div>
+              <ProductRadixFilter
+                ariaLabel={t.brandFilter}
+                value={brand}
+                onValueChange={setBrand}
+                options={brandOptions.map((b) => ({
+                  value: b,
+                  label:
+                    b === "All"
                       ? `${t.allBrands} (${rows.length})`
-                      : `${b} (${brandCounts.get(normalizeBrandText(b)) || 0})`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={cat} onValueChange={setCat}>
-              <SelectTrigger>
-                <SelectValue placeholder={t.typeFilter} />
-              </SelectTrigger>
-              <SelectContent>
-                {typeOptions.map((c) => (
-                  <SelectItem key={c} value={c}>
-                    {c === "All" ? `${t.all} (${rows.length})` : `${c} (${typeCounts.get(c) || 0})`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <div className="flex items-center gap-2 rounded-md border border-input bg-background px-3">
-              <Search className="h-4 w-4 text-muted-foreground" />
-              <Input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder={t.search}
-                maxLength={60}
-                className="border-0 bg-transparent shadow-none focus-visible:ring-0"
+                      : `${b} (${brandCounts.get(normalizeBrandText(b)) || 0})`,
+                }))}
               />
+              <ProductRadixFilter
+                ariaLabel={t.typeFilter}
+                value={cat}
+                onValueChange={setCat}
+                options={typeOptions.map((c) => ({
+                  value: c,
+                  label:
+                    c === "All" ? `${t.all} (${rows.length})` : `${c} (${typeCounts.get(c) || 0})`,
+                }))}
+              />
+              <div className="flex items-center gap-2 rounded-md border border-input bg-background px-3">
+                <Search className="h-4 w-4 text-muted-foreground" />
+                <Input
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  placeholder={t.search}
+                  maxLength={60}
+                  className="border-0 bg-transparent shadow-none focus-visible:ring-0"
+                />
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </section>
 
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        {loading ? (
-          <p className="py-16 text-center text-muted-foreground">Loading...</p>
-        ) : error ? (
-          <div className="mx-auto max-w-xl rounded-2xl border border-destructive/20 bg-destructive/5 p-6 text-center">
-            <p className="font-semibold text-foreground">
-              Product data is temporarily unavailable.
-            </p>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Please refresh the page and try again.
-            </p>
-          </div>
+        {showProductShells ? (
+          <ProductCardSkeletonGrid count={INITIAL_PRODUCT_COUNT} />
         ) : filtered.length === 0 ? (
-          <p className="py-16 text-center text-muted-foreground">{t.empty}</p>
+          <ProductEmptyGrid message={t.empty} />
         ) : (
-          <>
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-              {visibleProducts.map((p) => (
-                <button
-                  key={p.id}
-                  type="button"
-                  onClick={() => setSelected(p)}
-                  className={`group overflow-hidden rounded-2xl border bg-card text-left transition hover:-translate-y-1 hover:shadow-soft ${
-                    p.is_featured ? "border-primary/50 ring-2 ring-primary/10" : "border-border/60"
-                  }`}
-                >
-                  <div className="relative aspect-square overflow-hidden bg-muted">
-                    {getCoverImage(p) ? (
-                      <img
-                        src={getCoverImage(p)}
-                        alt={p.product_name}
-                        loading="lazy"
-                        className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                      />
-                    ) : null}
-                    <div className="absolute left-3 top-3 flex flex-wrap gap-1">
-                      {p.is_new ? (
-                        <Badge className="gap-1 bg-primary text-primary-foreground">
-                          <Sparkles className="h-3 w-3" />
-                          {t.new}
-                        </Badge>
-                      ) : null}
-                      {p.is_popular ? (
-                        <Badge className="gap-1 bg-foreground text-background">
-                          <Star className="h-3 w-3" />
-                          {t.popular}
-                        </Badge>
-                      ) : null}
-                    </div>
-                  </div>
-                  <div className="p-4">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="truncate text-[10px] font-semibold uppercase tracking-widest text-gold">
-                        {p.brand_name}
-                      </div>
-                      <Badge variant="secondary" className="max-w-[45%] truncate text-[10px]">
-                        {p.product_type}
-                      </Badge>
-                    </div>
-                    <h3 className="mt-1 line-clamp-2 text-sm font-medium">{p.product_name}</h3>
-                    <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
-                      {p.short_intro}
-                    </p>
-                    <span className="mt-4 inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-widest text-primary">
-                      {t.details}{" "}
-                      <ArrowRight className="h-3 w-3 transition group-hover:translate-x-1" />
-                    </span>
-                  </div>
-                </button>
-              ))}
-            </div>
-            {visibleCount < filtered.length ? (
-              <div className="mt-8 flex justify-center">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setVisibleCount((n) => n + 40)}
-                >
-                  Load more
-                </Button>
-              </div>
-            ) : null}
-          </>
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+            {visibleProducts.map((p) => (
+              <ProductCard key={p.id} product={p} labels={t} onSelect={setSelected} />
+            ))}
+          </div>
         )}
+        {hasMoreProducts ? (
+          <div ref={loadMoreRef} className="mt-8 flex justify-center">
+            <Button
+              type="button"
+              variant="outline"
+              className="rounded-full px-6"
+              onClick={() =>
+                setVisibleCount((current) =>
+                  Math.min(current + PRODUCT_BATCH_SIZE, filtered.length),
+                )
+              }
+            >
+              Load more products
+            </Button>
+          </div>
+        ) : null}
       </section>
 
       <Dialog open={!!selected} onOpenChange={(open) => !open && setSelected(null)}>
-        <DialogContent className="max-h-[90vh] max-w-5xl overflow-hidden p-0">
-          {selected ? (
+        <DialogContent className="grid h-[min(90vh,calc(100vh-2rem))] max-w-5xl grid-rows-[auto_minmax(0,1fr)] overflow-hidden p-0">
+          {dialogProduct ? (
             <>
               <div className="border-b bg-gradient-luxe px-6 py-5">
                 <DialogHeader>
                   <div className="mb-2 flex flex-wrap gap-2">
-                    <Badge variant="secondary">{selected.brand_name}</Badge>
-                    <Badge variant="outline">{selected.product_type}</Badge>
+                    <Badge variant="secondary">{dialogProduct.brand_name}</Badge>
+                    <Badge variant="outline">{dialogProduct.product_type}</Badge>
                   </div>
                   <DialogTitle className="pr-8 text-2xl leading-tight md:text-3xl">
-                    {selected.product_name}
+                    {dialogProduct.product_name}
                   </DialogTitle>
                   <DialogDescription className="text-sm leading-relaxed text-foreground/70">
-                    {selected.short_intro}
+                    {dialogProduct.short_intro}
                   </DialogDescription>
                 </DialogHeader>
               </div>
-              <div className="max-h-[72vh] overflow-y-auto p-6">
-                <div className="grid gap-6 md:grid-cols-[280px_1fr]">
+              <div className="min-h-0 overflow-y-auto overscroll-contain p-6">
+                <div className="grid min-h-0 gap-6 md:grid-cols-[280px_minmax(0,1fr)]">
                   <aside className="space-y-4">
-                    {getCoverImage(selected) ? (
-                      <img
-                        src={getCoverImage(selected)}
-                        alt={selected.product_name}
-                        className="aspect-square w-full rounded-3xl border bg-muted object-cover shadow-soft"
+                    {getCoverImage(dialogProduct) ? (
+                      <ModalProductImage
+                        src={getCoverImage(dialogProduct) || ""}
+                        alt={dialogProduct.product_name}
                       />
-                    ) : null}
+                    ) : (
+                      <div className="aspect-square w-full overflow-hidden rounded-3xl border bg-muted shadow-soft">
+                        <ProductImageSkeleton />
+                      </div>
+                    )}
                     <div className="rounded-2xl border bg-muted/25 p-4">
                       <div className="mb-3 text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
                         Product summary
@@ -364,38 +375,44 @@ function ProductsPage() {
                       <dl className="grid gap-3 text-sm">
                         <div>
                           <dt className="font-semibold text-foreground">Brand</dt>
-                          <dd className="text-muted-foreground">{selected.brand_name}</dd>
+                          <dd className="text-muted-foreground">{dialogProduct.brand_name}</dd>
                         </div>
                         <div>
                           <dt className="font-semibold text-foreground">Category</dt>
-                          <dd className="text-muted-foreground">{selected.product_type}</dd>
+                          <dd className="text-muted-foreground">{dialogProduct.product_type}</dd>
                         </div>
                       </dl>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      {selected.is_new ? <Badge>{t.new}</Badge> : null}
-                      {selected.is_popular ? <Badge variant="secondary">{t.popular}</Badge> : null}
-                      {selected.is_featured ? <Badge variant="outline">{t.featured}</Badge> : null}
+                      {dialogProduct.is_new ? <Badge>{t.new}</Badge> : null}
+                      {dialogProduct.is_popular ? (
+                        <Badge variant="secondary">{t.popular}</Badge>
+                      ) : null}
+                      {dialogProduct.is_featured ? (
+                        <Badge variant="outline">{t.featured}</Badge>
+                      ) : null}
                     </div>
                   </aside>
-                  <main className="space-y-5">
-                    {selected.detail_html ? (
+                  <div className="min-w-0 space-y-5">
+                    {detailLoading ? (
+                      <ProductDetailLoadingState />
+                    ) : dialogProduct.detail_html ? (
                       <div
                         className="space-y-4 text-sm leading-7 text-foreground/80 [&_h3]:mb-3 [&_h3]:text-lg [&_h3]:font-black [&_h3]:text-foreground [&_li]:mb-1.5 [&_section]:rounded-2xl [&_section]:border [&_section]:bg-card [&_section]:p-5 [&_strong]:text-foreground [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:pl-5"
                         dangerouslySetInnerHTML={{
-                          __html: sanitizeProductDetailHtml(selected.detail_html),
+                          __html: sanitizeProductDetailHtml(dialogProduct.detail_html),
                         }}
                       />
                     ) : (
                       <div className="rounded-2xl border bg-card p-5 text-sm leading-7 text-muted-foreground">
-                        {selected.short_intro}
+                        {dialogProduct.short_intro}
                       </div>
                     )}
-                    {selected.conditions?.filter((c) => c.visible).length ? (
+                    {!detailLoading && dialogProduct.conditions?.filter((c) => c.visible).length ? (
                       <div className="rounded-2xl border bg-card p-5">
                         <h3 className="mb-3 text-lg font-black">Additional information</h3>
                         <div className="grid gap-2 text-sm">
-                          {selected.conditions
+                          {dialogProduct.conditions
                             .filter((c) => c.visible)
                             .map((c, idx) => (
                               <div
@@ -409,7 +426,7 @@ function ProductsPage() {
                         </div>
                       </div>
                     ) : null}
-                  </main>
+                  </div>
                 </div>
                 <div className="mt-6 rounded-3xl border border-primary/20 bg-primary/5 p-5 text-center md:text-left">
                   <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -459,5 +476,200 @@ function ProductsPage() {
         title="Register B2B inquiry without leaving this product"
       />
     </>
+  );
+}
+
+function ProductEmptyGrid({ message }: { message: string }) {
+  return (
+    <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+      {Array.from({ length: 4 }).map((_, index) => (
+        <div
+          key={index}
+          className="overflow-hidden rounded-2xl border border-dashed border-border bg-card text-left"
+        >
+          <div className="relative aspect-square overflow-hidden bg-muted">
+            <ProductImageSkeleton />
+          </div>
+          <div className="p-4">
+            <p className="mt-2 text-sm text-muted-foreground">{message}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ProductCard({
+  product,
+  labels,
+  onSelect,
+}: {
+  product: CatalogProduct;
+  labels: (typeof productText)["en"];
+  onSelect: (product: CatalogProduct) => void;
+}) {
+  const coverImage = getCoverImage(product);
+
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(product)}
+      className={`group overflow-hidden rounded-2xl border bg-card text-left transition hover:-translate-y-1 hover:shadow-soft ${
+        product.is_featured ? "border-primary/50 ring-2 ring-primary/10" : "border-border/60"
+      }`}
+    >
+      <div className="relative aspect-square overflow-hidden bg-muted">
+        {coverImage ? (
+          <LazyProductImage src={coverImage} alt={product.product_name} />
+        ) : (
+          <ProductImageSkeleton />
+        )}
+        <div className="absolute left-3 top-3 flex flex-wrap gap-1">
+          {product.is_new ? (
+            <Badge className="gap-1 bg-primary text-primary-foreground">
+              <Sparkles className="h-3 w-3" />
+              {labels.new}
+            </Badge>
+          ) : null}
+          {product.is_popular ? (
+            <Badge className="gap-1 bg-foreground text-background">
+              <Star className="h-3 w-3" />
+              {labels.popular}
+            </Badge>
+          ) : null}
+        </div>
+      </div>
+      <div className="p-4">
+        <div className="flex items-center justify-between gap-2">
+          <div className="truncate text-[10px] font-semibold uppercase tracking-widest text-gold">
+            {product.brand_name}
+          </div>
+          <Badge variant="secondary" className="max-w-[45%] truncate text-[10px]">
+            {product.product_type}
+          </Badge>
+        </div>
+        <h3 className="mt-1 line-clamp-2 text-sm font-medium">{product.product_name}</h3>
+        <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{product.short_intro}</p>
+        <span className="mt-4 inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-widest text-primary">
+          {labels.details} <ArrowRight className="h-3 w-3 transition group-hover:translate-x-1" />
+        </span>
+      </div>
+    </button>
+  );
+}
+
+function LazyProductImage({ src, alt }: { src: string; alt: string }) {
+  const [loaded, setLoaded] = useState(false);
+
+  return (
+    <>
+      {!loaded ? <ProductImageSkeleton /> : null}
+      <img
+        src={src}
+        alt={alt}
+        loading="lazy"
+        decoding="async"
+        fetchPriority="low"
+        onLoad={() => setLoaded(true)}
+        className={`absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105 ${
+          loaded ? "opacity-100" : "opacity-0"
+        }`}
+      />
+    </>
+  );
+}
+
+function ModalProductImage({ src, alt }: { src: string; alt: string }) {
+  const [loaded, setLoaded] = useState(false);
+
+  return (
+    <div className="relative aspect-square w-full overflow-hidden rounded-3xl border bg-muted shadow-soft">
+      {loaded ? null : <ProductImageSkeleton />}
+      <img
+        src={src}
+        alt={alt}
+        loading="lazy"
+        decoding="async"
+        fetchPriority="low"
+        onLoad={() => setLoaded(true)}
+        className={`absolute inset-0 h-full w-full object-cover transition duration-300 ${
+          loaded ? "opacity-100" : "opacity-0"
+        }`}
+      />
+    </div>
+  );
+}
+
+function ProductDetailLoadingState() {
+  return (
+    <div className="space-y-4" aria-busy="true">
+      <div className="rounded-2xl border bg-card p-5">
+        <div className="mb-4 h-5 w-40 animate-pulse rounded-full bg-primary/15 ring-1 ring-primary/10" />
+        <div className="space-y-3">
+          <div className="h-3 w-full animate-pulse rounded-full bg-primary/15 ring-1 ring-primary/10" />
+          <div className="h-3 w-11/12 animate-pulse rounded-full bg-primary/15 ring-1 ring-primary/10" />
+          <div className="h-3 w-4/5 animate-pulse rounded-full bg-primary/15 ring-1 ring-primary/10" />
+        </div>
+      </div>
+      <div className="rounded-2xl border bg-card p-5">
+        <div className="mb-4 h-5 w-52 animate-pulse rounded-full bg-primary/15 ring-1 ring-primary/10" />
+        <div className="space-y-3">
+          <div className="h-3 w-full animate-pulse rounded-full bg-primary/15 ring-1 ring-primary/10" />
+          <div className="h-3 w-10/12 animate-pulse rounded-full bg-primary/15 ring-1 ring-primary/10" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProductRadixFilter({
+  value,
+  onValueChange,
+  ariaLabel,
+  options,
+}: {
+  value: string;
+  onValueChange: (value: string) => void;
+  ariaLabel: string;
+  options: Array<{ value: string; label: string }>;
+}) {
+  const selectedLabel = options.find((option) => option.value === value)?.label ?? value;
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          aria-label={ariaLabel}
+          className="flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-left text-sm shadow-sm ring-offset-background transition focus:outline-none focus:ring-1 focus:ring-ring"
+        >
+          <span className="truncate">{selectedLabel}</span>
+          <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="max-h-72 min-w-[12rem]">
+        <DropdownMenuRadioGroup value={value} onValueChange={onValueChange}>
+          {options.map((option) => (
+            <DropdownMenuRadioItem key={option.value} value={option.value}>
+              {option.label}
+            </DropdownMenuRadioItem>
+          ))}
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+function ProductFilterSkeleton() {
+  return (
+    <div
+      className="grid gap-3 lg:grid-cols-[auto_180px_220px_1fr] lg:items-center"
+      aria-busy="true"
+    >
+      <div className="h-5 w-56 animate-pulse rounded-full bg-primary/15 ring-1 ring-primary/10" />
+      <div className="h-10 animate-pulse rounded-md border border-primary/10 bg-primary/10" />
+      <div className="h-10 animate-pulse rounded-md border border-primary/10 bg-primary/10" />
+      <div className="h-10 animate-pulse rounded-md border border-primary/10 bg-primary/10" />
+    </div>
   );
 }
