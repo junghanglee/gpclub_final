@@ -11,7 +11,7 @@ import {
 } from "@/components/site/SectionSkeletons";
 import { Button } from "@/components/ui/button";
 import { getCoverImage, useCatalogProducts } from "@/lib/catalog-products";
-import { useHomeContent } from "@/lib/home-content";
+import { HomeContentProvider, useHomeContent } from "@/lib/home-content";
 import { useI18n } from "@/lib/i18n";
 import { useRepresentativeCatalog } from "@/lib/product-catalogs";
 
@@ -65,8 +65,16 @@ export const Route = createFileRoute("/")({
       },
     ],
   }),
-  component: HomePage,
+  component: HomeRouteComponent,
 });
+
+function HomeRouteComponent() {
+  return (
+    <HomeContentProvider>
+      <HomePage />
+    </HomeContentProvider>
+  );
+}
 
 type BilingualText = { vi: string; en: string };
 

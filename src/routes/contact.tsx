@@ -31,7 +31,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { usePageContent } from "@/lib/page-content";
-import { withPublicDataTimeout } from "@/lib/public-data-timeout";
+import { fetchCachedPublicData, withPublicDataTimeout } from "@/lib/public-data-timeout";
 import {
   buildWhatsappLink,
   buildZaloLink,
@@ -146,6 +146,23 @@ const contactText = {
 const INITIAL_FAQ_COUNT = 12;
 const FAQ_BATCH_SIZE = 12;
 
+async function fetchContactFaqs() {
+  return fetchCachedPublicData("contact-faqs", async () => {
+    const { data, error } = await withPublicDataTimeout(
+      supabase
+        .from("faqs")
+        .select("question, answer, category, sort_order")
+        .eq("published", true)
+        .order("sort_order")
+        .order("created_at"),
+      "contact faqs",
+    );
+
+    if (error) throw error;
+    return data ?? [];
+  });
+}
+
 const inquirySchema = z.object({
   name: z.string().trim().min(1).max(100),
   email: z.string().trim().email().max(200),
@@ -177,7 +194,6 @@ function ContactPage() {
   const [faqLang, setFaqLang] = useState<"ko" | "en" | "vi">(lang);
   const [faqLoading, setFaqLoading] = useState(true);
   const [visibleFaqCount, setVisibleFaqCount] = useState(INITIAL_FAQ_COUNT);
-
   useEffect(() => {
     setFaqLang(lang);
     setVisibleFaqCount(INITIAL_FAQ_COUNT);
@@ -189,18 +205,10 @@ function ContactPage() {
     const loadFaqs = async () => {
       setFaqLoading(true);
       try {
-        const { data, error } = await withPublicDataTimeout(
-          supabase
-            .from("faqs")
-            .select("question, answer, category, sort_order")
-            .eq("published", true)
-            .order("sort_order")
-            .order("created_at"),
-          "contact faqs",
-        );
+        const data = await fetchContactFaqs();
 
         if (cancelled) return;
-        if (error || !data || data.length === 0) {
+        if (!data || data.length === 0) {
           setFaqs([]);
           return;
         }

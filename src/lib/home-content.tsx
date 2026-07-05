@@ -1,6 +1,10 @@
 ﻿import { createContext, type ReactNode, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { withPublicDataTimeout } from "@/lib/public-data-timeout";
+import {
+  fetchCachedPublicData,
+  readPublicDataCache,
+  withPublicDataTimeout,
+} from "@/lib/public-data-timeout";
 
 export type LocalizedText = { vi: string; en: string };
 
@@ -217,25 +221,35 @@ export function mergeHomeContent(value: unknown): HomeAdminContent {
 
 type HomeContentContextValue = { content: HomeAdminContent; loading: boolean };
 
+const HOME_CONTENT_CACHE_KEY = "home-content:home";
+
+async function fetchHomeContent() {
+  return fetchCachedPublicData(HOME_CONTENT_CACHE_KEY, async () => {
+    const { data } = await withPublicDataTimeout(
+      supabase.from("home_content").select("value").eq("key", "home").maybeSingle(),
+      "home content",
+    );
+    return mergeHomeContent(data?.value);
+  });
+}
+
 const Ctx = createContext<HomeContentContextValue>({
   content: DEFAULT_HOME_CONTENT,
   loading: true,
 });
 
 export function HomeContentProvider({ children }: { children: ReactNode }) {
-  const [content, setContent] = useState<HomeAdminContent>(DEFAULT_HOME_CONTENT);
-  const [loading, setLoading] = useState(true);
+  const cachedContent = readPublicDataCache<HomeAdminContent>(HOME_CONTENT_CACHE_KEY);
+  const [content, setContent] = useState<HomeAdminContent>(cachedContent ?? DEFAULT_HOME_CONTENT);
+  const [loading, setLoading] = useState(!cachedContent);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     (async () => {
       try {
-        const { data } = await withPublicDataTimeout(
-          supabase.from("home_content").select("value").eq("key", "home").maybeSingle(),
-          "home content",
-        );
-        if (!cancelled) setContent(mergeHomeContent(data?.value));
+        const nextContent = await fetchHomeContent();
+        if (!cancelled) setContent(nextContent);
       } catch {
         if (!cancelled) setContent(DEFAULT_HOME_CONTENT);
       } finally {

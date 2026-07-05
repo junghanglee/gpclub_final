@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { usePageContent } from "@/lib/page-content";
-import { withPublicDataTimeout } from "@/lib/public-data-timeout";
+import { fetchCachedPublicData, withPublicDataTimeout } from "@/lib/public-data-timeout";
 
 export const Route = createFileRoute("/events")({
   head: () => ({ meta: [{ title: "Event — GPCLUB Vietnam" }] }),
@@ -39,6 +39,24 @@ type EventRow = {
   post_type?: "event" | "new_product" | null;
 };
 
+async function fetchPublishedEvents() {
+  return fetchCachedPublicData("events:published", async () => {
+    const { data } = await withPublicDataTimeout(
+      supabase
+        .from("events")
+        .select("*")
+        .eq("published", true)
+        .order("featured", { ascending: false })
+        .order("sort_order", { ascending: false })
+        .order("event_date", { ascending: false })
+        .order("created_at", { ascending: false }),
+      "events",
+    );
+
+    return (data ?? []) as EventRow[];
+  });
+}
+
 function isEmbeddable(url: string) {
   return url.includes("youtube.com/embed/") || url.includes("player.vimeo.com/");
 }
@@ -52,6 +70,7 @@ function MediaPreview({ item }: { item: EventRow }) {
       <video
         src={item.media_url}
         controls
+        preload="metadata"
         className="aspect-video w-full rounded-[1.75rem] bg-black object-cover"
       />
     );
@@ -61,6 +80,7 @@ function MediaPreview({ item }: { item: EventRow }) {
       <iframe
         src={item.media_url}
         title={item.title_en}
+        loading="lazy"
         className="aspect-video w-full rounded-[1.75rem] bg-black"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowFullScreen
@@ -71,6 +91,8 @@ function MediaPreview({ item }: { item: EventRow }) {
     <img
       src={item.media_url}
       alt={item.title_en}
+      loading="lazy"
+      decoding="async"
       className="aspect-video w-full rounded-[1.75rem] object-cover"
     />
   );
@@ -87,18 +109,8 @@ function EventsPage() {
     (async () => {
       try {
         setLoading(true);
-        const { data } = await withPublicDataTimeout(
-          supabase
-            .from("events")
-            .select("*")
-            .eq("published", true)
-            .order("featured", { ascending: false })
-            .order("sort_order", { ascending: false })
-            .order("event_date", { ascending: false })
-            .order("created_at", { ascending: false }),
-          "events",
-        );
-        if (alive) setRows((data ?? []) as EventRow[]);
+        const data = await fetchPublishedEvents();
+        if (alive) setRows(data);
       } catch {
         if (alive) setRows([]);
       } finally {

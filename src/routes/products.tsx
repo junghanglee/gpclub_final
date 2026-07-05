@@ -93,7 +93,7 @@ const productText = {
   },
 };
 
-const INITIAL_PRODUCT_COUNT = 16;
+const INITIAL_PRODUCT_COUNT = 8;
 const PRODUCT_BATCH_SIZE = 16;
 
 function ProductsPage() {
@@ -569,6 +569,7 @@ function LazyProductImage({ src, alt }: { src: string; alt: string }) {
         alt={alt}
         loading="lazy"
         decoding="async"
+        fetchPriority="low"
         onLoad={() => setLoaded(true)}
         className={`absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105 ${
           loaded ? "opacity-100" : "opacity-0"

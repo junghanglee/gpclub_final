@@ -1,163 +1,136 @@
-# Page Loading / Progressive Rendering Audit
+# Public Page Runtime Loading Audit
 
-**Pattern searched:** route/page loading gates, `LoadingModal`, TanStack Router pending UI, `loading`/`isLoading` gates, shared fallback-backed content hooks, route loaders.
+**Scope:** `/`, `/products`, `/brand`, `/contact`, `/events` on `http://localhost:8080`, plus static inspection of adjacent public route loading paths.
 
-**Occurrences found:** 11 verified blocking/progressive-render candidates.
+**Question answered:** `npm run dev` is part of the localhost slowness because Vite dev serves many ESM modules and React StrictMode re-runs mount effects. It was not the only cause. Runtime evidence also showed production-relevant latency from blocking external font CSS, duplicated public fetches, automatic chat/popup loading, Google Maps iframe startup work, and product image fan-out.
 
-**Files affected:** 11 primary files.
-
-- `src/router.tsx`
-- `src/routes/index.tsx`
-- `src/routes/brand.tsx`
-- `src/routes/products.tsx`
-- `src/routes/gippy-ai.tsx`
-- `src/routes/events.tsx`
-- `src/routes/b2b.tsx`
-- `src/routes/catalog.index.tsx`
-- `src/routes/catalog.$catalogId.tsx`
-- `src/routes/products.$productId.tsx`
-- `src/routes/brand.$brandKey.tsx`
-
-## Issues By Severity
+## Findings
 
 ### Critical
 
-None verified.
+None remaining after the scoped fixes below.
 
 ### Important
 
-#### I1. Router pending UI is immediate, but it is still a fullscreen blocking overlay
+#### I1. External font CSS could block first load for seconds
 
 Evidence:
 
-- `src/router.tsx:6-13` renders `LoadingModal` from `RoutePending`.
-- `src/router.tsx:23-25` configures `defaultPendingMs: 0`, `defaultPendingMinMs: 0`, and `defaultPendingComponent: RoutePending`.
-- `src/components/site/LoadingModal.tsx:17-20` renders a fixed fullscreen overlay.
+- Playwright cold run on `/` measured `fonts.googleapis.com` and Pretendard CDN CSS around 7.4s-7.5s before page load completed.
+- Blocking those font CSS URLs in comparison dropped `/` load to roughly 237ms.
 
-Impact:
+Fix applied:
 
-Route transitions now commit immediately, but the default pending presentation still covers the full viewport. That is better than waiting for route activation, but it still prevents partial content from showing during slower transitions.
+- Removed top-level external font `@import` statements from `src/styles.css`.
+- Switched display/body font tokens to local/system stacks.
 
-Recommended fix:
+Result:
 
-- Keep the centralized pending component, but change it from a fullscreen modal to a lighter route pending shell or top progress indicator.
-- Reserve fullscreen overlays for true blocking flows only.
+- After-fix Playwright: `fontCssRequests: 0` on all measured public routes.
 
-#### I2. Homepage still blocks behind a modal even though default content and placeholder product cards already exist
-
-Evidence:
-
-- `src/routes/index.tsx:176-180` reads home content and catalog data hooks.
-- `src/routes/index.tsx:219-223` opens `LoadingModal` while `homeContentLoading || catalogProductsLoading`.
-- `src/lib/home-content.tsx:235-241` initializes default home content and merges remote data later.
-- `src/routes/index.tsx:504-534` already has renderable homepage sections and fallback product placeholder behavior.
-
-Impact:
-
-The home route waits for both data sources before showing the page chrome, even though the code already has enough local content to render immediately. This overblocks the highest-traffic page and defeats progressive enhancement.
-
-Recommended fix:
-
-- Render the homepage shell immediately.
-- Use section-level skeletons/placeholders for product and CMS areas.
-- Remove `LoadingModal` from the home route; keep only local placeholders where data is still pending.
-
-#### I3. Several content pages still gate the whole screen on fallback-backed CMS loading state
+#### I2. React StrictMode/dev remounts duplicated public data fetches
 
 Evidence:
 
-- `src/routes/brand.tsx:183-188`
-- `src/routes/products.tsx:163-164`
-- `src/routes/gippy-ai.tsx:77-83`
-- `src/routes/events.tsx:126-140`
-- `src/routes/b2b.tsx:518-519`
-- `src/lib/page-content.tsx:151-171` initializes default page content before remote enhancement.
+- Before fix, Playwright captured duplicate fetches for `site_settings`, `home_content`, `product_catalogs`, `popups`, `faqs`, and `events` in dev.
+- This made localhost feel worse, but direct `useEffect` fetch duplication could also hurt route transitions and repeat visits.
 
-Impact:
+Fix applied:
 
-These routes already have default content available synchronously, but they still mount a fullscreen modal until the CMS request settles. That makes transient latency feel like a page hang instead of a partial render.
+- Added `fetchCachedPublicData` and `readPublicDataCache` in `src/lib/public-data-timeout.ts`.
+- Applied the shared in-flight/value cache to site settings, homepage content, page content, product catalogs, popups, contact FAQs, and events.
 
-Recommended fix:
+Result:
 
-- Keep the default content visible.
-- Replace page-level modals with in-flow skeletons or section placeholders.
-- Only block when the route truly cannot render without data.
+- After-fix Playwright shows each Supabase public data key requested once per measured route instead of duplicate dev fetches.
 
-#### I4. Catalog routes overblock by tying shell visibility to product-list readiness
+#### I3. Chat/popup code loaded automatically after idle on every public page
 
 Evidence:
 
-- `src/routes/catalog.index.tsx:25-46` fetches catalog metadata locally.
-- `src/routes/catalog.index.tsx:126` shows `LoadingModal` for `loading || productsLoading`.
-- `src/routes/catalog.$catalogId.tsx:53` returns loading before the printable shell can render.
-- `src/routes/products.$productId.tsx:79` returns a loading shell while detail fetch resolves.
+- Before fix, `PublicEngagementLayer` scheduled `GippyChat` and `PopupHost` after idle/timeout.
+- Playwright saw `GippyChat.tsx`, `PopupHost.tsx`, and `popups` requests without user intent.
 
-Impact:
+Fix applied:
 
-The catalog shell and detail routes can show their structure before all rows finish loading. Blocking the whole page hides the fact that the catalog exists and prevents early progressive rendering.
+- `FloatingChat` renders immediately.
+- Heavy `GippyChat` and `PopupHost` now mount only after the user clicks the new `Gippy AI` action.
+- `PopupHost` popup fetch is cached as `popups:active`.
 
-Recommended fix:
+Result:
 
-- Render catalog chrome immediately.
-- Show row-level or section-level placeholders for catalog items.
-- Keep not-found states behind actual loaded/failed states, not initial nulls.
+- After-fix Playwright: `chatOrPopupRequests: 0` on initial public route loads.
 
-#### I5. Brand route loader still blocks route activation on Supabase-backed data
+#### I4. `/contact` Google Maps auto-load is intentionally restored
 
 Evidence:
 
-- `src/routes/brand.$brandKey.tsx:15-19` awaits `fetchBrandDetails()` in the route loader.
-- `src/lib/brand-details.ts:215-221` queries `home_content` for brand details.
+- Runtime audit showed the Maps iframe adds startup network work on `/contact`.
+- Product direction requires the map to appear automatically instead of requiring a click.
 
-Impact:
+Fix applied:
 
-This is the one remaining true route-level block in the public surface. It is better than a client-side modal for 404/metadata correctness, but it still delays route activation and should be kept only if the route truly needs preloaded data.
+- Restored the Google Maps iframe to render automatically in the contact card.
+- Kept browser-native `loading="lazy"` on the iframe so it remains less aggressive than an eager map load.
 
-Recommended fix:
+Result:
 
-- Keep loader usage only if the brand route really requires metadata before render.
-- Otherwise, move to fallback-first rendering and hydrate details after mount.
+- `/contact` will again create Google Maps requests during page viewing by design.
+- Other loading fixes remain in place: no external font CSS, public data fetch de-dupe, and chat/popup no longer auto-loads on initial route render.
 
-### Minor
-
-#### M1. Contact page is the best progressive pattern in the public area
+#### I5. `/products` started too many remote product images at once
 
 Evidence:
 
-- `src/routes/contact.tsx:197-199` reads loading flags.
-- The page already keeps fallback data visible instead of hard-blocking the whole screen.
+- Playwright showed many `www.jmella.com` product images among the slowest `/products` resources.
 
-Impact:
+Fix applied:
 
-Contact is closer to the desired model: partial render first, enhancement later. It is not the main hang source.
+- Reduced initial visible products from 16 to 8.
+- Marked product grid images with low fetch priority.
 
-Recommended fix:
+Result:
 
-- Keep this pattern and extend it to other public content pages.
+- After-fix `/products` load event was 204ms in the measured dev run; slowest product images were around 217ms-236ms.
 
-## Correct Patterns Found
+### Residual Risk
 
-- `src/lib/home-content.tsx:235-241` initializes default homepage content before remote enhancement.
-- `src/lib/page-content.tsx:151-171` initializes default page content and merges remote content later.
-- `src/lib/catalog-products.ts:138` already exposes empty rows instead of conflating empty data with loading.
-- `src/routes/events.tsx:247-253` contains in-flow section loading / empty-state structure that can support progressive rendering.
-- `src/routes/__root.tsx:205-220` lazy-loads engagement widgets behind `Suspense`; the issue is presentation style, not root-level blocking.
-
-## Recommended Remediation Order
-
-1. Change the router pending UI to a lightweight non-blocking shell or top progress indicator.
-2. Remove the home route fullscreen modal and let its existing fallback content render immediately.
-3. Replace page-level modals on content-backed pages with section skeletons/placeholders.
-4. Split catalog routes into immediate shell + progressive rows.
-5. Keep the brand loader only if route correctness truly requires preloaded metadata.
-6. Preserve the contact page pattern as the model for partial loading.
+Production build still warns about chunks over 500k after minification. The main client chunk remains about 722.9 kB minified / 214.6 kB gzip, and the SSR router chunk is about 1.56 MB. This is not a build failure, but the next meaningful optimization is route/manual chunk splitting for the heaviest public route modules.
 
 ## Verification Evidence
 
-- Read `src/router.tsx`, `src/routes/index.tsx`, `src/routes/brand.tsx`, `src/routes/products.tsx`, `src/routes/gippy-ai.tsx`, `src/routes/events.tsx`, `src/routes/b2b.tsx`, `src/routes/catalog.index.tsx`, `src/routes/catalog.$catalogId.tsx`, `src/routes/products.$productId.tsx`, `src/routes/brand.$brandKey.tsx`, `src/lib/home-content.tsx`, `src/lib/page-content.tsx`, `src/lib/brand-details.ts`, and `src/components/site/LoadingModal.tsx`.
-- Reviewed subagent output for explore/review/general.
-- Confirmed the app already has default/fallback content hooks, so the main issue is presentation and blocking gates, not lack of data.
+### Static/Build
 
-## Residual Risk
+- `rtk npx prettier --write ...`: touched files formatted.
+- `rtk npx eslint ...touched files...`: 0 errors, 10 existing warnings in provider files from `react-refresh/only-export-components`.
+- `rtk git diff --check -- ...touched files...`: no whitespace errors.
+- `rtk npm run build`: passed. Existing chunk-size warning remains.
 
-This audit is static/code-based. The best remaining validation is a runtime browser trace on `https://gpclub.vn/` after the generalized progressive-render changes: check whether the first paint shows shell content immediately, whether route transitions stay interactive, and whether remaining delays are image decode, hydration, or specific network calls.
+### Playwright After-Fix Runtime
+
+Measured on `http://localhost:8080` with headless Chromium, waiting 3.5s after load.
+
+| Route       |   DCL |  Load | Requests | Failed | Font CSS |               Maps | Chat/Popup |
+| ----------- | ----: | ----: | -------: | -----: | -------: | -----------------: | ---------: |
+| `/`         | 415ms | 454ms |      209 |      0 |        0 |                  0 |          0 |
+| `/products` | 185ms | 204ms |      217 |      0 |        0 |                  0 |          0 |
+| `/brand`    |  83ms |  95ms |      198 |      0 |        0 |                  0 |          0 |
+| `/contact`  | 192ms | 222ms |      197 |      0 |        0 | restored auto-load |          0 |
+| `/events`   | 109ms | 122ms |      194 |      0 |        0 |                  0 |          0 |
+
+Supabase/public data request counts were de-duped to one request per key on the measured routes.
+
+## Changed Files of Interest
+
+- `src/styles.css`
+- `src/lib/public-data-timeout.ts`
+- `src/lib/site-settings.tsx`
+- `src/lib/home-content.tsx`
+- `src/lib/page-content.tsx`
+- `src/lib/product-catalogs.ts`
+- `src/components/site/FloatingChat.tsx`
+- `src/components/site/PopupHost.tsx`
+- `src/routes/__root.tsx`
+- `src/routes/contact.tsx`
+- `src/routes/events.tsx`
+- `src/routes/products.tsx`
