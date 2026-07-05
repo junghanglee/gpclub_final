@@ -37,6 +37,9 @@ supabase/.temp/
 .openclaw*
 .chrome*/
 .workspace/
+.opencode/artifacts/playwright-*.json
+.opencode/artifacts/playwright-*.png
+.opencode/artifacts/run-playwright-*.cjs
 *.html
 !index.html
 !public/downloads/*.html
