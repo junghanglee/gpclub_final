@@ -968,8 +968,8 @@ export default function ChatbotTab({ lang }: { lang: AdminLang }) {
                     <SelectContent>
                       <SelectItem value="mixed">{t("mixed")}</SelectItem>
                       <SelectItem value="en">English</SelectItem>
-                      <SelectItem value="vi">Ti?ng Vi?t</SelectItem>
-                      <SelectItem value="ko">???</SelectItem>
+                      <SelectItem value="vi">Tiếng Việt</SelectItem>
+                      <SelectItem value="ko">한국어</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
