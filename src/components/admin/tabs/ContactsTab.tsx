@@ -210,7 +210,7 @@ export default function ContactsTab({ lang }: { lang: AdminLang }) {
               <DialogHeader>
                 <DialogTitle>{t("conversation")}</DialogTitle>
                 <p className="break-all text-xs text-muted-foreground">
-                  {t("sessionId")}: {selectedSession.sessionId} � {t("messageCount")}:{" "}
+                  {t("sessionId")}: {selectedSession.sessionId} - {t("messageCount")}:{" "}
                   {selectedSession.records.length}
                 </p>
               </DialogHeader>

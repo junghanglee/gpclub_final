@@ -1,6 +1,7 @@
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { type ADMIN_I18N, type AdminLang, tx } from "@/components/admin/admin-i18n";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,7 +23,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { type AdminLang, ADMIN_I18N, tx } from "@/components/admin/admin-i18n";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -46,9 +46,9 @@ const emptyFaq: FAQ = {
 type FaqLangFilter = "ko" | "en" | "vi";
 
 const FAQ_LANG_OPTIONS: { value: FaqLangFilter; label: string }[] = [
-  { value: "ko", label: "???" },
+  { value: "ko", label: "한국어" },
   { value: "en", label: "English" },
-  { value: "vi", label: "Ti?ng Vi?t" },
+  { value: "vi", label: "Tiếng Việt" },
 ];
 
 const getFaqLang = (category?: string | null): FaqLangFilter => {
