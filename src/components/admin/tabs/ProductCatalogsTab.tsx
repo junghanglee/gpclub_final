@@ -1,6 +1,7 @@
 import { Download, Eye, Pencil, Plus, RefreshCw, Star, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { type ADMIN_I18N, type AdminLang, tx } from "@/components/admin/admin-i18n";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,7 +30,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { type AdminLang, ADMIN_I18N, tx } from "@/components/admin/admin-i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { type CatalogProduct, getCoverImage, normalizedSearchText } from "@/lib/catalog-products";
 import {
@@ -38,6 +38,22 @@ import {
   type ProductCatalog,
   saveProductCatalogs,
 } from "@/lib/product-catalogs";
+
+type CatalogProductWithBrand = CatalogProduct & {
+  brands?: { id: string; name: string } | Array<{ id: string; name: string }> | null;
+};
+
+type CatalogBrandOption = {
+  id: string;
+  name: string;
+};
+
+function displayBrandName(product: CatalogProductWithBrand) {
+  if (product.brand_display_name) return product.brand_display_name;
+  const joinedBrand = Array.isArray(product.brands) ? product.brands[0] : product.brands;
+  return joinedBrand?.name || product.brand_name;
+}
+
 function emptyCatalog(rows: CatalogProduct[]): ProductCatalog {
   const now = new Date().toISOString();
   return {
@@ -56,7 +72,7 @@ function emptyCatalog(rows: CatalogProduct[]): ProductCatalog {
 export default function ProductCatalogsAdminTab({ lang }: { lang: AdminLang }) {
   const t = (key: keyof typeof ADMIN_I18N) => tx(lang, key);
   const [rows, setRows] = useState<ProductCatalog[]>([]);
-  const [products, setProducts] = useState<CatalogProduct[]>([]);
+  const [products, setProducts] = useState<CatalogProductWithBrand[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<ProductCatalog | null>(null);
@@ -70,7 +86,7 @@ export default function ProductCatalogsAdminTab({ lang }: { lang: AdminLang }) {
       fetchProductCatalogs(),
       supabase
         .from("admin_products")
-        .select("*")
+        .select("*,brands(id,name)")
         .order("sort_order", { ascending: false })
         .order("created_at", { ascending: false }),
     ]);
@@ -78,7 +94,7 @@ export default function ProductCatalogsAdminTab({ lang }: { lang: AdminLang }) {
     else setRows(catalogResult.value);
     if (productResult.status === "rejected") toast.error(String(productResult.reason));
     else if (productResult.value.error) toast.error(productResult.value.error.message);
-    else setProducts((productResult.value.data || []) as CatalogProduct[]);
+    else setProducts((productResult.value.data || []) as CatalogProductWithBrand[]);
     setLoading(false);
   };
 
@@ -91,13 +107,17 @@ export default function ProductCatalogsAdminTab({ lang }: { lang: AdminLang }) {
     [products],
   );
 
-  const brands = useMemo(
-    () => [
-      "All",
-      ...Array.from(new Set(products.map((product) => product.brand_name).filter(Boolean))),
-    ],
-    [products],
-  );
+  const brands = useMemo(() => {
+    const byId = new Map<string, CatalogBrandOption>();
+    products.forEach((product) => {
+      if (!product.brand_id) return;
+      byId.set(product.brand_id, {
+        id: product.brand_id,
+        name: displayBrandName(product),
+      });
+    });
+    return Array.from(byId.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [products]);
   const productTypes = useMemo(
     () => [
       "All",
@@ -108,13 +128,13 @@ export default function ProductCatalogsAdminTab({ lang }: { lang: AdminLang }) {
   const filteredProducts = useMemo(() => {
     const query = normalizedSearchText(productSearch);
     return products.filter((product) => {
-      const brandMatch = brandFilter === "All" || product.brand_name === brandFilter;
+      const brandMatch = brandFilter === "All" || product.brand_id === brandFilter;
       const typeMatch = typeFilter === "All" || product.product_type === typeFilter;
       const searchMatch =
         !query ||
         normalizedSearchText(
           [
-            product.brand_name,
+            displayBrandName(product),
             product.product_name,
             product.product_type,
             product.short_intro,
@@ -122,7 +142,7 @@ export default function ProductCatalogsAdminTab({ lang }: { lang: AdminLang }) {
         ).includes(query);
       return brandMatch && typeMatch && searchMatch;
     });
-  }, [brandFilter, productSearch, productTypes, products, typeFilter]);
+  }, [brandFilter, productSearch, products, typeFilter]);
 
   const startNew = () => {
     setProductSearch("");
@@ -413,9 +433,10 @@ export default function ProductCatalogsAdminTab({ lang }: { lang: AdminLang }) {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="All">{t("allBrands")}</SelectItem>
                       {brands.map((brand) => (
-                        <SelectItem key={brand} value={brand}>
-                          {brand === "All" ? t("allBrands") : brand}
+                        <SelectItem key={brand.id} value={brand.id}>
+                          {brand.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -485,7 +506,7 @@ export default function ProductCatalogsAdminTab({ lang }: { lang: AdminLang }) {
                         </span>
                         <span className="min-w-0 flex-1">
                           <span className="block text-xs font-bold uppercase tracking-[0.18em] text-primary">
-                            {product.brand_name}
+                            {displayBrandName(product)}
                           </span>
                           <span className="mt-1 block font-semibold">{product.product_name}</span>
                           <span className="mt-1 block text-xs text-muted-foreground">

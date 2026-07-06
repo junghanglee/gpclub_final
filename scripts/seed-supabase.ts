@@ -31,6 +31,59 @@ type SeedProduct = {
   is_featured: boolean;
 };
 
+type SeedBrand = {
+  key: string;
+  slug: string;
+  name: string;
+  description: string;
+  published: boolean;
+  sort_order: number;
+};
+
+type SeedBrandRecord = {
+  id: string;
+  key: string;
+  name: string;
+};
+
+const SEED_BRANDS: SeedBrand[] = [
+  {
+    key: "jmsolution",
+    slug: "jmsolution",
+    name: "JMsolution",
+    description: "K-beauty skincare and sheet mask portfolio.",
+    published: true,
+    sort_order: 10,
+  },
+  {
+    key: "jmella",
+    slug: "jmella",
+    name: "JMELLA",
+    description: "Perfume body and hair care portfolio.",
+    published: true,
+    sort_order: 20,
+  },
+  {
+    key: "gpclub",
+    slug: "gpclub",
+    name: "GPCLUB",
+    description: "GPCLUB curated B2B product sets.",
+    published: true,
+    sort_order: 30,
+  },
+];
+
+function brandKeyForName(brandName: string) {
+  const normalized = brandName
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "");
+  if (normalized === "jmsolution") return "jmsolution";
+  if (normalized === "jmella") return "jmella";
+  if (normalized === "gpclub") return "gpclub";
+  return "unknown-brand";
+}
+
 // Verbatim from the deleted src/data/products.ts — every field filled, none empty.
 const SEED_PRODUCTS: SeedProduct[] = [
   {
@@ -212,9 +265,19 @@ const BRAND_DETAILS_VALUE = {
 };
 
 async function seedProducts() {
+  const brands = await seedBrands();
   let inserted = 0;
   let updated = 0;
   for (const p of SEED_PRODUCTS) {
+    const brand = brands.get(brandKeyForName(p.brand_name));
+    if (!brand) throw new Error(`No seed brand found for ${p.brand_name}`);
+    const payload = {
+      ...p,
+      brand_id: brand.id,
+      brand_name: brand.name,
+      sort_order: 0,
+    };
+
     // Match on product_name so re-running the script updates instead of duplicating.
     const { data: existing } = await supabaseAdmin
       .from("admin_products")
@@ -225,12 +288,12 @@ async function seedProducts() {
     if (existing?.id) {
       const { error } = await supabaseAdmin
         .from("admin_products")
-        .update({ ...p, sort_order: 0 })
+        .update(payload)
         .eq("id", existing.id);
       if (error) throw new Error(`Update ${p.product_name} failed: ${error.message}`);
       updated += 1;
     } else {
-      const { error } = await supabaseAdmin.from("admin_products").insert({ ...p, sort_order: 0 });
+      const { error } = await supabaseAdmin.from("admin_products").insert(payload);
       if (error) throw new Error(`Insert ${p.product_name} failed: ${error.message}`);
       inserted += 1;
     }
@@ -238,6 +301,17 @@ async function seedProducts() {
   console.log(
     `Products: ${inserted} inserted, ${updated} updated (total ${SEED_PRODUCTS.length}).`,
   );
+}
+
+async function seedBrands() {
+  const { data, error } = await supabaseAdmin
+    .from("brands")
+    .upsert(SEED_BRANDS, { onConflict: "key" })
+    .select("id,key,name");
+
+  if (error) throw new Error(`Brands upsert failed: ${error.message}`);
+
+  return new Map(((data ?? []) as SeedBrandRecord[]).map((brand) => [brand.key, brand]));
 }
 
 async function seedBrandDetails() {

@@ -1,0 +1,36 @@
+# Progress Log
+
+Bead: gpclub_final-ivb
+Started: 2026-07-06
+
+## Codebase Patterns
+
+- Product data currently uses `admin_products.brand_name` free text.
+- Public `/products` filter correctness failed because brand metadata came from a limited 48-row query.
+- Option C requires schema normalization plus compatibility updates across product, admin, catalog, B2B, and Gippy consumers.
+
+---
+
+<!-- Task logs below - APPEND ONLY -->
+
+## 2026-07-06 LFG implementation pass
+
+- Added normalized brand migration `supabase/migrations/20260706090000_create_brands_and_normalize_products.sql` with `public.brands`, `admin_products.brand_id`, backfill, FK, indexes, RLS, and brand-name sync triggers.
+- Updated `scripts/seed-supabase.ts` to seed canonical brands and write `brand_id` plus canonical `brand_name` into `admin_products`.
+- Updated Supabase generated types manually in `src/integrations/supabase/types.ts` for `brands`, `admin_products.brand_id`, and the brand relationship.
+- Updated `src/lib/catalog-products.ts` to join published brands, expose brand summaries, support brand-filtered catalog queries, and preserve `brand_name` display compatibility.
+- Updated public `/products` in `src/routes/products.tsx` to use brand chips from full published brand summaries and visible card brand tags instead of deriving brand options from the first 48 products.
+- Added `src/components/admin/tabs/BrandsTab.tsx` and wired it into Product Management in `src/components/admin/AdminPage.tsx`.
+- Updated `ProductsTab.tsx` and `ProductCatalogsTab.tsx` to use brand IDs and joined brand names instead of free-text brand filtering.
+- Review found a valid admin edge case: new product form could open without loaded brands. Fixed by guarding `startNew()` and disabling New Product while loading or when no brands exist.
+- Verification passed for changed-file lint/prettier and production build. Runtime browser verification is blocked until the Supabase target has the new `public.brands` migration applied; read-only schema probe returned `PGRST205` for `public.brands`.
+
+## 2026-07-06 verify follow-up fixes
+
+- Fixed full-repo lint blockers by excluding `.opencode` runtime artifacts in `eslint.config.js` and formatting existing source files that Prettier flagged.
+- Added a legacy public catalog fallback in `src/lib/catalog-products.ts` for missing `brands` schema or PostgREST relationship errors (`PGRST200`, `PGRST205`). This prevents `/products` from blanking before the migration reaches the target DB.
+- Split brand RLS in the migration into public published-brand read and explicit admin all-brand read policies.
+- Browser smoke on `http://127.0.0.1:8090/products` against the current pre-migration Supabase target now falls back from failed brand joins to legacy `admin_products` queries and renders chips: `All brands (346)`, `GPCLUB (1)`, `JMELLA (172)`, `JMsolution (173)`.
+- Brand chip smoke: selecting `JMsolution (173)` changes the page to `Showing: 173`, and inspected product cards contain `JMsolution` brand text.
+- Fresh `npm run lint` completed with 0 errors and 22 existing warnings. Fresh `npm run build` completed successfully.
+- Remaining blocker: apply `supabase/migrations/20260706090000_create_brands_and_normalize_products.sql` to the configured Supabase project, then rerun SQL and browser smoke against the migrated schema. Do not mark all PRD tasks complete before that.

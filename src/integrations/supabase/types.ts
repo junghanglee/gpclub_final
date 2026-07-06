@@ -10,6 +10,7 @@ export type Database = {
     Tables: {
       admin_products: {
         Row: {
+          brand_id: string;
           brand_name: string;
           conditions: Json;
           cover_image_url: string | null;
@@ -30,6 +31,7 @@ export type Database = {
           updated_at: string;
         };
         Insert: {
+          brand_id?: string;
           brand_name?: string;
           conditions?: Json;
           concerns?: string[];
@@ -50,6 +52,7 @@ export type Database = {
           updated_at?: string;
         };
         Update: {
+          brand_id?: string;
           brand_name?: string;
           conditions?: Json;
           concerns?: string[];
@@ -66,6 +69,50 @@ export type Database = {
           published?: boolean;
           short_intro?: string;
           skin_types?: string[];
+          sort_order?: number;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "admin_products_brand_id_fkey";
+            columns: ["brand_id"];
+            isOneToOne: false;
+            referencedRelation: "brands";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      brands: {
+        Row: {
+          created_at: string;
+          description: string | null;
+          id: string;
+          key: string;
+          name: string;
+          published: boolean;
+          slug: string;
+          sort_order: number;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          key: string;
+          name: string;
+          published?: boolean;
+          slug: string;
+          sort_order?: number;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          key?: string;
+          name?: string;
+          published?: boolean;
+          slug?: string;
           sort_order?: number;
           updated_at?: string;
         };

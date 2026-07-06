@@ -42,6 +42,7 @@ const loadSettingsTab = () => import("@/components/admin/tabs/SettingsTab");
 const loadChatbotTab = () => import("@/components/admin/tabs/ChatbotTab");
 const loadProductCatalogsTab = () => import("@/components/admin/tabs/ProductCatalogsTab");
 const loadProductsTab = () => import("@/components/admin/tabs/ProductsTab");
+const loadBrandsTab = () => import("@/components/admin/tabs/BrandsTab");
 
 const StatsTab = lazy(loadStatsTab);
 const HomeEditorTab = lazy(loadHomeEditorTab);
@@ -54,11 +55,13 @@ const SettingsTab = lazy(loadSettingsTab);
 const ChatbotTab = lazy(loadChatbotTab);
 const ProductCatalogsTab = lazy(loadProductCatalogsTab);
 const ProductsTab = lazy(loadProductsTab);
+const BrandsTab = lazy(loadBrandsTab);
 
 const preloadAdminTabs = () => {
   void Promise.allSettled([
     loadStatsTab(),
     loadProductsTab(),
+    loadBrandsTab(),
     loadProductCatalogsTab(),
     loadDealersTab(),
     loadContactsTab(),
@@ -172,8 +175,8 @@ export default function AdminPage() {
           <TabsTrigger
             value="productManagement"
             className="gap-1.5"
-            onMouseEnter={() => void loadProductsTab()}
-            onFocus={() => void loadProductsTab()}
+            onMouseEnter={() => void Promise.allSettled([loadProductsTab(), loadBrandsTab()])}
+            onFocus={() => void Promise.allSettled([loadProductsTab(), loadBrandsTab()])}
           >
             <PackageOpen className="h-3.5 w-3.5" /> {t("productManagement")}
           </TabsTrigger>
@@ -228,6 +231,9 @@ export default function AdminPage() {
         <TabsContent value="productManagement" className="mt-6">
           <Tabs defaultValue="products">
             <TabsList className="mb-5 flex w-full flex-wrap justify-start gap-1 bg-background p-1 shadow-soft">
+              <TabsTrigger value="brands" className="gap-1.5">
+                <PackageOpen className="h-3.5 w-3.5" /> Brands
+              </TabsTrigger>
               <TabsTrigger value="products" className="gap-1.5">
                 <PackageOpen className="h-3.5 w-3.5" /> {t("products")}
               </TabsTrigger>
@@ -235,6 +241,11 @@ export default function AdminPage() {
                 <FileText className="h-3.5 w-3.5" /> {t("catalogManagement")}
               </TabsTrigger>
             </TabsList>
+            <TabsContent value="brands">
+              <Suspense fallback={<AdminTabSkeleton />}>
+                <BrandsTab lang={adminLang} />
+              </Suspense>
+            </TabsContent>
             <TabsContent value="products">
               <Suspense fallback={<AdminTabSkeleton />}>
                 <ProductsTab lang={adminLang} />

@@ -1,6 +1,8 @@
 import { Pencil, Plus, RefreshCw, Trash2, X } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { type ADMIN_I18N, type AdminLang, tx } from "@/components/admin/admin-i18n";
+import { ADMIN_PAGE_SIZE, PaginationControls, pageRange } from "@/components/admin/admin-shared";
 import {
   ProductDetailEditor,
   type ProductDetailEditorHandle,
@@ -33,11 +35,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { type AdminLang, ADMIN_I18N, tx } from "@/components/admin/admin-i18n";
-import { ADMIN_PAGE_SIZE, PaginationControls, pageRange } from "@/components/admin/admin-shared";
 import { supabase } from "@/integrations/supabase/client";
-import { type CatalogProduct, canonicalBrandName, type ProductMedia } from "@/lib/catalog-products";
+import type { CatalogProduct, ProductMedia } from "@/lib/catalog-products";
 import { sanitizeProductDetailHtml } from "@/lib/product-detail-html";
+
+type BrandOption = {
+  id: string;
+  name: string;
+  key: string;
+  published: boolean;
+  sort_order: number;
+};
 function ProductTagField({
   label,
   placeholder,
@@ -99,6 +107,7 @@ function ProductTagField({
 function emptyProduct(): CatalogProduct {
   return {
     id: "",
+    brand_id: null,
     brand_name: "",
     product_name: "",
     product_type: "Sheet Mask",
@@ -125,53 +134,79 @@ export default function ProductsAdminTab({ lang }: { lang: AdminLang }) {
   const [editing, setEditing] = useState<CatalogProduct | null>(null);
   const [search, setSearch] = useState("");
   const [brandFilter, setBrandFilter] = useState("All");
+  const [brands, setBrands] = useState<BrandOption[]>([]);
   const [page, setPage] = useState(0);
   const [totalRows, setTotalRows] = useState(0);
   const detailEditorRef = useRef<ProductDetailEditorHandle>(null);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     const { from, to } = pageRange(page);
     const trimmedSearch = search.trim();
+    const brandPromise = supabase
+      .from("brands")
+      .select("id,name,key,published,sort_order")
+      .order("sort_order", { ascending: true })
+      .order("name", { ascending: true });
     let query = supabase
       .from("admin_products")
-      .select("*", { count: "estimated" })
+      .select("*,brands(id,key,slug,name,sort_order,published)", {
+        count: "estimated",
+      })
       .order("sort_order", { ascending: false })
       .order("created_at", { ascending: false })
       .range(from, to);
     if (brandFilter !== "All") {
-      query = query.eq("brand_name", canonicalBrandName(brandFilter));
+      query = query.eq("brand_id", brandFilter);
     }
     if (trimmedSearch) {
       query = query.ilike("product_name", `%${trimmedSearch}%`);
     }
-    const { data, error, count } = await query;
-    if (error) toast.error(error.message);
+    const [brandResult, productResult] = await Promise.all([brandPromise, query]);
+    if (brandResult.error) toast.error(brandResult.error.message);
+    else setBrands((brandResult.data || []) as BrandOption[]);
+    if (productResult.error) toast.error(productResult.error.message);
     else {
-      setRows((data || []) as CatalogProduct[]);
-      setTotalRows(count ?? data?.length ?? 0);
+      setRows((productResult.data || []) as CatalogProduct[]);
+      setTotalRows(productResult.count ?? productResult.data?.length ?? 0);
     }
     setLoading(false);
-  };
+  }, [brandFilter, page, search]);
 
   useEffect(() => {
     void load();
-  }, [page, search, brandFilter]);
+  }, [load]);
 
   useEffect(() => {
     setPage(0);
   }, [search, brandFilter]);
 
   const startNew = () => {
-    setEditing(emptyProduct());
+    const primaryBrand = brands.find((brand) => brand.published) ?? brands[0];
+    if (!primaryBrand) {
+      toast.error("Create a brand before adding products.");
+      return;
+    }
+
+    setEditing({
+      ...emptyProduct(),
+      brand_id: primaryBrand.id,
+      brand_name: primaryBrand.name,
+    });
     setOpen(true);
   };
 
   const save = async () => {
     if (!editing) return;
+    const selectedBrand = brands.find((brand) => brand.id === editing.brand_id);
+    if (!selectedBrand) {
+      toast.error("Select a brand before saving this product.");
+      return;
+    }
     const detailHtml = detailEditorRef.current?.commit() ?? editing.detail_html;
     const payload = {
-      brand_name: canonicalBrandName(editing.brand_name),
+      brand_id: selectedBrand.id,
+      brand_name: selectedBrand.name,
       product_name: editing.product_name,
       product_type: editing.product_type,
       short_intro: editing.short_intro,
@@ -210,25 +245,13 @@ export default function ProductsAdminTab({ lang }: { lang: AdminLang }) {
     }
   };
 
-  const brands = useMemo(
-    () => [
-      "All",
-      "JMsolution",
-      "Jmella",
-      ...Array.from(new Set(rows.map((row) => row.brand_name).filter(Boolean))),
-    ],
-    [rows],
-  );
-
   const productTypes = useMemo(
     () => ["All", ...Array.from(new Set(rows.map((row) => row.product_type).filter(Boolean)))],
     [rows],
   );
 
   const quickUpdate = async (row: CatalogProduct, patch: Partial<CatalogProduct>) => {
-    const normalizedPatch = patch.brand_name
-      ? { ...patch, brand_name: canonicalBrandName(patch.brand_name) }
-      : patch;
+    const normalizedPatch = patch;
     setRows((prev) =>
       prev.map((item) => (item.id === row.id ? { ...item, ...normalizedPatch } : item)),
     );
@@ -273,7 +296,7 @@ export default function ProductsAdminTab({ lang }: { lang: AdminLang }) {
           <Button variant="outline" onClick={load}>
             <RefreshCw className="mr-1 h-4 w-4" /> {t("refresh")}
           </Button>
-          <Button onClick={startNew}>
+          <Button onClick={startNew} disabled={loading || brands.length === 0}>
             <Plus className="mr-1 h-4 w-4" /> {t("newProduct")}
           </Button>
         </div>
@@ -290,9 +313,10 @@ export default function ProductsAdminTab({ lang }: { lang: AdminLang }) {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="All">All brands</SelectItem>
             {brands.map((brand) => (
-              <SelectItem key={brand} value={brand}>
-                {brand === "All" ? "All brands" : brand}
+              <SelectItem key={brand.id} value={brand.id}>
+                {brand.name}
               </SelectItem>
             ))}
           </SelectContent>
@@ -328,7 +352,9 @@ export default function ProductsAdminTab({ lang }: { lang: AdminLang }) {
                       onCheckedChange={(v) => void quickUpdate(row, { published: v })}
                     />
                   </TableCell>
-                  <TableCell className="font-medium">{row.brand_name}</TableCell>
+                  <TableCell className="font-medium">
+                    {row.brand_display_name || row.brand_name}
+                  </TableCell>
                   <TableCell>
                     <Input
                       value={row.product_name}
@@ -426,11 +452,28 @@ export default function ProductsAdminTab({ lang }: { lang: AdminLang }) {
               <div className="grid gap-4 md:grid-cols-4">
                 <div>
                   <Label>{t("brandName")}</Label>
-                  <Input
-                    className="mt-1.5"
-                    value={editing.brand_name}
-                    onChange={(e) => setEditing({ ...editing, brand_name: e.target.value })}
-                  />
+                  <Select
+                    value={editing.brand_id ?? ""}
+                    onValueChange={(brandId) => {
+                      const selectedBrand = brands.find((brand) => brand.id === brandId);
+                      setEditing({
+                        ...editing,
+                        brand_id: brandId,
+                        brand_name: selectedBrand?.name ?? editing.brand_name,
+                      });
+                    }}
+                  >
+                    <SelectTrigger className="mt-1.5">
+                      <SelectValue placeholder="Select brand" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {brands.map((brand) => (
+                        <SelectItem key={brand.id} value={brand.id}>
+                          {brand.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <Label>{t("productName")}</Label>
