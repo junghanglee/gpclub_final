@@ -1,0 +1,205 @@
+{
+	"beadId": "gpclub_final-ivb",
+	"prdName": "normalize-brand-management-and-product-filtering",
+	"tasks": [
+		{
+			"id": "database-1",
+			"category": "database",
+			"description": "The database has a brands authority table and every product has a valid required brand relationship while retaining compatibility display data.",
+			"steps": [
+				"Verify: select count(*) from public.admin_products where brand_id is null; returns 0 after migration.",
+				"Verify: select b.name, count(*) from public.admin_products p join public.brands b on b.id = p.brand_id group by b.name order by b.name; returns expected canonical brand counts.",
+				"Verify: migration can be run against current schema without duplicate-object errors."
+			],
+			"passes": false,
+			"metadata": {
+				"depends_on": [],
+				"parallel": false,
+				"conflicts_with": [
+					"Update Supabase Types",
+					"Update Catalog Product Data Layer",
+					"Update Admin Product Brand Management"
+				],
+				"files": [
+					"supabase/migrations/*_create_brands_and_normalize_products.sql",
+					"scripts/seed-supabase.ts"
+				]
+			}
+		},
+		{
+			"id": "types-1",
+			"category": "types",
+			"description": "Generated Supabase TypeScript types include brands, admin_products.brand_id, and the product-brand relationship.",
+			"steps": [
+				"Verify: TypeScript references to brands and admin_products.brand_id compile without local hand-written any casts.",
+				"Verify: npm run build exits 0 after type updates and consumer changes."
+			],
+			"passes": false,
+			"metadata": {
+				"depends_on": ["Normalize Brand Schema"],
+				"parallel": false,
+				"conflicts_with": [
+					"Update Catalog Product Data Layer",
+					"Update Admin Product Brand Management"
+				],
+				"files": ["src/integrations/supabase/types.ts"]
+			}
+		},
+		{
+			"id": "data-1",
+			"category": "data",
+			"description": "Public catalog helpers expose normalized brand identity, published brand summaries, and product queries that can filter by brand without depending on the first 48 rows.",
+			"steps": [
+				"Verify: public brand summary query returns all published brands with published product counts.",
+				"Verify: product query filtered by a brand identity returns only products for that brand.",
+				"Verify: unfiltered product query no longer determines brand chip availability from a limited page."
+			],
+			"passes": false,
+			"metadata": {
+				"depends_on": ["Normalize Brand Schema", "Update Supabase Types"],
+				"parallel": false,
+				"conflicts_with": [
+					"Update Products Page Brand UX",
+					"Update Adjacent Product Consumers"
+				],
+				"files": ["src/lib/catalog-products.ts"]
+			}
+		},
+		{
+			"id": "admin-1",
+			"category": "admin",
+			"description": "Admin users can manage brands and assign products to normalized brands without typing arbitrary brand text.",
+			"steps": [
+				"Verify: admin product form displays managed brand options.",
+				"Verify: creating a product stores brand_id and synchronized display brand data.",
+				"Verify: editing a product brand moves it to the correct admin brand filter.",
+				"Verify: unpublished brands cannot be accidentally exposed as public filter chips unless they have intended public state."
+			],
+			"passes": false,
+			"metadata": {
+				"depends_on": ["Normalize Brand Schema", "Update Supabase Types"],
+				"parallel": false,
+				"conflicts_with": ["Update Product Catalog Admin Brand Filtering"],
+				"files": [
+					"src/components/admin/AdminPage.tsx",
+					"src/components/admin/tabs/ProductsTab.tsx",
+					"src/components/admin/tabs/BrandsTab.tsx"
+				]
+			}
+		},
+		{
+			"id": "ui-1",
+			"category": "ui",
+			"description": "The public products page uses visible accessible brand chip buttons and cards show clear brand tags in all-product browsing.",
+			"steps": [
+				"Verify: browser DOM for /products contains brand chip buttons, not the previous brand dropdown menu.",
+				"Verify: clicking a brand chip filters visible products to that brand.",
+				"Verify: clicking the all chip restores mixed-brand results.",
+				"Verify: each product card in the all view has a visible brand tag/sticky note."
+			],
+			"passes": false,
+			"metadata": {
+				"depends_on": ["Update Catalog Product Data Layer"],
+				"parallel": false,
+				"conflicts_with": ["Update Adjacent Product Consumers"],
+				"files": ["src/routes/products.tsx"]
+			}
+		},
+		{
+			"id": "admin-2",
+			"category": "admin",
+			"description": "Product catalog selection and catalog displays use normalized brand identity and preserve correct brand labels.",
+			"steps": [
+				"Verify: catalog product selection filtered by brand returns all matching products regardless of casing legacy data had before migration.",
+				"Verify: public catalog pages render expected brand names for selected products."
+			],
+			"passes": false,
+			"metadata": {
+				"depends_on": [
+					"Update Admin Product Brand Management",
+					"Update Catalog Product Data Layer"
+				],
+				"parallel": false,
+				"conflicts_with": ["Update Adjacent Product Consumers"],
+				"files": [
+					"src/components/admin/tabs/ProductCatalogsTab.tsx",
+					"src/routes/catalog.index.tsx",
+					"src/routes/catalog.$catalogId.tsx"
+				]
+			}
+		},
+		{
+			"id": "compatibility-1",
+			"category": "compatibility",
+			"description": "Home, product detail, B2B, and Gippy continue to render and reason about product brands correctly after normalization.",
+			"steps": [
+				"Verify: product detail page shows the correct brand and B2B inquiry includes it.",
+				"Verify: home featured products render brand labels without runtime errors.",
+				"Verify: Gippy product recommendations are not limited to a brand-hidden 48-row slice when brand diversity matters."
+			],
+			"passes": false,
+			"metadata": {
+				"depends_on": ["Update Catalog Product Data Layer"],
+				"parallel": false,
+				"conflicts_with": [
+					"Update Products Page Brand UX",
+					"Update Product Catalog Admin Brand Filtering"
+				],
+				"files": [
+					"src/routes/index.tsx",
+					"src/routes/products.$productId.tsx",
+					"src/routes/b2b.tsx",
+					"src/components/site/GippyChat.tsx"
+				]
+			}
+		},
+		{
+			"id": "verification-1",
+			"category": "verification",
+			"description": "The implementation is validated with SQL checks, lint/build, and browser runtime checks against the original failure mode.",
+			"steps": [
+				"Verify: SQL full-table brand counts match /products chip counts.",
+				"Verify: Playwright opens /products, observes all expected brand chips, clicks each chip, and confirms card brand tags.",
+				"Verify: npm run lint exits 0.",
+				"Verify: npm run build exits 0."
+			],
+			"passes": false,
+			"metadata": {
+				"depends_on": [
+					"Update Products Page Brand UX",
+					"Update Product Catalog Admin Brand Filtering",
+					"Update Adjacent Product Consumers"
+				],
+				"parallel": false,
+				"conflicts_with": [],
+				"files": [".beads/artifacts/gpclub_final-ivb/progress.txt"]
+			}
+		}
+	],
+	"context": {
+		"patterns": [
+			"Public catalog helpers live in src/lib/catalog-products.ts and use Supabase with public data timeout patterns.",
+			"Admin product management lives in src/components/admin/tabs/ProductsTab.tsx and currently writes brand_name directly.",
+			"Public /products currently derives filters from fetched product rows and renders a Radix dropdown."
+		],
+		"keyFiles": [
+			"src/lib/catalog-products.ts",
+			"src/routes/products.tsx",
+			"src/components/admin/tabs/ProductsTab.tsx",
+			"src/components/admin/tabs/ProductCatalogsTab.tsx",
+			"supabase/migrations/20260603201300_create_admin_products.sql"
+		],
+		"nonGoals": [
+			"Full visual redesign of the products page.",
+			"External CMS integration for brand content.",
+			"Removing compatibility brand_name renders before all consumers are migrated."
+		]
+	},
+	"beadMetadata": {
+		"depends_on": [],
+		"parallel": false,
+		"conflicts_with": [],
+		"blocks": [],
+		"estimated_hours": 18
+	}
+}

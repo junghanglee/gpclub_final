@@ -29,9 +29,9 @@ import {
   type CatalogProduct,
   fetchPublishedCatalogProductById,
   getCoverImage,
-  normalizeBrandText,
   productSearchText,
   useCatalogProducts,
+  usePublishedCatalogBrandSummaries,
 } from "@/lib/catalog-products";
 import { useI18n } from "@/lib/i18n";
 import { usePageContent } from "@/lib/page-content";
@@ -100,10 +100,15 @@ function ProductsPage() {
   const { lang } = useI18n();
   const { content: page, loading: pageLoading } = usePageContent("products");
   const t = productText[lang];
-  const { rows, loading } = useCatalogProducts();
+  const [brand, setBrand] = useState("All");
+  const selectedBrandId = brand === "All" ? undefined : brand;
+  const { rows, loading } = useCatalogProducts({
+    limit: 0,
+    brandId: selectedBrandId,
+  });
+  const { rows: brandSummaries, loading: brandsLoading } = usePublishedCatalogBrandSummaries();
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("All");
-  const [brand, setBrand] = useState("All");
   const [visibleCount, setVisibleCount] = useState(INITIAL_PRODUCT_COUNT);
   const [selected, setSelected] = useState<CatalogProduct | null>(null);
   const [selectedDetail, setSelectedDetail] = useState<CatalogProduct | null>(null);
@@ -111,29 +116,19 @@ function ProductsPage() {
   const [inquiryOpen, setInquiryOpen] = useState(false);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
-  const brandOptions = useMemo(() => {
-    const byKey = new Map<string, string>();
-    rows.forEach((p) => {
-      const label = p.brand_name.trim();
-      if (!label) return;
-      const key = normalizeBrandText(label);
-      if (!byKey.has(key)) byKey.set(key, label);
-    });
-    return ["All", ...Array.from(byKey.values()).sort((a, b) => a.localeCompare(b))];
-  }, [rows]);
+  const totalPublishedProducts = useMemo(
+    () => brandSummaries.reduce((total, item) => total + item.count, 0),
+    [brandSummaries],
+  );
+
+  const selectedBrandName = useMemo(() => {
+    if (brand === "All") return t.allBrands;
+    return brandSummaries.find((item) => item.id === brand)?.name ?? brand;
+  }, [brand, brandSummaries, t.allBrands]);
 
   const typeOptions = useMemo(() => {
     const types = Array.from(new Set(rows.map((p) => p.product_type.trim()).filter(Boolean)));
     return ["All", ...types.sort((a, b) => a.localeCompare(b))];
-  }, [rows]);
-
-  const brandCounts = useMemo(() => {
-    const counts = new Map<string, number>();
-    rows.forEach((p) => {
-      const key = normalizeBrandText(p.brand_name);
-      counts.set(key, (counts.get(key) || 0) + 1);
-    });
-    return counts;
   }, [rows]);
 
   const typeCounts = useMemo(() => {
@@ -144,14 +139,12 @@ function ProductsPage() {
 
   const filtered = useMemo(() => {
     const normalizedQuery = q.trim().toLowerCase();
-    const normalizedBrand = normalizeBrandText(brand);
     return rows.filter((p) => {
       if (cat !== "All" && p.product_type !== cat) return false;
-      if (brand !== "All" && normalizeBrandText(p.brand_name) !== normalizedBrand) return false;
       if (normalizedQuery && !productSearchText(p).includes(normalizedQuery)) return false;
       return true;
     });
-  }, [rows, q, cat, brand]);
+  }, [rows, q, cat]);
 
   useEffect(() => {
     setVisibleCount(INITIAL_PRODUCT_COUNT);
@@ -260,28 +253,33 @@ function ProductsPage() {
 
       <section className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-8">
         <div className="rounded-3xl border border-border/60 bg-card p-4 shadow-soft">
-          {loading ? (
+          {loading || brandsLoading ? (
             <ProductFilterSkeleton />
           ) : (
-            <div className="grid gap-3 lg:grid-cols-[auto_180px_220px_1fr] lg:items-center">
-              <div className="text-sm font-bold text-foreground">
-                {t.totalRegistered}: <span className="text-primary">{rows.length}</span>
-                <span className="ml-3 text-muted-foreground">
-                  {t.showing}: {filtered.length}
-                </span>
+            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_220px_1fr] lg:items-start">
+              <div className="space-y-3 lg:col-span-3">
+                <div className="flex flex-wrap items-center gap-3 text-sm font-bold text-foreground">
+                  <span>
+                    {t.totalRegistered}:{" "}
+                    <span className="text-primary">{totalPublishedProducts}</span>
+                  </span>
+                  <span className="text-muted-foreground">
+                    {t.showing}: {filtered.length}
+                  </span>
+                  <span className="rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground">
+                    {selectedBrandName}
+                  </span>
+                </div>
+                <BrandChipFilter
+                  allLabel={`${t.allBrands} (${totalPublishedProducts})`}
+                  selected={brand}
+                  onSelect={setBrand}
+                  brands={brandSummaries.map((item) => ({
+                    value: item.id,
+                    label: `${item.name} (${item.count})`,
+                  }))}
+                />
               </div>
-              <ProductRadixFilter
-                ariaLabel={t.brandFilter}
-                value={brand}
-                onValueChange={setBrand}
-                options={brandOptions.map((b) => ({
-                  value: b,
-                  label:
-                    b === "All"
-                      ? `${t.allBrands} (${rows.length})`
-                      : `${b} (${brandCounts.get(normalizeBrandText(b)) || 0})`,
-                }))}
-              />
               <ProductRadixFilter
                 ariaLabel={t.typeFilter}
                 value={cat}
@@ -344,7 +342,9 @@ function ProductsPage() {
               <div className="border-b bg-gradient-luxe px-6 py-5">
                 <DialogHeader>
                   <div className="mb-2 flex flex-wrap gap-2">
-                    <Badge variant="secondary">{dialogProduct.brand_name}</Badge>
+                    <Badge variant="secondary">
+                      {dialogProduct.brand_display_name || dialogProduct.brand_name}
+                    </Badge>
                     <Badge variant="outline">{dialogProduct.product_type}</Badge>
                   </div>
                   <DialogTitle className="pr-8 text-2xl leading-tight md:text-3xl">
@@ -375,7 +375,9 @@ function ProductsPage() {
                       <dl className="grid gap-3 text-sm">
                         <div>
                           <dt className="font-semibold text-foreground">Brand</dt>
-                          <dd className="text-muted-foreground">{dialogProduct.brand_name}</dd>
+                          <dd className="text-muted-foreground">
+                            {dialogProduct.brand_display_name || dialogProduct.brand_name}
+                          </dd>
                         </div>
                         <div>
                           <dt className="font-semibold text-foreground">Category</dt>
@@ -460,7 +462,7 @@ function ProductsPage() {
         product={
           selected
             ? {
-                brandName: selected.brand_name,
+                brandName: selected.brand_display_name || selected.brand_name,
                 productName: selected.product_name,
                 productType: selected.product_type,
                 imageUrl: getCoverImage(selected) || undefined,
@@ -470,12 +472,47 @@ function ProductsPage() {
         source="Product detail popup"
         defaultMessage={
           selected
-            ? `I am interested in B2B opportunities for ${selected.brand_name} - ${selected.product_name}.`
+            ? `I am interested in B2B opportunities for ${selected.brand_display_name || selected.brand_name} - ${selected.product_name}.`
             : ""
         }
         title="Register B2B inquiry without leaving this product"
       />
     </>
+  );
+}
+
+function BrandChipFilter({
+  allLabel,
+  selected,
+  onSelect,
+  brands,
+}: {
+  allLabel: string;
+  selected: string;
+  onSelect: (value: string) => void;
+  brands: Array<{ value: string; label: string }>;
+}) {
+  const options = [{ value: "All", label: allLabel }, ...brands];
+
+  return (
+    <div className="flex flex-wrap gap-2" role="group" aria-label="Brand filter">
+      {options.map((option) => {
+        const active = selected === option.value;
+        return (
+          <Button
+            key={option.value}
+            type="button"
+            variant={active ? "default" : "outline"}
+            size="sm"
+            aria-pressed={active}
+            onClick={() => onSelect(option.value)}
+            className="h-9 rounded-full px-4 text-xs font-bold"
+          >
+            {option.label}
+          </Button>
+        );
+      })}
+    </div>
   );
 }
 
@@ -524,7 +561,10 @@ function ProductCard({
         ) : (
           <ProductImageSkeleton />
         )}
-        <div className="absolute left-3 top-3 flex flex-wrap gap-1">
+        <div className="absolute left-3 top-3 flex max-w-[calc(100%-1.5rem)] flex-wrap gap-1">
+          <Badge className="max-w-full truncate bg-card text-foreground shadow-soft ring-1 ring-border/70">
+            {product.brand_display_name || product.brand_name}
+          </Badge>
           {product.is_new ? (
             <Badge className="gap-1 bg-primary text-primary-foreground">
               <Sparkles className="h-3 w-3" />
@@ -542,7 +582,7 @@ function ProductCard({
       <div className="p-4">
         <div className="flex items-center justify-between gap-2">
           <div className="truncate text-[10px] font-semibold uppercase tracking-widest text-gold">
-            {product.brand_name}
+            {product.brand_display_name || product.brand_name}
           </div>
           <Badge variant="secondary" className="max-w-[45%] truncate text-[10px]">
             {product.product_type}

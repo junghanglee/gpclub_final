@@ -18,6 +18,10 @@ export type ProductCondition = {
 
 export type CatalogProduct = {
   id: string;
+  brand_id: string | null;
+  brand_key?: string;
+  brand_slug?: string;
+  brand_display_name?: string;
   brand_name: string;
   product_name: string;
   product_type: string;
@@ -37,10 +41,44 @@ export type CatalogProduct = {
   updated_at?: string;
 };
 
+export type CatalogBrandSummary = {
+  id: string;
+  key: string;
+  slug: string;
+  name: string;
+  count: number;
+  sort_order: number;
+};
+
+type CatalogBrandJoin = {
+  id: string;
+  key: string;
+  slug: string;
+  name: string;
+  sort_order: number;
+  published: boolean;
+};
+
+type CatalogProductRow = Partial<CatalogProduct> & {
+  brands?: CatalogBrandJoin | CatalogBrandJoin[] | null;
+};
+
+type CatalogBrandSummaryRow = {
+  brand_id: string | null;
+  brands?: CatalogBrandJoin | CatalogBrandJoin[] | null;
+};
+
 const CATALOG_PRODUCT_LIST_COLUMNS =
+  "id,brand_id,brand_name,product_name,product_type,short_intro,cover_image_url,sort_order,published,is_new,is_popular,is_featured,created_at,updated_at,brands!inner(id,key,slug,name,sort_order,published)";
+const LEGACY_CATALOG_PRODUCT_LIST_COLUMNS =
   "id,brand_name,product_name,product_type,short_intro,cover_image_url,sort_order,published,is_new,is_popular,is_featured,created_at,updated_at";
 export const catalogProductsQueryKey = ["catalog-products", "published"] as const;
+export const catalogBrandSummariesQueryKey = [
+  "catalog-products",
+  "published-brand-summaries",
+] as const;
 const EMPTY_CATALOG_PRODUCTS: CatalogProduct[] = [];
+const EMPTY_CATALOG_BRAND_SUMMARIES: CatalogBrandSummary[] = [];
 
 export function normalizeBrandText(value?: string | null) {
   return (value || "").toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -61,7 +99,7 @@ export function normalizedSearchText(value?: string | null) {
 export function productSearchText(p: CatalogProduct) {
   return normalizedSearchText(
     [
-      p.brand_name,
+      p.brand_display_name || p.brand_name,
       p.product_name,
       p.product_type,
       p.short_intro,
@@ -71,10 +109,35 @@ export function productSearchText(p: CatalogProduct) {
   );
 }
 
-function normalizeCatalogProductRow(row: Partial<CatalogProduct>): CatalogProduct {
+function getJoinedBrand(row: { brands?: CatalogBrandJoin | CatalogBrandJoin[] | null }) {
+  if (Array.isArray(row.brands)) return row.brands[0] ?? null;
+  return row.brands ?? null;
+}
+
+function isMissingBrandSchemaError(error: unknown) {
+  if (!error || typeof error !== "object") return false;
+  const code = "code" in error ? String(error.code) : "";
+  const message = "message" in error ? String(error.message) : "";
+  return (
+    code === "PGRST200" ||
+    code === "PGRST205" ||
+    message.includes("Could not find the table 'public.brands'") ||
+    message.includes("Could not find a relationship") ||
+    message.includes("admin_products_brand_id_fkey")
+  );
+}
+
+function normalizeCatalogProductRow(row: CatalogProductRow): CatalogProduct {
+  const joinedBrand = getJoinedBrand(row);
+  const brandDisplayName = joinedBrand?.name || row.brand_name || "";
+
   return {
     id: row.id || "",
-    brand_name: row.brand_name || "",
+    brand_id: row.brand_id ?? joinedBrand?.id ?? null,
+    brand_key: joinedBrand?.key,
+    brand_slug: joinedBrand?.slug,
+    brand_display_name: brandDisplayName,
+    brand_name: brandDisplayName,
     product_name: row.product_name || "",
     product_type: row.product_type || "",
     short_intro: row.short_intro || "",
@@ -94,13 +157,59 @@ function normalizeCatalogProductRow(row: Partial<CatalogProduct>): CatalogProduc
   };
 }
 
-export async function fetchPublishedCatalogProducts(limit = 120) {
+function normalizeLegacyCatalogProductRow(row: CatalogProductRow): CatalogProduct {
+  const product = normalizeCatalogProductRow(row);
+  const brandName = canonicalBrandName(product.brand_name || "");
+  const brandKey = normalizeBrandText(brandName);
+  return {
+    ...product,
+    brand_id: null,
+    brand_key: brandKey,
+    brand_slug: brandKey,
+    brand_display_name: brandName,
+    brand_name: brandName,
+  };
+}
+
+async function fetchLegacyPublishedCatalogProducts(
+  limit = 120,
+  options: { brandId?: string; brandKey?: string } = {},
+) {
+  let query = supabase
+    .from("admin_products")
+    .select(LEGACY_CATALOG_PRODUCT_LIST_COLUMNS)
+    .eq("published", true)
+    .order("sort_order", { ascending: false })
+    .order("created_at", { ascending: false });
+
+  if (limit > 0) query = query.limit(limit);
+
+  const { data, error } = await withPublicDataTimeout(query, "legacy catalog products");
+  if (error) throw error;
+
+  const brandFilter = normalizeBrandText(options.brandKey || options.brandId || "");
+  return (data || [])
+    .map((row) => normalizeLegacyCatalogProductRow(row as CatalogProductRow))
+    .filter((product) => {
+      const productBrand = normalizeBrandText(product.brand_name);
+      return productBrand && (!brandFilter || productBrand === brandFilter);
+    });
+}
+
+export async function fetchPublishedCatalogProducts(
+  limit = 120,
+  options: { brandId?: string; brandKey?: string } = {},
+) {
   let query = supabase
     .from("admin_products")
     .select(CATALOG_PRODUCT_LIST_COLUMNS)
     .eq("published", true)
+    .eq("brands.published", true)
     .order("sort_order", { ascending: false })
     .order("created_at", { ascending: false });
+
+  if (options.brandId) query = query.eq("brand_id", options.brandId);
+  if (options.brandKey) query = query.eq("brands.key", options.brandKey);
 
   if (limit > 0) query = query.limit(limit);
 
@@ -108,31 +217,150 @@ export async function fetchPublishedCatalogProducts(limit = 120) {
     const { data, error } = await withPublicDataTimeout(query, "catalog products");
 
     if (error) throw error;
-    return (data || []).map((row) => normalizeCatalogProductRow(row as Partial<CatalogProduct>));
-  } catch {
+    return (data || []).map((row) => normalizeCatalogProductRow(row as CatalogProductRow));
+  } catch (error) {
+    if (isMissingBrandSchemaError(error)) {
+      try {
+        return await fetchLegacyPublishedCatalogProducts(limit, options);
+      } catch {
+        return EMPTY_CATALOG_PRODUCTS;
+      }
+    }
+
     return EMPTY_CATALOG_PRODUCTS;
+  }
+}
+
+export async function fetchPublishedCatalogBrandSummaries() {
+  const query = supabase
+    .from("admin_products")
+    .select("brand_id,brands!inner(id,key,slug,name,sort_order,published)")
+    .eq("published", true)
+    .eq("brands.published", true);
+
+  try {
+    const { data, error } = await withPublicDataTimeout(query, "catalog brand summaries");
+
+    if (error) throw error;
+
+    const counts = new Map<string, CatalogBrandSummary>();
+    for (const row of (data || []) as CatalogBrandSummaryRow[]) {
+      const brand = getJoinedBrand(row);
+      if (!brand?.id) continue;
+
+      const existing = counts.get(brand.id);
+      if (existing) {
+        existing.count += 1;
+      } else {
+        counts.set(brand.id, {
+          id: brand.id,
+          key: brand.key,
+          slug: brand.slug,
+          name: brand.name,
+          sort_order: Number.isFinite(brand.sort_order) ? Number(brand.sort_order) : 0,
+          count: 1,
+        });
+      }
+    }
+
+    return Array.from(counts.values()).sort(
+      (a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name),
+    );
+  } catch (error) {
+    if (isMissingBrandSchemaError(error)) {
+      try {
+        const legacyProducts = await fetchLegacyPublishedCatalogProducts(0);
+        const counts = new Map<string, CatalogBrandSummary>();
+
+        for (const product of legacyProducts) {
+          const key = normalizeBrandText(product.brand_display_name || product.brand_name);
+          if (!key) continue;
+
+          const existing = counts.get(key);
+          if (existing) {
+            existing.count += 1;
+          } else {
+            counts.set(key, {
+              id: key,
+              key,
+              slug: key,
+              name: product.brand_display_name || product.brand_name,
+              sort_order: 0,
+              count: 1,
+            });
+          }
+        }
+
+        return Array.from(counts.values()).sort((a, b) => a.name.localeCompare(b.name));
+      } catch {
+        return EMPTY_CATALOG_BRAND_SUMMARIES;
+      }
+    }
+
+    return EMPTY_CATALOG_BRAND_SUMMARIES;
   }
 }
 
 export async function fetchPublishedCatalogProductById(id: string) {
   try {
     const { data, error } = await withPublicDataTimeout(
-      supabase.from("admin_products").select("*").eq("published", true).eq("id", id).maybeSingle(),
+      supabase
+        .from("admin_products")
+        .select("*,brands(id,key,slug,name,sort_order,published)")
+        .eq("published", true)
+        .eq("brands.published", true)
+        .eq("id", id)
+        .maybeSingle(),
       "catalog product detail",
     );
 
     if (error) throw error;
-    return (data ?? null) as CatalogProduct | null;
-  } catch {
+    return data ? normalizeCatalogProductRow(data as CatalogProductRow) : null;
+  } catch (error) {
+    if (isMissingBrandSchemaError(error)) {
+      try {
+        const { data, error: legacyError } = await withPublicDataTimeout(
+          supabase
+            .from("admin_products")
+            .select("*")
+            .eq("published", true)
+            .eq("id", id)
+            .maybeSingle(),
+          "legacy catalog product detail",
+        );
+
+        if (legacyError) throw legacyError;
+        return data ? normalizeLegacyCatalogProductRow(data as CatalogProductRow) : null;
+      } catch {
+        return null;
+      }
+    }
+
     return null;
   }
 }
 
-export function useCatalogProducts(options: { enabled?: boolean; limit?: number } = {}) {
+export function useCatalogProducts(
+  options: {
+    enabled?: boolean;
+    limit?: number;
+    brandId?: string;
+    brandKey?: string;
+  } = {},
+) {
   const limit = options.limit ?? 48;
   const query = useQuery({
-    queryKey: [...catalogProductsQueryKey, limit],
-    queryFn: () => fetchPublishedCatalogProducts(limit),
+    queryKey: [
+      ...catalogProductsQueryKey,
+      limit,
+      options.brandId ?? null,
+      options.brandKey ?? null,
+    ],
+    queryFn: () =>
+      fetchPublishedCatalogProducts(limit, {
+        brandId: options.brandId,
+        brandKey: options.brandKey,
+      }),
     staleTime: 5 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
     retry: 1,
@@ -147,11 +375,31 @@ export function useCatalogProducts(options: { enabled?: boolean; limit?: number 
     [rows],
   );
   const brands = useMemo(
-    () => ["All", ...Array.from(new Set(rows.map((p) => p.brand_name).filter(Boolean)))],
+    () => [
+      "All",
+      ...Array.from(new Set(rows.map((p) => p.brand_display_name || p.brand_name).filter(Boolean))),
+    ],
     [rows],
   );
 
   return { rows, loading, error: query.error, source, types, brands };
+}
+
+export function usePublishedCatalogBrandSummaries(options: { enabled?: boolean } = {}) {
+  const query = useQuery({
+    queryKey: catalogBrandSummariesQueryKey,
+    queryFn: fetchPublishedCatalogBrandSummaries,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    retry: 1,
+    enabled: options.enabled ?? true,
+  });
+
+  return {
+    rows: query.data ?? EMPTY_CATALOG_BRAND_SUMMARIES,
+    loading: query.isLoading,
+    error: query.error,
+  };
 }
 
 export function getCoverImage(p: CatalogProduct) {
@@ -194,7 +442,7 @@ export function pickByQuery(rows: CatalogProduct[], q: string, limit = 3) {
       return (
         haystack.includes(lc) ||
         (p.concerns ?? []).some((c) => lc.includes(c.toLowerCase())) ||
-        lc.includes((p.brand_name ?? "").toLowerCase())
+        lc.includes((p.brand_display_name || p.brand_name || "").toLowerCase())
       );
     })
     .slice(0, limit);
