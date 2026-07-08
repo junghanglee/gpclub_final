@@ -129,6 +129,8 @@ function EventsPage() {
   const eventRows = useMemo(() => rows.filter((r) => r.post_type !== "new_product"), [rows]);
   const featured = useMemo(() => eventRows.find((r) => r.featured) ?? eventRows[0], [eventRows]);
   const rest = useMemo(() => eventRows.filter((r) => r.id !== featured?.id), [eventRows, featured]);
+  const heroImageSrc = page.heroImage.url || gippyEventHero;
+  const heroImageAlt = page.heroImage.alt[lang] || "Gippy AI event mascot giving a thumbs up";
 
   return (
     <main className="overflow-hidden bg-background">
@@ -164,8 +166,8 @@ function EventsPage() {
           </div>
           <div className="flex justify-center lg:col-span-5 lg:justify-end">
             <img
-              src={gippyEventHero}
-              alt="Gippy AI event mascot giving a thumbs up"
+              src={heroImageSrc}
+              alt={heroImageAlt}
               loading="eager"
               decoding="async"
               className="aspect-[3/4] max-h-[414px] w-full max-w-[311px] object-contain drop-shadow-2xl"

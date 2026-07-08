@@ -2,7 +2,8 @@ import { ImagePlus, Pencil, Plus, RefreshCw, Trash2, UploadCloud } from "lucide-
 import { type DragEvent, useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { type ADMIN_I18N, type AdminLang, tx } from "@/components/admin/admin-i18n";
-import { ADMIN_PAGE_SIZE, PaginationControls, pageRange } from "@/components/admin/admin-shared";
+import { PaginationControls } from "@/components/admin/admin-pagination-controls";
+import { ADMIN_PAGE_SIZE, pageRange } from "@/components/admin/admin-shared";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -307,6 +308,9 @@ export default function PopupsTab({ lang }: { lang: AdminLang }) {
         canNext={(page + 1) * ADMIN_PAGE_SIZE < totalRows}
         onPrevious={() => setPage((p) => Math.max(0, p - 1))}
         onNext={() => setPage((p) => p + 1)}
+        previousLabel={t("previousPage")}
+        pageLabel={t("pageLabel")}
+        nextLabel={t("nextPage")}
       />
 
       <Dialog open={open} onOpenChange={setOpen}>

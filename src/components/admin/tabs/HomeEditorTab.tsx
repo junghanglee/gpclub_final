@@ -1,26 +1,18 @@
-import { RefreshCw } from "lucide-react";
-import { useEffect, useState, type ChangeEvent } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { type ADMIN_I18N, type AdminLang, tx } from "@/components/admin/admin-i18n";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { type AdminLang, ADMIN_I18N, tx } from "@/components/admin/admin-i18n";
+  type CmsContentLang,
+  CmsPanel,
+  LocalizedTextField,
+} from "@/components/admin/cms-form-fields";
+import { CmsFormShell } from "@/components/admin/cms-form-shell";
+import { CmsMediaField } from "@/components/admin/cms-media-field";
+import { HomeContentSections } from "@/components/admin/home-content-sections";
+import { PageSectionEditor } from "@/components/admin/page-section-editor";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database, Json } from "@/integrations/supabase/types";
-import {
-  DEFAULT_HOME_CONTENT,
-  type HomeAdminContent,
-  type LocalizedText,
-  mergeHomeContent,
-} from "@/lib/home-content";
+import { DEFAULT_HOME_CONTENT, type HomeAdminContent, mergeHomeContent } from "@/lib/home-content";
 import {
   DEFAULT_PAGE_CONTENT,
   mergePageContent,
@@ -31,102 +23,279 @@ import {
 } from "@/lib/page-content";
 
 type HomeContentInsert = Database["public"]["Tables"]["home_content"]["Insert"];
+type ContentLang = CmsContentLang;
 
-function TextPair({
-  label,
-  value,
-  onChange,
-  multiline = false,
-}: {
-  label: string;
-  value: LocalizedText;
-  onChange: (value: LocalizedText) => void;
-  multiline?: boolean;
-}) {
-  const Comp = multiline ? Textarea : Input;
-  return (
-    <div className="grid gap-3 md:grid-cols-2">
-      <div>
-        <Label>{label} VI</Label>
-        <Comp
-          className="mt-1.5"
-          value={value.vi}
-          rows={multiline ? 3 : undefined}
-          onChange={(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-            onChange({ ...value, vi: e.target.value })
-          }
-        />
-      </div>
-      <div>
-        <Label>{label} EN</Label>
-        <Comp
-          className="mt-1.5"
-          value={value.en}
-          rows={multiline ? 3 : undefined}
-          onChange={(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-            onChange({ ...value, en: e.target.value })
-          }
-        />
-      </div>
-    </div>
+const CONTENT_LANG_OPTIONS: {
+  value: ContentLang;
+  labelKey: keyof typeof ADMIN_I18N;
+}[] = [
+  { value: "vi", labelKey: "vietnameseContent" },
+  { value: "en", labelKey: "englishContent" },
+];
+
+const PAGE_PREVIEW_PATHS: Record<"home" | PageContentKey, string> = {
+  home: "/",
+  brand: "/brand",
+  products: "/products",
+  "gippy-ai": "/gippy-ai",
+  events: "/events",
+  b2b: "/b2b",
+  contact: "/contact",
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === "object" && !Array.isArray(value);
+}
+
+function isLocalizedContainer(value: unknown): value is Record<ContentLang, unknown> {
+  return isRecord(value) && ("vi" in value || "en" in value);
+}
+
+function mergeActiveLocaleValue(base: unknown, draft: unknown, lang: ContentLang): unknown {
+  if (isLocalizedContainer(draft)) {
+    const baseRecord = isRecord(base) ? base : {};
+    const inactiveLang: ContentLang = lang === "vi" ? "en" : "vi";
+    return {
+      ...draft,
+      ...baseRecord,
+      [lang]: draft[lang],
+      [inactiveLang]: baseRecord[inactiveLang] ?? draft[inactiveLang],
+    };
+  }
+
+  if (Array.isArray(draft)) {
+    const baseArray = Array.isArray(base) ? base : [];
+    const length = Math.max(baseArray.length, draft.length);
+    return Array.from({ length }, (_, index) => {
+      if (index >= draft.length) return baseArray[index];
+      return mergeActiveLocaleValue(baseArray[index], draft[index], lang);
+    });
+  }
+
+  if (isRecord(draft)) {
+    const baseRecord = isRecord(base) ? base : {};
+    const keys = new Set([...Object.keys(baseRecord), ...Object.keys(draft)]);
+    const out: Record<string, unknown> = {};
+    for (const key of keys) {
+      out[key] =
+        key in draft ? mergeActiveLocaleValue(baseRecord[key], draft[key], lang) : baseRecord[key];
+    }
+    return out;
+  }
+
+  return draft;
+}
+
+function hasText(value: unknown): boolean {
+  if (typeof value === "string") return value.trim().length > 0;
+  if (Array.isArray(value)) return value.some((item) => hasText(item));
+  return false;
+}
+
+const OPTIONAL_LOCALIZED_FIELD_SUFFIXES = [
+  ".hero.imageAlt",
+  ".heroImage.alt",
+  ".image.alt",
+  ".images.alts",
+];
+
+function isOptionalLocalizedField(path: string): boolean {
+  return OPTIONAL_LOCALIZED_FIELD_SUFFIXES.some((suffix) => path.endsWith(suffix));
+}
+
+function collectLocaleIssues(value: unknown, lang: ContentLang, path = "Content"): string[] {
+  if (isOptionalLocalizedField(path)) return [];
+
+  if (isLocalizedContainer(value)) {
+    const inactiveLang: ContentLang = lang === "vi" ? "en" : "vi";
+    const activeValue = value[lang];
+    const inactiveValue = value[inactiveLang];
+
+    if (Array.isArray(activeValue) || Array.isArray(inactiveValue)) {
+      const activeItems = Array.isArray(activeValue) ? activeValue : [];
+      const inactiveItems = Array.isArray(inactiveValue) ? inactiveValue : [];
+      return inactiveItems.flatMap((item, index) =>
+        hasText(item) && !hasText(activeItems[index]) ? [`${path} ${index + 1}`] : [],
+      );
+    }
+
+    return hasText(inactiveValue) && !hasText(activeValue) ? [path] : [];
+  }
+
+  if (Array.isArray(value)) {
+    return value.flatMap((item, index) => collectLocaleIssues(item, lang, `${path} ${index + 1}`));
+  }
+
+  if (isRecord(value)) {
+    return Object.entries(value).flatMap(([key, entry]) =>
+      collectLocaleIssues(entry, lang, `${path}.${key}`),
+    );
+  }
+
+  return [];
+}
+
+function collectMissingRequiredLocalized(
+  fields: Array<[path: string, value: { vi?: unknown; en?: unknown }]>,
+  lang: ContentLang,
+): string[] {
+  return fields.flatMap(([path, value]) => (hasText(value[lang]) ? [] : [path]));
+}
+
+function collectRequiredHomeIssues(form: HomeAdminContent, lang: ContentLang, path: string) {
+  return collectMissingRequiredLocalized(
+    [
+      [`${path}.hero.title`, form.hero.title],
+      [`${path}.hero.subtitle`, form.hero.subtitle],
+      [`${path}.hero.primaryCta`, form.hero.primaryCta],
+      [`${path}.hero.secondaryCta`, form.hero.secondaryCta],
+    ],
+    lang,
+  );
+}
+
+function collectRequiredPageIssues(form: PageEditableContent, lang: ContentLang, path: string) {
+  return collectMissingRequiredLocalized(
+    [
+      [`${path}.title`, form.title],
+      [`${path}.highlight`, form.highlight],
+      [`${path}.description`, form.description],
+      [`${path}.primaryCta`, form.primaryCta],
+      [`${path}.secondaryCta`, form.secondaryCta],
+    ],
+    lang,
   );
 }
 
 function PageTextEditor({
   form,
   onChange,
+  pageKey,
+  contentLang,
+  compareMode,
   t,
+  validationIssues,
 }: {
   form: PageEditableContent;
   onChange: (next: PageEditableContent) => void;
+  pageKey: PageContentKey;
+  contentLang: ContentLang;
+  compareMode: boolean;
   t: (key: keyof typeof ADMIN_I18N) => string;
+  validationIssues: string[];
 }) {
   const patch = (next: Partial<PageEditableContent>) => onChange({ ...form, ...next });
+  const localizedFieldProps = { activeLang: contentLang, compareMode };
+  const contentIssues = validationIssues.filter(
+    (issue) =>
+      issue.includes(".title") ||
+      issue.includes(".highlight") ||
+      issue.includes(".description") ||
+      issue.includes(".primaryCta") ||
+      issue.includes(".secondaryCta"),
+  ).length;
+
   return (
-    <section className="space-y-4 rounded-2xl border border-border/60 bg-card p-4 shadow-soft md:p-6">
-      <h3 className="font-display text-xl">{t("content")}</h3>
-      <TextPair label={t("kicker")} value={form.kicker} onChange={(v) => patch({ kicker: v })} />
-      <TextPair
-        label={t("title")}
-        value={form.title}
-        onChange={(v) => patch({ title: v })}
-        multiline
+    <div className="space-y-4">
+      <CmsPanel title={t("content")} defaultOpen issueCount={contentIssues}>
+        <LocalizedTextField
+          {...localizedFieldProps}
+          label={t("kicker")}
+          value={form.kicker}
+          onChange={(v) => patch({ kicker: v })}
+        />
+        <LocalizedTextField
+          {...localizedFieldProps}
+          label={t("title")}
+          value={form.title}
+          onChange={(v) => patch({ title: v })}
+          multiline
+        />
+        <LocalizedTextField
+          {...localizedFieldProps}
+          label={t("highlight")}
+          value={form.highlight}
+          onChange={(v) => patch({ highlight: v })}
+          multiline
+        />
+        <LocalizedTextField
+          {...localizedFieldProps}
+          label={t("description")}
+          value={form.description}
+          onChange={(v) => patch({ description: v })}
+          multiline
+        />
+        <LocalizedTextField
+          {...localizedFieldProps}
+          label={t("primaryCta")}
+          value={form.primaryCta}
+          onChange={(v) => patch({ primaryCta: v })}
+        />
+        <LocalizedTextField
+          {...localizedFieldProps}
+          label={t("secondaryCta")}
+          value={form.secondaryCta}
+          onChange={(v) => patch({ secondaryCta: v })}
+        />
+        <CmsMediaField
+          label={t("heroImageUrl")}
+          value={form.heroImage}
+          onChange={(heroImage) => patch({ heroImage })}
+          uploadPrefix={`page-content/hero/${pageKey}`}
+          contentLang={contentLang}
+          compareMode={compareMode}
+          imageAltLabel={t("heroImageAlt")}
+          imageDetailsLabel={t("imageDetails")}
+          imageDetailsHint={t("imageDetailsHint")}
+          uploadHint={t("pageHeroImageHint")}
+          clearLabel={t("clearImage")}
+          chooseLabel={t("chooseHeroImage")}
+          uploadingLabel={t("uploadingImage")}
+        />
+      </CmsPanel>
+      <PageSectionEditor
+        pageKey={pageKey}
+        sections={form.sections}
+        contentLang={contentLang}
+        compareMode={compareMode}
+        onChange={(sections) => patch({ sections })}
+        validationIssues={validationIssues}
+        t={(key) => t(key as keyof typeof ADMIN_I18N)}
       />
-      <TextPair
-        label={t("highlight")}
-        value={form.highlight}
-        onChange={(v) => patch({ highlight: v })}
-        multiline
-      />
-      <TextPair
-        label={t("description")}
-        value={form.description}
-        onChange={(v) => patch({ description: v })}
-        multiline
-      />
-      <TextPair
-        label={t("primaryCta")}
-        value={form.primaryCta}
-        onChange={(v) => patch({ primaryCta: v })}
-      />
-      <TextPair
-        label={t("secondaryCta")}
-        value={form.secondaryCta}
-        onChange={(v) => patch({ secondaryCta: v })}
-      />
-    </section>
+    </div>
   );
 }
 
 export default function HomeEditorTab({ lang }: { lang: AdminLang }) {
   const t = (key: keyof typeof ADMIN_I18N) => tx(lang, key);
   const [selectedPage, setSelectedPage] = useState<"home" | PageContentKey>("home");
+  const [contentLang, setContentLang] = useState<ContentLang>("vi");
+  const [compareMode, setCompareMode] = useState(false);
   const [form, setForm] = useState<HomeAdminContent>(DEFAULT_HOME_CONTENT);
   const [pageForm, setPageForm] = useState<PageEditableContent>(DEFAULT_PAGE_CONTENT.brand);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const selectedPageLabel =
+    selectedPage === "home"
+      ? "HOME"
+      : PAGE_CONTENT_OPTIONS.find((page) => page.key === selectedPage)?.label || selectedPage;
+  const selectedContentLangLabel = t(
+    CONTENT_LANG_OPTIONS.find((option) => option.value === contentLang)?.labelKey ||
+      "vietnameseContent",
+  );
+  const activeDraft = selectedPage === "home" ? form : pageForm;
+  const requiredIssues =
+    selectedPage === "home"
+      ? collectRequiredHomeIssues(form, contentLang, selectedPageLabel)
+      : collectRequiredPageIssues(pageForm, contentLang, selectedPageLabel);
+  const validationIssues = Array.from(
+    new Set([
+      ...requiredIssues,
+      ...collectLocaleIssues(activeDraft, contentLang, selectedPageLabel),
+    ]),
+  );
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     if (selectedPage === "home") {
       const { data, error } = await supabase
@@ -146,11 +315,11 @@ export default function HomeEditorTab({ lang }: { lang: AdminLang }) {
       setPageForm(mergePageContent(selectedPage, data?.value));
     }
     setLoading(false);
-  };
+  }, [selectedPage]);
 
   useEffect(() => {
     load();
-  }, [selectedPage]);
+  }, [load]);
 
   const patch = (next: Partial<HomeAdminContent>) => setForm((prev) => ({ ...prev, ...next }));
   const patchHero = (next: Partial<HomeAdminContent["hero"]>) =>
@@ -167,26 +336,67 @@ export default function HomeEditorTab({ lang }: { lang: AdminLang }) {
     patch({ images: { ...form.images, ...next } });
   const patchCta = (next: Partial<HomeAdminContent["cta"]>) =>
     patch({ cta: { ...form.cta, ...next } });
+  const localizedFieldProps = { activeLang: contentLang, compareMode };
+
+  const openPreview = (langToPreview: ContentLang) => {
+    const path = PAGE_PREVIEW_PATHS[selectedPage];
+    window.open(`${path}?lang=${langToPreview}`, "_blank", "noopener,noreferrer");
+  };
 
   const save = async () => {
+    if (validationIssues.length > 0) {
+      toast.error(
+        `Publish checklist has ${validationIssues.length} missing ${selectedContentLangLabel} field${
+          validationIssues.length === 1 ? "" : "s"
+        }.`,
+      );
+      return;
+    }
+
     setSaving(true);
+    const key = selectedPage === "home" ? "home" : pageContentStorageKey(selectedPage);
+    const { data, error: loadError } = await supabase
+      .from("home_content")
+      .select("value")
+      .eq("key", key)
+      .maybeSingle();
+    if (loadError) {
+      setSaving(false);
+      return toast.error(loadError.message);
+    }
+
+    const draft = selectedPage === "home" ? form : pageForm;
+    const mergedValue = mergeActiveLocaleValue(data?.value, draft, contentLang) as Json;
     const row =
       selectedPage === "home"
-        ? ({ key: "home", value: form as Json } satisfies HomeContentInsert)
+        ? ({ key, value: mergedValue } satisfies HomeContentInsert)
         : ({
-            key: pageContentStorageKey(selectedPage),
-            value: pageForm as Json,
+            key,
+            value: mergedValue,
           } satisfies HomeContentInsert);
     const { error } = await supabase.from("home_content").upsert(row);
     setSaving(false);
     if (error) return toast.error(error.message);
+    if (selectedPage === "home") setForm(mergeHomeContent(mergedValue));
+    else setPageForm(mergePageContent(selectedPage, mergedValue));
     toast.success(t("saved"));
   };
 
   const resetDefaults = () => {
-    if (!confirm(t("resetHomeConfirm"))) return;
-    if (selectedPage === "home") setForm(DEFAULT_HOME_CONTENT);
-    else setPageForm(DEFAULT_PAGE_CONTENT[selectedPage]);
+    const resetConfirmMessage = `${t("resetHomeConfirm")}\n\n${t(
+      "resetScopeHint",
+    )}: ${selectedPageLabel} / ${selectedContentLangLabel}`;
+    if (!confirm(resetConfirmMessage)) return;
+    if (selectedPage === "home") {
+      setForm(mergeHomeContent(mergeActiveLocaleValue(form, DEFAULT_HOME_CONTENT, contentLang)));
+    } else {
+      setPageForm(
+        mergePageContent(
+          selectedPage,
+          mergeActiveLocaleValue(pageForm, DEFAULT_PAGE_CONTENT[selectedPage], contentLang),
+        ),
+      );
+    }
   };
 
   if (loading)
@@ -198,378 +408,67 @@ export default function HomeEditorTab({ lang }: { lang: AdminLang }) {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-col gap-3 rounded-2xl border border-border/60 bg-card p-4 shadow-soft sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="font-display text-2xl">{t("homeEditor")}</h2>
-          <p className="text-sm text-muted-foreground">{t("homeEditorDesc")}</p>
-          <div className="mt-4 max-w-xs">
-            <Label>{t("pageToEdit")}</Label>
-            <Select
-              value={selectedPage}
-              onValueChange={(v) => setSelectedPage(v as "home" | PageContentKey)}
-            >
-              <SelectTrigger className="mt-1.5 rounded-full bg-background">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PAGE_CONTENT_OPTIONS.map((page) => (
-                  <SelectItem key={page.key} value={page.key}>
-                    {page.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <Button variant="outline" onClick={load} className="rounded-full">
-            <RefreshCw className="mr-1 h-4 w-4" /> {t("reload")}
-          </Button>
-          <Button variant="outline" onClick={resetDefaults} className="rounded-full">
-            {t("reset")}
-          </Button>
-          <Button onClick={save} disabled={saving} className="rounded-full">
-            {saving ? t("saving") : t("saveHome")}
-          </Button>
-        </div>
-      </div>
+      <CmsFormShell
+        title={t("homeEditor")}
+        description={t("homeEditorDesc")}
+        pageLabel={t("pageToEdit")}
+        languageLabel={t("contentLanguage")}
+        pageOptions={PAGE_CONTENT_OPTIONS}
+        selectedPage={selectedPage}
+        onSelectedPageChange={setSelectedPage}
+        languageOptions={CONTENT_LANG_OPTIONS.map((option) => ({
+          value: option.value,
+          label: t(option.labelKey),
+        }))}
+        selectedLanguage={contentLang}
+        onSelectedLanguageChange={setContentLang}
+        compareMode={compareMode}
+        onCompareModeChange={setCompareMode}
+        compareLabel={t("compareTranslations")}
+        editingScopeLabel={t("editingScope")}
+        selectedPageLabel={selectedPageLabel}
+        selectedLanguageLabel={selectedContentLangLabel}
+        previewVietnameseLabel={t("previewVietnamese")}
+        previewEnglishLabel={t("previewEnglish")}
+        onPreview={openPreview}
+        onReload={load}
+        onReset={resetDefaults}
+        onSave={save}
+        saving={saving}
+        reloadLabel={t("reload")}
+        resetLabel={t("reset")}
+        saveLabel={t("saveHome")}
+        savingLabel={t("saving")}
+        saveScopeLabel={t("saveScopeHint")}
+        resetScopeLabel={t("resetScopeHint")}
+        validationIssues={validationIssues}
+      />
 
       {selectedPage !== "home" ? (
-        <PageTextEditor form={pageForm} onChange={setPageForm} t={t} />
+        <PageTextEditor
+          form={pageForm}
+          onChange={setPageForm}
+          pageKey={selectedPage}
+          contentLang={contentLang}
+          compareMode={compareMode}
+          validationIssues={validationIssues}
+          t={t}
+        />
       ) : (
-        <>
-          <section className="space-y-4 rounded-2xl border border-border/60 bg-card p-4 shadow-soft md:p-6">
-            <h3 className="font-display text-xl">{t("heroSection")}</h3>
-            <TextPair
-              label={t("kicker")}
-              value={form.hero.kicker}
-              onChange={(v) => patchHero({ kicker: v })}
-            />
-            <TextPair
-              label={t("title")}
-              value={form.hero.title}
-              onChange={(v) => patchHero({ title: v })}
-              multiline
-            />
-            <TextPair
-              label={t("subtitle")}
-              value={form.hero.subtitle}
-              onChange={(v) => patchHero({ subtitle: v })}
-              multiline
-            />
-            <TextPair
-              label={t("primaryCta")}
-              value={form.hero.primaryCta}
-              onChange={(v) => patchHero({ primaryCta: v })}
-            />
-            <TextPair
-              label={t("secondaryCta")}
-              value={form.hero.secondaryCta}
-              onChange={(v) => patchHero({ secondaryCta: v })}
-            />
-            <div>
-              <Label>{t("heroImageUrl")}</Label>
-              <Input
-                className="mt-1.5"
-                placeholder="https://..."
-                value={form.hero.imageUrl}
-                onChange={(e) => patchHero({ imageUrl: e.target.value })}
-              />
-              <p className="mt-1 text-xs text-muted-foreground">{t("defaultHeroImageHint")}</p>
-            </div>
-            <TextPair
-              label={t("heroImageAlt")}
-              value={form.hero.imageAlt}
-              onChange={(v) => patchHero({ imageAlt: v })}
-            />
-          </section>
-
-          <section className="space-y-4 rounded-2xl border border-border/60 bg-card p-4 shadow-soft md:p-6">
-            <h3 className="font-display text-xl">{t("heroStats")}</h3>
-            <div className="grid gap-3 md:grid-cols-4">
-              <div>
-                <Label>{t("masksValue")}</Label>
-                <Input
-                  className="mt-1.5"
-                  value={form.stats.masksValue}
-                  onChange={(e) => patchStats({ masksValue: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label>{t("countriesValue")}</Label>
-                <Input
-                  className="mt-1.5"
-                  value={form.stats.countriesValue}
-                  onChange={(e) => patchStats({ countriesValue: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label>{t("vietnamValue")}</Label>
-                <Input
-                  className="mt-1.5"
-                  value={form.stats.vietnamValue}
-                  onChange={(e) => patchStats({ vietnamValue: e.target.value })}
-                />
-              </div>
-            </div>
-            <TextPair
-              label={t("masksLabel")}
-              value={form.stats.masksLabel}
-              onChange={(v) => patchStats({ masksLabel: v })}
-            />
-            <TextPair
-              label={t("countriesLabel")}
-              value={form.stats.countriesLabel}
-              onChange={(v) => patchStats({ countriesLabel: v })}
-            />
-            <TextPair
-              label={t("vietnamLabel")}
-              value={form.stats.vietnamLabel}
-              onChange={(v) => patchStats({ vietnamLabel: v })}
-            />
-          </section>
-
-          <section className="space-y-4 rounded-2xl border border-border/60 bg-card p-4 shadow-soft md:p-6">
-            <h3 className="font-display text-xl">{t("partnerHook")}</h3>
-            <TextPair
-              label={t("kicker")}
-              value={form.partnerHook.kicker}
-              onChange={(v) => patchPartner({ kicker: v })}
-            />
-            <TextPair
-              label={t("title")}
-              value={form.partnerHook.title}
-              onChange={(v) => patchPartner({ title: v })}
-              multiline
-            />
-            <TextPair
-              label={t("highlight")}
-              value={form.partnerHook.highlight}
-              onChange={(v) => patchPartner({ highlight: v })}
-            />
-            <TextPair
-              label={t("body")}
-              value={form.partnerHook.body}
-              onChange={(v) => patchPartner({ body: v })}
-              multiline
-            />
-          </section>
-
-          <section className="space-y-4 rounded-2xl border border-border/60 bg-card p-4 shadow-soft md:p-6">
-            <h3 className="font-display text-xl">{t("trustPillars")}</h3>
-            <TextPair
-              label={t("trustKicker")}
-              value={form.trust.kicker}
-              onChange={(v) => patchTrust({ kicker: v })}
-            />
-            <TextPair
-              label={t("trustTitle")}
-              value={form.trust.title}
-              onChange={(v) => patchTrust({ title: v })}
-            />
-            <div className="grid gap-4 lg:grid-cols-3">
-              {form.pillars.map((pillar, i) => (
-                <div key={pillar.num} className="space-y-3 rounded-xl border border-border/60 p-4">
-                  <div className="grid grid-cols-[70px_1fr] gap-2">
-                    <div>
-                      <Label>{t("numberLabel")}</Label>
-                      <Input
-                        className="mt-1.5"
-                        value={pillar.num}
-                        onChange={(e) => {
-                          const xs = [...form.pillars];
-                          xs[i] = { ...pillar, num: e.target.value };
-                          patch({ pillars: xs });
-                        }}
-                      />
-                    </div>
-                    <TextPair
-                      label={t("smallLabel")}
-                      value={pillar.eng}
-                      onChange={(v) => {
-                        const xs = [...form.pillars];
-                        xs[i] = { ...pillar, eng: v };
-                        patch({ pillars: xs });
-                      }}
-                    />
-                  </div>
-                  <TextPair
-                    label={t("title")}
-                    value={pillar.title}
-                    onChange={(v) => {
-                      const xs = [...form.pillars];
-                      xs[i] = { ...pillar, title: v };
-                      patch({ pillars: xs });
-                    }}
-                  />
-                  <TextPair
-                    label={t("text")}
-                    value={pillar.text}
-                    onChange={(v) => {
-                      const xs = [...form.pillars];
-                      xs[i] = { ...pillar, text: v };
-                      patch({ pillars: xs });
-                    }}
-                    multiline
-                  />
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section className="space-y-4 rounded-2xl border border-border/60 bg-card p-4 shadow-soft md:p-6">
-            <h3 className="font-display text-xl">{t("processImagesCta")}</h3>
-            <TextPair
-              label={t("processKicker")}
-              value={form.process.kicker}
-              onChange={(v) => patchProcess({ kicker: v })}
-            />
-            <TextPair
-              label={t("processTitle")}
-              value={form.process.title}
-              onChange={(v) => patchProcess({ title: v })}
-              multiline
-            />
-            <TextPair
-              label={t("processBody")}
-              value={form.process.body}
-              onChange={(v) => patchProcess({ body: v })}
-              multiline
-            />
-            <TextPair
-              label={t("imageKicker")}
-              value={form.images.kicker}
-              onChange={(v) => patchImages({ kicker: v })}
-            />
-            <TextPair
-              label={t("imageTitle")}
-              value={form.images.title}
-              onChange={(v) => patchImages({ title: v })}
-              multiline
-            />
-            <TextPair
-              label={t("imageBody")}
-              value={form.images.body}
-              onChange={(v) => patchImages({ body: v })}
-              multiline
-            />
-            <TextPair
-              label={t("imageCta")}
-              value={form.images.cta}
-              onChange={(v) => patchImages({ cta: v })}
-            />
-            <div className="grid gap-4 lg:grid-cols-3">
-              {[0, 1, 2].map((index) => (
-                <div key={index} className="space-y-3 rounded-xl border border-border/60 p-4">
-                  <h4 className="font-semibold">
-                    {t("imageSlot")} {index + 1}
-                  </h4>
-                  <div>
-                    <Label>{t("imageUrl")}</Label>
-                    <Input
-                      className="mt-1.5"
-                      placeholder="https://..."
-                      value={form.images.urls[index] || ""}
-                      onChange={(e) => {
-                        const urls = [...form.images.urls];
-                        urls[index] = e.target.value;
-                        patchImages({ urls });
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <Label>{t("labelVi")}</Label>
-                    <Input
-                      className="mt-1.5"
-                      value={form.images.labels.vi[index] || ""}
-                      onChange={(e) => {
-                        const labels = {
-                          vi: [...form.images.labels.vi],
-                          en: [...form.images.labels.en],
-                        };
-                        labels.vi[index] = e.target.value;
-                        patchImages({ labels });
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <Label>{t("labelEn")}</Label>
-                    <Input
-                      className="mt-1.5"
-                      value={form.images.labels.en[index] || ""}
-                      onChange={(e) => {
-                        const labels = {
-                          vi: [...form.images.labels.vi],
-                          en: [...form.images.labels.en],
-                        };
-                        labels.en[index] = e.target.value;
-                        patchImages({ labels });
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <Label>{t("altVi")}</Label>
-                    <Input
-                      className="mt-1.5"
-                      value={form.images.alts.vi[index] || ""}
-                      onChange={(e) => {
-                        const alts = {
-                          vi: [...form.images.alts.vi],
-                          en: [...form.images.alts.en],
-                        };
-                        alts.vi[index] = e.target.value;
-                        patchImages({ alts });
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <Label>{t("altEn")}</Label>
-                    <Input
-                      className="mt-1.5"
-                      value={form.images.alts.en[index] || ""}
-                      onChange={(e) => {
-                        const alts = {
-                          vi: [...form.images.alts.vi],
-                          en: [...form.images.alts.en],
-                        };
-                        alts.en[index] = e.target.value;
-                        patchImages({ alts });
-                      }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-            <TextPair
-              label={t("ctaKicker")}
-              value={form.cta.kicker}
-              onChange={(v) => patchCta({ kicker: v })}
-            />
-            <TextPair
-              label={t("ctaTitle")}
-              value={form.cta.title}
-              onChange={(v) => patchCta({ title: v })}
-              multiline
-            />
-            <TextPair
-              label={t("ctaHighlight")}
-              value={form.cta.highlight}
-              onChange={(v) => patchCta({ highlight: v })}
-              multiline
-            />
-            <TextPair
-              label={t("ctaBody")}
-              value={form.cta.body}
-              onChange={(v) => patchCta({ body: v })}
-              multiline
-            />
-            <TextPair
-              label={t("ctaButton")}
-              value={form.cta.button}
-              onChange={(v) => patchCta({ button: v })}
-            />
-          </section>
-        </>
+        <HomeContentSections
+          form={form}
+          patch={patch}
+          patchHero={patchHero}
+          patchStats={patchStats}
+          patchPartner={patchPartner}
+          patchTrust={patchTrust}
+          patchProcess={patchProcess}
+          patchImages={patchImages}
+          patchCta={patchCta}
+          localizedFieldProps={localizedFieldProps}
+          validationIssues={validationIssues}
+          t={t}
+        />
       )}
     </div>
   );

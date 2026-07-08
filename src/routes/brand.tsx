@@ -182,6 +182,58 @@ function BrandPage() {
   const { lang } = useI18n();
   const { content: page, loading: pageLoading } = usePageContent("brand");
   const pick = (copy: LocalText) => copy[lang];
+  const heroImageSrc = page.heroImage.url || gippyBrandHero;
+  const heroImageAlt = page.heroImage.alt[lang] || "GPCLUB Vietnam brand partner mascot";
+  const brandSections = page.sections.brand;
+  const brandPositioningBody = brandSections?.positioning.body?.length
+    ? brandSections.positioning.body
+    : [
+        t(
+          "GPVN kết nối năng lực thương hiệu GPCLUB với nhu cầu thực tế của người tiêu dùng và đối tác Việt Nam.",
+          "GPVN connects GPCLUB brand capability with the real needs of Vietnamese consumers and partner channels.",
+        ),
+        t(
+          "Triết lý của GPVN là biến chăm sóc sắc đẹp thành hành trình nâng niu và bồi đắp giá trị bản thân mỗi ngày.",
+          "GPVN turns beauty care into a daily journey of cherishing and building personal value.",
+        ),
+      ];
+  const coreValues = (
+    brandSections?.coreValues?.length ? brandSections.coreValues : CORE_VALUES
+  ).map((item, index) => ({
+    ...item,
+    icon: CORE_VALUES[index]?.icon ?? Sparkles,
+  }));
+  const brandCards = (brandSections?.brands?.length ? brandSections.brands : BRANDS).map(
+    (item, index) => ({
+      ...item,
+      key: "id" in item ? item.id : item.key,
+      image:
+        "image" in item && typeof item.image === "string" && item.image.trim().length > 0
+          ? item.image
+          : (BRANDS[index]?.image ?? labImg),
+      bullets: BRANDS[index]?.bullets ?? [],
+    }),
+  );
+  const advisorImageSrc = brandSections?.advisor.image.url || aiAssistantImg;
+  const advisorImageAlt = brandSections?.advisor.image.alt[lang] || "GPVN AI partner advisor";
+  const positioningTitle =
+    brandSections?.positioning.title[lang] ??
+    (lang === "vi" ? "Kh\u00f4ng ch\u1ec9 ph\u00e2n ph\u1ed1i. " : "Not only distribution. ");
+  const positioningHighlight =
+    brandSections?.positioning.highlight[lang] ??
+    (lang === "vi" ? "T\u0103ng tr\u01b0\u1edfng th\u01b0\u01a1ng hi\u1ec7u." : "brand growth.");
+  const imageSlots = (
+    brandSections?.imageSlots?.length
+      ? brandSections.imageSlots
+      : IMAGE_SLOTS.map((slot) => ({
+          id: slot.label.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+          label: t(slot.label, slot.label),
+          image: { url: "", alt: t("", "") },
+        }))
+  ).map((slot, index) => ({
+    ...slot,
+    ratio: IMAGE_SLOTS[index]?.ratio ?? "aspect-[16/10]",
+  }));
 
   return (
     <>
@@ -232,8 +284,8 @@ function BrandPage() {
           </div>
           <div className="lg:col-span-5">
             <img
-              src={gippyBrandHero}
-              alt="Gippy AI partner advisor mascot giving a thumbs up"
+              src={heroImageSrc}
+              alt={heroImageAlt}
               loading="eager"
               decoding="async"
               className="mx-auto aspect-[3/4] max-h-[414px] w-full max-w-[311px] object-contain lg:ml-auto"
@@ -246,26 +298,17 @@ function BrandPage() {
         <div className="mx-auto grid max-w-[1200px] items-center gap-12 px-4 sm:px-6 lg:grid-cols-12 lg:px-10">
           <div className="lg:col-span-5">
             <div className="text-[11px] font-bold uppercase tracking-[0.32em] text-primary">
-              GPVN POSITIONING
+              {brandSections?.positioning.kicker ?? "GPVN POSITIONING"}
             </div>
             <h2 className="mt-4 font-display text-3xl font-black leading-tight md:text-5xl">
-              {lang === "vi" ? "Không chỉ phân phối. " : "Not only distribution. "}
-              <span className="text-primary">
-                {lang === "vi" ? "GPVN là cầu nối chiến lược." : "GPVN is a strategic bridge."}
-              </span>
+              {positioningTitle}
+              <span className="text-primary">{positioningHighlight}</span>
             </h2>
           </div>
           <div className="space-y-5 text-[15px] leading-relaxed text-foreground/75 lg:col-span-7">
-            <p>
-              {lang === "vi"
-                ? "GPVN kết nối DNA đột phá của tập đoàn mẹ với nhu cầu thực tế của người tiêu dùng Việt Nam thông qua hai đại diện thương hiệu trọng tâm: JMsolution và Jmella."
-                : "GPVN connects the parent company’s innovation DNA with the real needs of Vietnamese partner channels through strategic brand representatives: JMsolution and Jmella."}
-            </p>
-            <p>
-              {lang === "vi"
-                ? "Triết lý của GPVN là biến chăm sóc da và tóc thành hành trình nâng niu, bồi đắp giá trị bản thân mỗi ngày."
-                : "GPVN’s philosophy is to turn skin and hair care into a daily journey of cherishing and building personal value."}
-            </p>
+            {brandPositioningBody.map((paragraph, index) => (
+              <p key={index}>{paragraph[lang]}</p>
+            ))}
           </div>
         </div>
       </section>
@@ -281,7 +324,7 @@ function BrandPage() {
             </h2>
           </div>
           <div className="mt-12 grid gap-px overflow-hidden border border-border bg-border md:grid-cols-3">
-            {CORE_VALUES.map((item) => (
+            {coreValues.map((item) => (
               <motion.article
                 key={item.label}
                 initial={{ opacity: 0, y: 14 }}
@@ -313,11 +356,11 @@ function BrandPage() {
             <h2 className="mt-4 font-display text-3xl font-black leading-tight md:text-5xl">
               {lang === "vi"
                 ? "Hai thương hiệu. Một danh mục làm đẹp mạnh mẽ cho Việt Nam."
-                : "Three brands. One powerful partner-ready beauty portfolio for Vietnam."}
+                : "Two brands. One powerful partner-ready beauty portfolio for Vietnam."}
             </h2>
           </div>
           <div className="mt-14 space-y-20">
-            {BRANDS.map((brand, index) => (
+            {brandCards.map((brand, index) => (
               <article
                 key={brand.key}
                 className="grid items-center gap-10 lg:grid-cols-12 lg:gap-14"
@@ -369,22 +412,26 @@ function BrandPage() {
         <div className="mx-auto grid max-w-[1200px] items-center gap-12 px-4 sm:px-6 lg:grid-cols-12 lg:px-10">
           <div className="lg:col-span-5">
             <img
-              src={aiAssistantImg}
-              alt="GPVN AI partner advisor"
+              src={advisorImageSrc}
+              alt={advisorImageAlt}
               className="aspect-[4/5] w-full rounded-sm object-cover shadow-sm"
             />
           </div>
           <div className="lg:col-span-7">
             <div className="text-[11px] font-bold uppercase tracking-[0.32em] text-primary">
-              AI PARTNER ADVISOR
+              {brandSections?.advisor.kicker ?? "AI PARTNER ADVISOR"}
             </div>
             <h2 className="mt-4 font-display text-3xl font-black leading-tight md:text-5xl">
-              {lang === "vi" ? "Trợ lý AI chuyên sâu của GPVN" : "GPVN advanced AI partner advisor"}
+              {brandSections?.advisor.title[lang] ??
+                (lang === "vi"
+                  ? "Trợ lý AI chuyên sâu của GPVN"
+                  : "GPVN advanced AI partner advisor")}
             </h2>
             <p className="mt-7 text-[15px] leading-relaxed text-foreground/75">
-              {lang === "vi"
-                ? "GPVN tiên phong tích hợp hệ thống trợ lý AI thông minh ngay trên website: giải đáp sản phẩm, phân tích thành phần, cố vấn công dụng và cá nhân hóa lộ trình chăm sóc cho khí hậu, thói quen và làn da Việt Nam."
-                : "GPVN pioneers an intelligent AI advisor on the website: answering product questions, decoding ingredients, explaining functions, and personalizing routines for Vietnam’s climate, habits, and skin needs."}
+              {brandSections?.advisor.body[lang] ??
+                (lang === "vi"
+                  ? "GPVN tiên phong tích hợp hệ thống trợ lý AI thông minh ngay trên website: giải đáp sản phẩm, phân tích thành phần, cố vấn công dụng và cá nhân hóa lộ trình chăm sóc cho khí hậu, thói quen và làn da Việt Nam."
+                  : "GPVN pioneers an intelligent AI advisor on the website: answering product questions, decoding ingredients, explaining functions, and personalizing routines for Vietnam’s climate, habits, and skin needs.")}
             </p>
             <Button
               asChild
@@ -417,18 +464,32 @@ function BrandPage() {
             </p>
           </div>
           <div className="mt-10 grid items-start gap-5 md:grid-cols-12">
-            {IMAGE_SLOTS.map((slot, i) => (
+            {imageSlots.map((slot, i) => (
               <div
-                key={slot.label}
+                key={slot.id}
                 className={`${slot.ratio} ${i === 1 ? "md:col-span-4" : "md:col-span-4 md:mt-10"} grid place-items-center border border-dashed border-primary/40 bg-primary/5 p-6 text-center`}
               >
-                <div>
-                  <ImagePlus className="mx-auto h-8 w-8 text-primary" />
-                  <div className="mt-4 text-xs font-bold uppercase tracking-[0.2em] text-primary">
-                    {slot.label}
+                {slot.image.url ? (
+                  <img
+                    src={slot.image.url}
+                    alt={slot.image.alt[lang] || slot.label[lang]}
+                    className="h-full w-full object-cover"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                ) : (
+                  <div>
+                    <ImagePlus className="mx-auto h-8 w-8 text-primary" />
+                    <div className="mt-4 text-xs font-bold uppercase tracking-[0.2em] text-primary">
+                      {slot.label[lang]}
+                    </div>
+                    <p className="mt-2 text-xs text-foreground/55">
+                      {lang === "vi"
+                        ? "Thay bằng hình ảnh chính thức"
+                        : "Replace with final image asset"}
+                    </p>
                   </div>
-                  <p className="mt-2 text-xs text-foreground/55">Replace with final image asset</p>
-                </div>
+                )}
               </div>
             ))}
           </div>

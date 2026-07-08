@@ -194,6 +194,9 @@ function ProductsPage() {
   const dialogProduct = selectedDetail ?? selected;
 
   const showProductShells = loading && filtered.length === 0;
+  const heroImageSrc = page.heroImage.url || gippyProductsHero;
+  const heroImageAlt =
+    page.heroImage.alt[lang] || "Gippy AI product consultant mascot holding cosmetics";
 
   const openInquiry = () => {
     if (!selected) return;
@@ -241,8 +244,8 @@ function ProductsPage() {
           </div>
           <div className="flex justify-center lg:col-span-5 lg:justify-end">
             <img
-              src={gippyProductsHero}
-              alt="Gippy AI product consultant mascot holding cosmetics"
+              src={heroImageSrc}
+              alt={heroImageAlt}
               loading="eager"
               decoding="async"
               className="aspect-[3/4] max-h-[414px] w-full max-w-[311px] object-contain drop-shadow-2xl"

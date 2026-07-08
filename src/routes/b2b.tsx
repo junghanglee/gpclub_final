@@ -375,6 +375,20 @@ function B2BPage() {
   const [done, setDone] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const { rows: catalogRows, loading: catalogLoading } = useCatalogProducts();
+  const heroImageSrc = page.heroImage.url || gippyB2BHero;
+  const heroImageAlt = page.heroImage.alt[lang] || "GPCLUB Vietnam B2B partnership mascot";
+  const b2bSections = page.sections.b2b;
+  const whyCards = (b2bSections?.why.cards ?? WHY_CARDS).map((item, index) => ({
+    ...item,
+    icon: WHY_CARDS[index]?.icon ?? PackageCheck,
+  }));
+  const valueCards = (b2bSections?.values.cards ?? VALUES).map((item, index) => ({
+    ...item,
+    icon: VALUES[index]?.icon ?? TrendingUp,
+  }));
+  const brandItems = b2bSections?.brands.items ?? BRAND_SELLING_POINTS;
+  const processSteps = b2bSections?.process.steps ?? t.process.map((item) => tx(item, item));
+  const imageSpaceSlots = b2bSections?.imageSpaces.slots ?? t.slots.map((item) => tx(item, item));
 
   const brandProductImages = useMemo(() => {
     const map = new Map<string, string>();
@@ -534,8 +548,8 @@ function B2BPage() {
           </div>
           <div className="flex justify-center lg:col-span-5 lg:justify-end">
             <img
-              src={gippyB2BHero}
-              alt="Gippy AI B2B partnership mascot"
+              src={heroImageSrc}
+              alt={heroImageAlt}
               loading="eager"
               decoding="async"
               className="aspect-[3/4] max-h-[414px] w-full max-w-[311px] object-contain"
@@ -548,14 +562,14 @@ function B2BPage() {
         <div className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-10">
           <div className="max-w-2xl">
             <div className="text-[11px] font-bold uppercase tracking-[0.32em] text-primary">
-              {t.whyKicker}
+              {b2bSections?.why.kicker[lang] ?? t.whyKicker}
             </div>
             <h2 className="mt-4 font-display text-3xl font-black leading-tight tracking-tight md:text-5xl">
-              {t.whyTitle}
+              {b2bSections?.why.title[lang] ?? t.whyTitle}
             </h2>
           </div>
           <div className="mt-14 grid gap-6 md:grid-cols-3">
-            {WHY_CARDS.map((c) => (
+            {whyCards.map((c) => (
               <article
                 key={c.num}
                 className="group border border-border bg-background p-8 transition hover:border-primary/40 hover:bg-accent/30 md:p-10"
@@ -587,14 +601,14 @@ function B2BPage() {
         <div className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-10">
           <div className="max-w-2xl">
             <div className="text-[11px] font-bold uppercase tracking-[0.32em] text-primary">
-              {t.valueKicker}
+              {b2bSections?.values.kicker[lang] ?? t.valueKicker}
             </div>
             <h2 className="mt-4 font-display text-3xl font-black leading-tight tracking-tight md:text-5xl">
-              {t.valueTitle}
+              {b2bSections?.values.title[lang] ?? t.valueTitle}
             </h2>
           </div>
           <div className="mt-14 grid gap-px overflow-hidden border border-border bg-border md:grid-cols-2">
-            {VALUES.map((v) => (
+            {valueCards.map((v) => (
               <article
                 key={v.num}
                 className="group bg-background p-8 transition hover:bg-accent/30 md:p-12"
@@ -608,7 +622,7 @@ function B2BPage() {
                   </span>
                 </div>
                 <div className="mt-6 text-[11px] font-bold uppercase tracking-[0.28em] text-primary">
-                  {v.eng}
+                  {"eyebrow" in v ? v.eyebrow : v.eng}
                 </div>
                 <div className="mt-2 font-display text-2xl font-black tracking-tight">
                   {pick(v.title)}
@@ -627,14 +641,14 @@ function B2BPage() {
         <div className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-10">
           <div className="max-w-3xl">
             <div className="text-[11px] font-bold uppercase tracking-[0.32em] text-primary">
-              {t.brandsKicker}
+              {b2bSections?.brands.kicker[lang] ?? t.brandsKicker}
             </div>
             <h2 className="mt-4 font-display text-3xl font-black leading-tight tracking-tight md:text-5xl">
-              {t.brandsTitle}
+              {b2bSections?.brands.title[lang] ?? t.brandsTitle}
             </h2>
           </div>
           <div className="mt-14 grid gap-8 md:grid-cols-2">
-            {BRAND_SELLING_POINTS.map((brand) => (
+            {brandItems.map((brand) => (
               <article
                 key={brand.name}
                 className="grid items-center gap-6 border border-border p-6 md:grid-cols-5 md:p-8"
@@ -662,23 +676,25 @@ function B2BPage() {
         <div className="mx-auto grid max-w-[1200px] items-center gap-10 px-4 sm:px-6 lg:grid-cols-12 lg:px-10">
           <div className="lg:col-span-5">
             <div className="text-[11px] font-bold uppercase tracking-[0.32em] text-primary">
-              {t.processKicker}
+              {b2bSections?.process.kicker[lang] ?? t.processKicker}
             </div>
             <h2 className="mt-4 font-display text-3xl font-black leading-tight tracking-tight md:text-5xl">
-              {t.processTitle}
+              {b2bSections?.process.title[lang] ?? t.processTitle}
             </h2>
-            <p className="mt-5 text-sm leading-relaxed text-foreground/65">{t.processDesc}</p>
+            <p className="mt-5 text-sm leading-relaxed text-foreground/65">
+              {b2bSections?.process.description[lang] ?? t.processDesc}
+            </p>
           </div>
           <div className="space-y-3 lg:col-span-7">
-            {t.process.map((item, i) => (
+            {processSteps.map((item, i) => (
               <div
-                key={item}
+                key={`${item.en}-${i}`}
                 className="flex items-center gap-5 border border-border bg-background p-5"
               >
                 <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary text-sm font-black text-primary-foreground">
                   {i + 1}
                 </div>
-                <div className="font-display text-lg font-black tracking-tight">{item}</div>
+                <div className="font-display text-lg font-black tracking-tight">{item[lang]}</div>
               </div>
             ))}
           </div>
@@ -689,22 +705,24 @@ function B2BPage() {
         <div className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-10">
           <div className="max-w-2xl">
             <div className="text-[11px] font-bold uppercase tracking-[0.32em] text-primary">
-              {t.imagesKicker}
+              {b2bSections?.imageSpaces.kicker[lang] ?? t.imagesKicker}
             </div>
             <h2 className="mt-4 font-display text-3xl font-black tracking-tight md:text-4xl">
-              {t.imagesTitle}
+              {b2bSections?.imageSpaces.title[lang] ?? t.imagesTitle}
             </h2>
-            <p className="mt-3 text-sm text-foreground/60">{t.imagesDesc}</p>
+            <p className="mt-3 text-sm text-foreground/60">
+              {b2bSections?.imageSpaces.description[lang] ?? t.imagesDesc}
+            </p>
           </div>
           <div className="mt-10 grid gap-5 md:grid-cols-3">
             {catalogLoading ? (
-              <ImageSlotSkeletonGrid slots={t.slots} />
+              <ImageSlotSkeletonGrid slots={imageSpaceSlots.map((slot) => slot[lang])} />
             ) : (
-              t.slots.map((slot, index) => {
+              imageSpaceSlots.map((slot, index) => {
                 const sample = sampleProductImages[index];
                 return (
                   <div
-                    key={slot}
+                    key={`${slot.en}-${index}`}
                     className="group relative overflow-hidden border border-border bg-background"
                   >
                     {sample ? (
@@ -719,7 +737,9 @@ function B2BPage() {
                       </div>
                     )}
                     <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent p-5 text-white">
-                      <div className="text-xs font-bold uppercase tracking-[0.2em]">{slot}</div>
+                      <div className="text-xs font-bold uppercase tracking-[0.2em]">
+                        {slot[lang]}
+                      </div>
                       {sample ? (
                         <p className="mt-2 line-clamp-1 text-xs text-white/75">{sample.alt}</p>
                       ) : (
@@ -738,12 +758,14 @@ function B2BPage() {
         <div className="mx-auto max-w-[860px] px-4 sm:px-6 lg:px-10">
           <div className="text-center">
             <div className="text-[11px] font-bold uppercase tracking-[0.32em] text-primary">
-              {t.contactKicker}
+              {b2bSections?.contact.kicker[lang] ?? t.contactKicker}
             </div>
             <h2 className="mt-3 font-display text-3xl font-black tracking-tight md:text-4xl">
-              {t.contactTitle}
+              {b2bSections?.contact.title[lang] ?? t.contactTitle}
             </h2>
-            <p className="mt-3 text-sm text-foreground/65">{t.contactDesc}</p>
+            <p className="mt-3 text-sm text-foreground/65">
+              {b2bSections?.contact.description[lang] ?? t.contactDesc}
+            </p>
           </div>
 
           <div className="mt-10">
