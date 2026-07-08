@@ -1,6 +1,9 @@
 import { RefreshCw, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { type ADMIN_I18N, type AdminLang, statusText, tx } from "@/components/admin/admin-i18n";
+import { PaginationControls } from "@/components/admin/admin-pagination-controls";
+import { ADMIN_PAGE_SIZE, pageRange } from "@/components/admin/admin-shared";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,8 +30,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { type AdminLang, ADMIN_I18N, statusText, tx } from "@/components/admin/admin-i18n";
-import { ADMIN_PAGE_SIZE, PaginationControls, pageRange } from "@/components/admin/admin-shared";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -51,7 +52,7 @@ export default function DealersTab({ lang }: { lang: AdminLang }) {
   const [page, setPage] = useState(0);
   const [totalRows, setTotalRows] = useState(0);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     const { from, to } = pageRange(page);
     const { data, error, count } = await supabase
@@ -65,10 +66,10 @@ export default function DealersTab({ lang }: { lang: AdminLang }) {
       setTotalRows(count ?? data?.length ?? 0);
     }
     setLoading(false);
-  };
+  }, [page]);
   useEffect(() => {
     load();
-  }, [page]);
+  }, [load]);
 
   const updateApplication = async (id: string, patch: B2BInquiryUpdate) => {
     const { error } = await supabase.from("b2b_inquiries").update(patch).eq("id", id);
@@ -181,6 +182,9 @@ export default function DealersTab({ lang }: { lang: AdminLang }) {
         canNext={(page + 1) * ADMIN_PAGE_SIZE < totalRows}
         onPrevious={() => setPage((value) => Math.max(0, value - 1))}
         onNext={() => setPage((value) => value + 1)}
+        previousLabel={t("previousPage")}
+        pageLabel={t("pageLabel")}
+        nextLabel={t("nextPage")}
       />
 
       <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>

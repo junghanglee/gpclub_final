@@ -1,0 +1,163 @@
+# Progress Log
+
+Bead: gpclub_final-my4
+Started: 2026-07-07
+
+## Codebase Patterns
+
+- Public CMS content locales are `vi` and `en`; admin chrome language is `en`, `vi`, and `ko`.
+- `home_content` stores homepage content under `home` and non-home page content under `page:${key}`.
+- `HomeEditorTab.tsx` owns load/save/reset for CMS page content.
+- `page-section-editor.tsx` owns editable structured sections for `brand`, `b2b`, and `gippy-ai`.
+- Keep Supabase schema unchanged and preserve unknown JSON branches during locale-scoped saves.
+
+---
+
+## 2026-07-07 Create
+
+- Created PRD and executable task JSON for full admin CMS i18n workflow.
+- User selected Option C from exploration: full CMS i18n workflow.
+- User selected `epic`, `Deep` research, and continuing in current dirty tree.
+
+---
+
+<!-- Task logs below - APPEND ONLY -->
+
+## 2026-07-07 Wave 1: Content Locale Editor Shell
+
+- Added content-locale shell state in `src/components/admin/tabs/HomeEditorTab.tsx`: `contentLang`, `compareMode`, content locale selector, compare toggle, editing scope line, and scoped Save/Reset helper text.
+- Added/admin-restored required `ADMIN_I18N` keys in `src/components/admin/admin-i18n.ts`: content language labels, compare/scope labels, preview labels, image upload labels, and pagination labels needed by existing dirty admin tabs.
+- Kept persistence and field editing behavior unchanged in this wave.
+- Verification: `rtk tsc --noEmit --pretty false` reports 5 remaining errors, none in Wave 1 files. Remaining errors are pre-existing dirty/workspace issues in `src/components/admin/tabs/ProductsTab.tsx`, `src/routes/b2b.tsx`, and `src/routes/brand.tsx`.
+
+## 2026-07-07 Wave 2: Locale Field Components And Compare Mode
+
+- Updated localized text controls in `src/components/admin/tabs/HomeEditorTab.tsx` to edit only the active website content locale and show the inactive locale as read-only when compare mode is enabled.
+- Threaded `contentLang` and `compareMode` through homepage fields, non-home hero fields, and `PageSectionEditor`.
+- Updated `src/components/admin/page-section-editor.tsx` so Brand, B2B, Gippy AI, and section image alt text use the same active-locale editing and read-only compare behavior.
+- Kept persistence/save/reset behavior unchanged in this wave.
+- Verification: `rtk prettier --write src/components/admin/tabs/HomeEditorTab.tsx src/components/admin/page-section-editor.tsx` formatted both changed files.
+- Verification: `rtk lint` reports 0 errors and 19 existing warnings; Wave 2 files have no lint errors.
+- Verification: `rtk tsc --noEmit --pretty false` still reports the same 5 known errors outside Wave 2 files in `ProductsTab.tsx`, `routes/b2b.tsx`, and `routes/brand.tsx`.
+
+## 2026-07-07 Wave 3: Locale-Safe Save And Reset
+
+- Added a locale-aware deep merge helper in `src/components/admin/tabs/HomeEditorTab.tsx`.
+- Updated Save to fetch the latest `home_content` row before upsert, write only the active locale from the current draft, preserve the inactive locale from the latest stored JSON, and preserve unknown stored JSON branches.
+- Updated Reset to apply defaults only to the active locale instead of replacing both `vi` and `en` content.
+- Kept Supabase schema, storage keys, and public content models unchanged.
+- Verification: `rtk prettier --write src/components/admin/tabs/HomeEditorTab.tsx` formatted the changed file.
+- Verification: `rtk lint` reports 0 errors and 19 existing warnings.
+- Verification: `rtk tsc --noEmit --pretty false` still reports the same 5 known errors outside Wave 3 files in `ProductsTab.tsx`, `routes/b2b.tsx`, and `routes/brand.tsx`.
+
+## 2026-07-07 Wave 4: Locale Validation And Publish Checklist
+
+- Added locale completeness collection in `src/components/admin/tabs/HomeEditorTab.tsx` for localized `vi/en` values already present in the active `home_content` draft.
+- Added a save gate that blocks saving when the active content locale is missing fields that exist in the other locale, while still allowing optional fields where both locales are blank.
+- Added a visible publish checklist panel beside Save/Reset, scoped to the selected page and active content language, with missing-field count and first few field paths.
+- Kept validation client-side and scoped to existing CMS JSON; no Supabase schema or publish-state changes were added.
+- Verification: `rtk prettier --write src/components/admin/tabs/HomeEditorTab.tsx` reported all files formatted correctly.
+- Verification: `rtk lint` reports 0 errors and 19 existing warnings.
+- Verification: `rtk tsc --noEmit --pretty false` still reports only the same 5 known external errors in `ProductsTab.tsx`, `routes/b2b.tsx`, and `routes/brand.tsx`.
+
+## 2026-07-07 Wave 5: Locale Preview Controls
+
+- Added query-string locale support to `src/lib/i18n.tsx`; public pages opened with `?lang=vi` or `?lang=en` now render that locale without changing the stored language preference.
+- Added preview buttons in `src/components/admin/tabs/HomeEditorTab.tsx` that open the selected CMS-managed public page in Vietnamese or English.
+- Kept preview lightweight and routed through the real public pages; no draft-preview store, route rewrite, or backend publish state was added.
+- Verification: `rtk prettier --write src/lib/i18n.tsx src/components/admin/tabs/HomeEditorTab.tsx` reported all files formatted correctly.
+- Verification: `rtk lint` reports 0 errors and 19 existing warnings.
+- Verification: `rtk tsc --noEmit --pretty false` still reports only the same 5 known external errors in `ProductsTab.tsx`, `routes/b2b.tsx`, and `routes/brand.tsx`.
+
+## 2026-07-07 Wave 6: Unsupported Section States And Fixed-Shape Policy
+
+- Added visible fixed-shape policy notices to the Brand, B2B, and Gippy AI section editors in `src/components/admin/page-section-editor.tsx`.
+- Added an explicit fallback panel for pages without structured section editors (`products`, `events`, `contact`) so editors know those pages currently support hero/page-level content only.
+- Kept section arrays fixed and did not add dynamic add/remove/reorder behavior.
+- Verification: `rtk prettier --write src/components/admin/page-section-editor.tsx` reported all files formatted correctly.
+- Verification: `rtk lint` reports 0 errors and 19 existing warnings.
+- Verification: `rtk tsc --noEmit --pretty false` still reports only the same 5 known external errors in `ProductsTab.tsx`, `routes/b2b.tsx`, and `routes/brand.tsx`.
+
+## 2026-07-07 Wave 7: Vietnamese Copy Cleanup
+
+- Added the missing admin i18n keys used by `src/components/admin/page-section-editor.tsx` so section labels resolve at runtime instead of depending on unchecked key casts.
+- Replaced no-diacritic Vietnamese footer defaults in `src/lib/site-settings.tsx` and `src/components/admin/tabs/SettingsTab.tsx`.
+- Replaced English text in the Products Vietnamese page defaults in `src/lib/page-content.tsx` for kicker, title, highlight, and description.
+- Kept cleanup scoped to admin/CMS/default strings in the PRD scope; no persisted Supabase content or schema was changed.
+- Verification: a Node key check reports `MISSING 0` for `page-section-editor.tsx` translation keys against `ADMIN_I18N`.
+- Verification: raw Unicode checks confirmed the intended Vietnamese footer and Products strings are present in the edited files.
+- Verification: `rtk prettier --write src/components/admin/admin-i18n.ts src/lib/site-settings.tsx src/components/admin/tabs/SettingsTab.tsx src/lib/page-content.tsx` reported all files formatted correctly.
+- Verification: `rtk lint` reports 0 errors and 19 existing warnings.
+- Verification: `rtk tsc --noEmit --pretty false` still reports only the same 5 known external errors in `ProductsTab.tsx`, `routes/b2b.tsx`, and `routes/brand.tsx`.
+
+## 2026-07-07 Wave 8: Verification And Handoff
+
+- Resolved the final TypeScript blockers surfaced by the project gate:
+  - Normalized the admin Products update payload so Supabase receives the generated `admin_products.Update` shape while local state keeps `CatalogProduct` shape.
+  - Narrowed mixed B2B value-card fallback labels by property presence.
+  - Preserved Brand card keys for both CMS-backed section items and legacy route constants.
+- Ran final verification gates from the PRD.
+- Verification: `rtk lint` reports 0 errors and 19 existing warnings.
+- Verification: `rtk tsc --noEmit --pretty false` reports `TypeScript: No errors found`.
+- Verification: `rtk npm run build` completed successfully with Vite client and SSR builds; Vite emitted the existing large-chunk warning.
+- Verification: `rtk npx vite build --config vite.spa.config.ts` completed successfully with the SPA/Vercel-equivalent build.
+- Worktree note: the repo still has broad pre-existing dirty/untracked `.beads`, `.opencode`, and source changes. No files were staged or committed.
+
+## 2026-07-07 Review Fixes And Residual Checks
+
+- Ran a 5-agent review pass after Wave 8. Confirmed and fixed these review findings:
+  - `src/lib/page-content.tsx`: Gippy quick-action `prompt` now survives merge/reload/save round trips.
+  - `src/lib/page-content.tsx`: unknown future `sections.*` buckets are preserved when normalizing known Brand/B2B/Gippy AI sections.
+  - `src/routes/brand.tsx`: positioning heading now has explicit title/highlight fallbacks, and brand card images preserve CMS-provided image values when present.
+  - `src/components/admin/tabs/ProductsTab.tsx`: quick-update payload now omits undefined fields, client-only brand display fields, and null `brand_id` instead of sending them to Supabase.
+- Scope expansion note: `ProductsTab.tsx`, `routes/b2b.tsx`, and `routes/brand.tsx` were touched during Wave 8 to unblock project verification gates; these were type/build blockers outside the original CMS editor waves and are recorded as verification-support fixes.
+- Dirty-worktree note: current status still includes broad pre-existing/adjacent dirty files and artifacts, including `.beads`, `.opencode`, `admin-shared.tsx`, `DealersTab.tsx`, `PopupsTab.tsx`, untracked `admin-image-uploader.tsx`, `admin-pagination-controls.tsx`, and `page-section-editor.tsx`. This handoff does not claim those are all newly created by this bead.
+- Manual verification gap: authenticated browser checks through `/auth` -> `/admin` -> Content Edit -> save/reload/preview were not run because no authenticated Supabase admin session or browser-runtime evidence was available in this execution. Static gates and builds were run; live CMS behavior remains manual QA.
+- Verification after review fixes: `rtk lint` reports 0 errors and 19 warnings. `rtk tsc --noEmit --pretty false` reports `TypeScript: No errors found`. `rtk npm run build` completed successfully with the existing large-chunk warning. `rtk npx vite build --config vite.spa.config.ts` completed successfully.
+
+## 2026-07-07 Verify Follow-Up Fixes
+
+- Addressed the `/verify` review blockers that remained after the first review pass:
+  - `src/components/admin/tabs/HomeEditorTab.tsx`: publish checklist now includes explicit required active-locale fields for home hero and non-home page hero/CTA/alt content, so empty `vi`/`en` pairs cannot bypass validation.
+  - `src/components/admin/tabs/HomeEditorTab.tsx`: reset confirmation now includes the selected page and selected website content language scope before applying locale-scoped defaults.
+- Remaining verification gap: authenticated `/auth` -> `/admin` -> Content Edit save/reload/preview QA still requires an admin Supabase session and was not executed here.
+- Verification: `rtk prettier --write src/components/admin/tabs/HomeEditorTab.tsx` reported all files formatted correctly.
+- Verification: `rtk lint` reports 0 errors and 19 warnings.
+- Verification: `rtk tsc --noEmit --pretty false` reports `TypeScript: No errors found`.
+- Verification: `rtk npm run build` completed successfully with the existing large-chunk warning.
+- Verification: `rtk npx vite build --config vite.spa.config.ts` completed successfully.
+
+## 2026-07-08 Create Extension: Form Architecture Refactor
+
+- User selected Option B from the follow-up form audit exploration: Form Architecture Refactor + UX Redesign.
+- Duplicate check found this work belongs under existing in-progress epic `gpclub_final-my4`; user chose `Extend my4` instead of creating a new bead.
+- User chose to reuse existing research and continue on the current branch/workspace; no implementation code was edited in this create phase.
+- Extended `.beads/artifacts/gpclub_final-my4/prd.md` with form architecture requirements: shared CMS form shell, shared localized field primitives, shared media field, focused homepage section editors, progressive disclosure, and preservation of existing `home_content` save/locale behavior.
+- Extended `.beads/artifacts/gpclub_final-my4/prd.json` from 8 to 14 tasks by appending 6 new tasks for the form refactor phase.
+- Preserved the audit decision that image alt/description fields are optional operator metadata and must not become save blockers.
+- Next execution command: `/ship gpclub_final-my4`.
+
+## 2026-07-08 Waves 9-14: Form Architecture Refactor
+
+- Implemented the Option B form architecture refactor extension for Content Edit while preserving the existing `home_content` persistence and locale-scoped save/reset behavior.
+- Added shared CMS form primitives in `src/components/admin/cms-form-fields.tsx`: localized text fields, plain text fields, and `CmsPanel` with native details/summary disclosure and section status counts.
+- Added shared CMS media editing in `src/components/admin/cms-media-field.tsx`, wrapping `AdminImageUploader` with optional image-description details. Image descriptions remain optional operator metadata and are not save blockers.
+- Added `src/components/admin/cms-form-shell.tsx` to move page/language/compare/preview/reload/reset/save/checklist presentation out of `HomeEditorTab.tsx`. The shell is presentation-only and does not import Supabase.
+- Added `src/components/admin/home-content-sections.tsx` and moved the long homepage editor body out of `HomeEditorTab.tsx` into focused sections for hero, stats, partner hook, trust/pillars, process/images, and CTA.
+- Updated `src/components/admin/page-section-editor.tsx` to use shared localized fields/media primitives and section-level disclosure/status for Brand, B2B, and Gippy AI section editors.
+- Verification during execution: Prettier reported all touched files formatted correctly; `rtk npm run lint` reported 0 errors and 19 existing warnings; `rtk tsc --noEmit --pretty false` reported no TypeScript errors; `rtk npm run build` completed successfully with the existing Vite large-chunk warning.
+- Review: ran 5 read-only review agents. No critical or important actionable code blockers remained after triage. Advisory follow-ups: issue-count bucketing is duplicated across section components, recursive validation/merge helpers still live in `HomeEditorTab.tsx`, and true multi-editor conflict/versioning support remains outside this UI refactor.
+- Manual verification gap: authenticated browser QA through `/auth` -> `/admin` -> Content Edit -> save/reload/preview still requires an admin Supabase session and was not executed in this run.
+- Updated `.beads/artifacts/gpclub_final-my4/prd.json` so all 14 tasks are marked passing with the recorded Wave 1-14 verification evidence.
+
+## 2026-07-08 Verify Follow-Up: PRD Gate Alignment
+
+- Addressed follow-up verification findings after the LFG completion report.
+- Added `typecheck` script to `package.json` so the PRD-prescribed `npm run typecheck` gate exists and maps to `tsc --noEmit --pretty false`.
+- Updated `src/components/admin/cms-form-shell.tsx` and `src/components/admin/tabs/HomeEditorTab.tsx` so preview buttons use explicit localized labels from `previewVietnamese` and `previewEnglish` instead of hardcoded `VI` / `EN` abbreviations.
+- Rechecked the reported Vietnamese mojibake examples with UTF-8 source reads: `src/components/admin/cms-form-fields.tsx` contains `Tiếng Việt`, `src/components/admin/admin-i18n.ts` contains `Thẻ thương hiệu chiến lược`, and `src/lib/page-content.tsx` contains `Câu chuyện bán hàng`. The mojibake finding was a terminal/rendering false positive, not a source corruption.
+- Verification: `rtk npx prettier --write package.json src/components/admin/cms-form-shell.tsx src/components/admin/tabs/HomeEditorTab.tsx` reported all files formatted correctly.
+- Verification: UTF-8 source check returned `UTF8_OK` for the three reported Vietnamese examples.
+- Verification: `rtk npm run typecheck` completed successfully.
+- Verification: `rtk npm run lint` reported 0 errors and 19 existing warnings.
+- Verification: `rtk npm run build` completed successfully with the existing Vite large-chunk warning.

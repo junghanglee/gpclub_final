@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { type ADMIN_I18N, type AdminLang, tx } from "@/components/admin/admin-i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,7 +13,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { type AdminLang, ADMIN_I18N, tx } from "@/components/admin/admin-i18n";
 import { supabase } from "@/integrations/supabase/client";
 import type { BrandSocial, FooterInfo, SeoInfo, SocialLink } from "@/lib/site-settings";
 
@@ -48,9 +48,9 @@ const DEFAULT_FOOTER: FooterInfo = {
   taglineEn:
     "Official partner platform for JMsolution, Jmella and Trois Touch in Vietnam - supporting supply, wholesale and channel growth.",
   taglineVi:
-    "Nen tang doi tac chinh thuc cho JMsolution, Jmella va Trois Touch tai Viet Nam - ho tro nguon hang, ban si va tang truong kenh phan phoi.",
+    "Nền tảng đối tác chính thức cho JMsolution, Jmella và Trois Touch tại Việt Nam - hỗ trợ nguồn hàng, bán sỉ và tăng trưởng kênh phân phối.",
   copyrightEn: "All rights reserved.",
-  copyrightVi: "Da dang ky ban quyen.",
+  copyrightVi: "Đã đăng ký bản quyền.",
   brandLine: "JMsolution - Jmella - Trois Touch",
   zaloVnPhone: "0703321243",
   zaloEnPhone: "0911412309",
@@ -130,7 +130,10 @@ export default function SettingsTab({ lang }: { lang: AdminLang }) {
     if (error) toast.error(error.message);
     const settings = Object.fromEntries((data ?? []).map((row) => [row.key, row.value]));
     setContact((settings.contact as ContactValues | undefined) ?? {});
-    setSeo({ ...DEFAULT_SEO, ...((settings.seo as Partial<SeoInfo> | undefined) ?? {}) });
+    setSeo({
+      ...DEFAULT_SEO,
+      ...((settings.seo as Partial<SeoInfo> | undefined) ?? {}),
+    });
     setFooter({
       ...DEFAULT_FOOTER,
       ...((settings.footer as Partial<FooterInfo> | undefined) ?? {}),
@@ -317,7 +320,14 @@ export default function SettingsTab({ lang }: { lang: AdminLang }) {
                 {
                   id: id("brand"),
                   brand: "New Brand",
-                  links: [{ id: id("link"), type: "website", label: "Website", url: "" }],
+                  links: [
+                    {
+                      id: id("link"),
+                      type: "website",
+                      label: "Website",
+                      url: "",
+                    },
+                  ],
                 },
               ])
             }
@@ -375,12 +385,20 @@ export default function SettingsTab({ lang }: { lang: AdminLang }) {
                     </Select>
                     <Input
                       value={link.label}
-                      onChange={(e) => updateLink(brandIndex, linkIndex, { label: e.target.value })}
+                      onChange={(e) =>
+                        updateLink(brandIndex, linkIndex, {
+                          label: e.target.value,
+                        })
+                      }
                       placeholder="Label"
                     />
                     <Input
                       value={link.url}
-                      onChange={(e) => updateLink(brandIndex, linkIndex, { url: e.target.value })}
+                      onChange={(e) =>
+                        updateLink(brandIndex, linkIndex, {
+                          url: e.target.value,
+                        })
+                      }
                       placeholder="https://..."
                     />
                     <Button
@@ -406,7 +424,12 @@ export default function SettingsTab({ lang }: { lang: AdminLang }) {
                     updateBrand(brandIndex, {
                       links: [
                         ...brand.links,
-                        { id: id("link"), type: "website", label: "Website", url: "" },
+                        {
+                          id: id("link"),
+                          type: "website",
+                          label: "Website",
+                          url: "",
+                        },
                       ],
                     })
                   }

@@ -180,6 +180,8 @@ function ContactPage() {
   const t = contactText[lang];
   const zaloLink = () => buildZaloLink(COMPANY.zaloPhone);
   const whatsappLink = () => buildWhatsappLink(COMPANY.whatsappPhone);
+  const heroImageSrc = page.heroImage.url || gippyContactHero;
+  const heroImageAlt = page.heroImage.alt[lang] || "Gippy AI contact consultant mascot";
   const offices = [
     {
       city: t.hq,
@@ -292,8 +294,8 @@ function ContactPage() {
           </div>
           <div className="flex justify-center lg:col-span-5 lg:justify-end">
             <img
-              src={gippyContactHero}
-              alt="Gippy AI contact consultant mascot"
+              src={heroImageSrc}
+              alt={heroImageAlt}
               loading="eager"
               decoding="async"
               className="aspect-[3/4] max-h-[414px] w-full max-w-[311px] object-contain"

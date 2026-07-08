@@ -2,7 +2,8 @@ import { Pencil, Plus, RefreshCw, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { type ADMIN_I18N, type AdminLang, tx } from "@/components/admin/admin-i18n";
-import { ADMIN_PAGE_SIZE, PaginationControls, pageRange } from "@/components/admin/admin-shared";
+import { PaginationControls } from "@/components/admin/admin-pagination-controls";
+import { ADMIN_PAGE_SIZE, pageRange } from "@/components/admin/admin-shared";
 import {
   ProductDetailEditor,
   type ProductDetailEditorHandle,
@@ -36,8 +37,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database, Json } from "@/integrations/supabase/types";
 import type { CatalogProduct, ProductMedia } from "@/lib/catalog-products";
 import { sanitizeProductDetailHtml } from "@/lib/product-detail-html";
+
+type AdminProductUpdate = Database["public"]["Tables"]["admin_products"]["Update"];
 
 type BrandOption = {
   id: string;
@@ -167,7 +171,7 @@ export default function ProductsAdminTab({ lang }: { lang: AdminLang }) {
     else setBrands((brandResult.data || []) as BrandOption[]);
     if (productResult.error) toast.error(productResult.error.message);
     else {
-      setRows((productResult.data || []) as CatalogProduct[]);
+      setRows((productResult.data || []) as unknown as CatalogProduct[]);
       setTotalRows(productResult.count ?? productResult.data?.length ?? 0);
     }
     setLoading(false);
@@ -251,10 +255,24 @@ export default function ProductsAdminTab({ lang }: { lang: AdminLang }) {
   );
 
   const quickUpdate = async (row: CatalogProduct, patch: Partial<CatalogProduct>) => {
-    const normalizedPatch = patch;
-    setRows((prev) =>
-      prev.map((item) => (item.id === row.id ? { ...item, ...normalizedPatch } : item)),
-    );
+    const normalizedPatch: AdminProductUpdate = {};
+    const writablePatch = normalizedPatch as Record<string, unknown>;
+
+    for (const [key, value] of Object.entries(patch)) {
+      if (
+        value === undefined ||
+        (key === "brand_id" && value === null) ||
+        key === "brand_key" ||
+        key === "brand_slug" ||
+        key === "brand_display_name"
+      ) {
+        continue;
+      }
+
+      writablePatch[key] = key === "conditions" || key === "media" ? (value as Json) : value;
+    }
+
+    setRows((prev) => prev.map((item) => (item.id === row.id ? { ...item, ...patch } : item)));
     const { error } = await supabase
       .from("admin_products")
       .update(normalizedPatch)
@@ -436,6 +454,9 @@ export default function ProductsAdminTab({ lang }: { lang: AdminLang }) {
         canNext={(page + 1) * ADMIN_PAGE_SIZE < totalRows}
         onPrevious={() => setPage((value) => Math.max(0, value - 1))}
         onNext={() => setPage((value) => value + 1)}
+        previousLabel={t("previousPage")}
+        pageLabel={t("pageLabel")}
+        nextLabel={t("nextPage")}
       />
 
       <Dialog open={open} onOpenChange={setOpen}>

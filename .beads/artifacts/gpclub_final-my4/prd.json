@@ -1,0 +1,431 @@
+{
+  "beadId": "gpclub_final-my4",
+  "prdName": "admin-cms-i18n-workflow",
+  "tasks": [
+    {
+      "id": "ux-1",
+      "category": "ux",
+      "title": "Content Locale Editor Shell",
+      "description": "The Content Edit tab exposes a persistent website content language selector and makes active page, active locale, compare state, and save/reset scope explicit.",
+      "steps": [
+        "Verify: /admin Content Edit displays separate controls for admin UI language and website content language.",
+        "Verify: switching website content language does not change gpclub-admin-lang or admin chrome labels.",
+        "Verify: page selector, save, reset, and preview controls visibly identify the active page and content locale."
+      ],
+      "passes": true,
+      "metadata": {
+        "depends_on": [],
+        "parallel": false,
+        "conflicts_with": [
+          "Locale Field Components And Compare Mode",
+          "Locale-Safe Save And Reset"
+        ],
+        "files": [
+          "src/components/admin/tabs/HomeEditorTab.tsx",
+          "src/components/admin/admin-i18n.ts"
+        ]
+      }
+    },
+    {
+      "id": "ux-2",
+      "category": "ux",
+      "title": "Locale Field Components And Compare Mode",
+      "description": "Localized text and image-alt fields render one editable locale by default, with compare mode showing the inactive locale as read-only reference across top-level and section editors.",
+      "steps": [
+        "Verify: localized homepage fields show only the selected locale as editable when compare mode is off.",
+        "Verify: localized Brand/B2B/Gippy section fields show only the selected locale as editable when compare mode is off.",
+        "Verify: compare mode shows the inactive locale as read-only and does not allow accidental editing of both locales."
+      ],
+      "passes": true,
+      "metadata": {
+        "depends_on": [
+          "Content Locale Editor Shell"
+        ],
+        "parallel": false,
+        "conflicts_with": [
+          "Content Locale Editor Shell",
+          "Locale Validation And Publish Checklist"
+        ],
+        "files": [
+          "src/components/admin/tabs/HomeEditorTab.tsx",
+          "src/components/admin/page-section-editor.tsx",
+          "src/components/admin/admin-i18n.ts"
+        ]
+      }
+    },
+    {
+      "id": "data-1",
+      "category": "data",
+      "title": "Locale-Safe Save And Reset",
+      "description": "Saves and resets preserve inactive locale values, unknown JSON branches, and unrelated page content while applying only the intended page/locale change.",
+      "steps": [
+        "Verify: saving Vietnamese text does not change existing English values in the same home_content row.",
+        "Verify: saving English text does not change existing Vietnamese values in the same home_content row.",
+        "Verify: reset action identifies page and locale scope and does not wipe the inactive locale.",
+        "Verify: existing unknown JSON keys in a loaded row survive save/reload."
+      ],
+      "passes": true,
+      "metadata": {
+        "depends_on": [
+          "Content Locale Editor Shell"
+        ],
+        "parallel": false,
+        "conflicts_with": [
+          "Locale Field Components And Compare Mode",
+          "Locale Validation And Publish Checklist"
+        ],
+        "files": [
+          "src/components/admin/tabs/HomeEditorTab.tsx",
+          "src/lib/home-content.tsx",
+          "src/lib/page-content.tsx"
+        ]
+      }
+    },
+    {
+      "id": "validation-1",
+      "category": "validation",
+      "title": "Locale Validation And Publish Checklist",
+      "description": "The editor blocks unsafe saves and shows a page-aware checklist for missing required localized text, CTA labels, unsupported/fallback states, and optional image metadata status.",
+      "steps": [
+        "Verify: saving with an empty required active-locale title or description is blocked.",
+        "Verify: saving with blank optional image descriptions is allowed while required active-locale text remains blocked.",
+        "Verify: validation errors are inline, field-specific, and focusable.",
+        "Verify: publish checklist updates when changing page or content locale."
+      ],
+      "passes": true,
+      "metadata": {
+        "depends_on": [
+          "Locale Field Components And Compare Mode",
+          "Locale-Safe Save And Reset"
+        ],
+        "parallel": false,
+        "conflicts_with": [
+          "Locale-Safe Save And Reset"
+        ],
+        "files": [
+          "src/components/admin/tabs/HomeEditorTab.tsx",
+          "src/components/admin/page-section-editor.tsx",
+          "src/lib/home-content.tsx",
+          "src/lib/page-content.tsx"
+        ]
+      }
+    },
+    {
+      "id": "preview-1",
+      "category": "preview",
+      "title": "Locale Preview Controls",
+      "description": "Admins can preview managed pages in Vietnamese or English with the preview locale explicit and independent from admin chrome language.",
+      "steps": [
+        "Verify: previewing vi opens or renders the public page in Vietnamese content mode.",
+        "Verify: previewing en opens or renders the public page in English content mode.",
+        "Verify: preview behavior does not change admin UI language preference.",
+        "Verify: normal public language behavior remains unchanged when not using preview controls."
+      ],
+      "passes": true,
+      "metadata": {
+        "depends_on": [
+          "Content Locale Editor Shell",
+          "Locale-Safe Save And Reset"
+        ],
+        "parallel": true,
+        "conflicts_with": [],
+        "files": [
+          "src/components/admin/tabs/HomeEditorTab.tsx",
+          "src/lib/i18n.tsx",
+          "src/routes/index.tsx",
+          "src/routes/brand.tsx",
+          "src/routes/products.tsx",
+          "src/routes/events.tsx",
+          "src/routes/b2b.tsx",
+          "src/routes/contact.tsx",
+          "src/routes/gippy-ai.tsx"
+        ]
+      }
+    },
+    {
+      "id": "content-1",
+      "category": "content",
+      "title": "Vietnamese Copy Cleanup",
+      "description": "Known no-diacritic Vietnamese admin labels and fallback strings in this workflow are replaced with valid Vietnamese with diacritics.",
+      "steps": [
+        "Verify: no known no-diacritic Vietnamese literals from the audit remain in admin-i18n.ts, site-settings.tsx, or SettingsTab.tsx.",
+        "Verify: page-content Vietnamese defaults used by managed routes render valid UTF-8 Vietnamese text.",
+        "Verify: existing persisted Supabase content is not overwritten by cleanup code."
+      ],
+      "passes": true,
+      "metadata": {
+        "depends_on": [],
+        "parallel": true,
+        "conflicts_with": [
+          "Content Locale Editor Shell"
+        ],
+        "files": [
+          "src/components/admin/admin-i18n.ts",
+          "src/lib/site-settings.tsx",
+          "src/components/admin/tabs/SettingsTab.tsx",
+          "src/lib/page-content.tsx"
+        ]
+      }
+    },
+    {
+      "id": "cms-1",
+      "category": "cms",
+      "title": "Unsupported Section States And Fixed-Shape Policy",
+      "description": "Pages without section editors and fixed-shape arrays are represented honestly in the UI and checklist so admins understand what is editable today.",
+      "steps": [
+        "Verify: Products, Events, and Contact communicate that section editing is not available when selected.",
+        "Verify: fixed-shape section lists do not imply admins can add/remove arbitrary items.",
+        "Verify: checklist reflects editable fields only and does not report non-CMS hardcoded route copy as missing CMS data."
+      ],
+      "passes": true,
+      "metadata": {
+        "depends_on": [
+          "Locale Field Components And Compare Mode"
+        ],
+        "parallel": true,
+        "conflicts_with": [],
+        "files": [
+          "src/components/admin/tabs/HomeEditorTab.tsx",
+          "src/components/admin/page-section-editor.tsx",
+          "src/lib/page-content.tsx"
+        ]
+      }
+    },
+    {
+      "id": "qa-1",
+      "category": "qa",
+      "title": "End-To-End Verification And Handoff",
+      "description": "The completed workflow has static verification, build verification, browser workflow evidence, and progress notes for follow-up shipping.",
+      "steps": [
+        "Verify: npx tsc --noEmit --pretty false",
+        "Verify: npm run lint",
+        "Verify: npm run build",
+        "Verify: npx vite build --config vite.spa.config.ts",
+        "Verify: authenticated /admin save/reload flow preserves inactive locale for one home page edit and one non-home page edit.",
+        "Verify: public preview renders the intended locale for one home page and one non-home page."
+      ],
+      "passes": true,
+      "metadata": {
+        "depends_on": [
+          "Locale Validation And Publish Checklist",
+          "Locale Preview Controls",
+          "Vietnamese Copy Cleanup",
+          "Unsupported Section States And Fixed-Shape Policy"
+        ],
+        "parallel": false,
+        "conflicts_with": [],
+        "files": [
+          ".beads/artifacts/gpclub_final-my4/progress.txt"
+        ]
+      }
+    },
+    {
+      "id": "architecture-1",
+      "category": "architecture",
+      "title": "Shared CMS Form Primitives",
+      "description": "Shared localized field and panel primitives replace duplicated Content Edit field implementations while preserving active-locale editing and compare-mode behavior.",
+      "steps": [
+        "Verify: homepage localized fields use the shared field primitive and still edit only the active content locale.",
+        "Verify: Brand, B2B, and Gippy AI section fields use the shared field primitive and still support compare mode.",
+        "Verify: duplicated TextPair implementations are removed or reduced to thin wrappers around the shared primitive.",
+        "Verify: rtk npm run lint and rtk npm run build pass or report only known unrelated warnings."
+      ],
+      "passes": true,
+      "metadata": {
+        "depends_on": [
+          "Locale Field Components And Compare Mode"
+        ],
+        "parallel": false,
+        "conflicts_with": [
+          "CMS Form Shell And Status Layout",
+          "Shared CMS Media Field"
+        ],
+        "files": [
+          "src/components/admin/cms-form-fields.tsx",
+          "src/components/admin/tabs/HomeEditorTab.tsx",
+          "src/components/admin/page-section-editor.tsx",
+          "src/components/admin/admin-i18n.ts"
+        ]
+      }
+    },
+    {
+      "id": "ux-3",
+      "category": "ux",
+      "title": "CMS Form Shell And Status Layout",
+      "description": "The Content Edit page selector, content language selector, compare toggle, preview controls, save/reset controls, dirty state, and validation status move into a focused shell so the form body contains only editable content.",
+      "steps": [
+        "Verify: Content Edit page-level controls remain visible and clearly identify active page and content locale.",
+        "Verify: save/reset/preview behavior remains wired to the same HomeEditorTab persistence state.",
+        "Verify: validation summary is visible outside the dense content form body.",
+        "Verify: rtk npm run lint and rtk npm run build pass or report only known unrelated warnings."
+      ],
+      "passes": true,
+      "metadata": {
+        "depends_on": [
+          "Shared CMS Form Primitives"
+        ],
+        "parallel": false,
+        "conflicts_with": [
+          "Shared CMS Form Primitives",
+          "Progressive Disclosure And Section Status"
+        ],
+        "files": [
+          "src/components/admin/cms-form-shell.tsx",
+          "src/components/admin/tabs/HomeEditorTab.tsx",
+          "src/components/admin/admin-i18n.ts"
+        ]
+      }
+    },
+    {
+      "id": "ux-4",
+      "category": "ux",
+      "title": "Shared CMS Media Field",
+      "description": "Image URL/upload controls and optional image descriptions are grouped through one shared media editor that wraps AdminImageUploader and preserves optional alt-description behavior.",
+      "steps": [
+        "Verify: non-home hero images use the shared media field.",
+        "Verify: Brand, B2B, and Gippy AI section image assets use the shared media field.",
+        "Verify: home hero and homepage image slots keep optional image descriptions and do not require them to save.",
+        "Verify: keyboard users can open and edit optional image details through native or accessible disclosure controls."
+      ],
+      "passes": true,
+      "metadata": {
+        "depends_on": [
+          "Shared CMS Form Primitives"
+        ],
+        "parallel": false,
+        "conflicts_with": [
+          "Home Content Section Editors"
+        ],
+        "files": [
+          "src/components/admin/cms-media-field.tsx",
+          "src/components/admin/admin-image-uploader.tsx",
+          "src/components/admin/tabs/HomeEditorTab.tsx",
+          "src/components/admin/page-section-editor.tsx",
+          "src/components/admin/admin-i18n.ts"
+        ]
+      }
+    },
+    {
+      "id": "architecture-2",
+      "category": "architecture",
+      "title": "Home Content Section Editors",
+      "description": "Homepage hero, stats, partner hook, trust/process/media, and CTA content move out of the inline HomeEditorTab body into focused section editor components while preserving draft state and callbacks.",
+      "steps": [
+        "Verify: homepage hero, stats, partner hook, trust/process/media, and CTA content are rendered by focused section components.",
+        "Verify: changing each homepage section still updates the same home_content draft shape.",
+        "Verify: locale-safe save/reset behavior remains unchanged for homepage content.",
+        "Verify: rtk tsc --noEmit --pretty false reports no new errors in the touched files."
+      ],
+      "passes": true,
+      "metadata": {
+        "depends_on": [
+          "Shared CMS Form Primitives",
+          "Shared CMS Media Field"
+        ],
+        "parallel": false,
+        "conflicts_with": [
+          "Shared CMS Media Field",
+          "Progressive Disclosure And Section Status"
+        ],
+        "files": [
+          "src/components/admin/home-content-sections.tsx",
+          "src/components/admin/tabs/HomeEditorTab.tsx",
+          "src/components/admin/cms-form-fields.tsx",
+          "src/components/admin/cms-media-field.tsx",
+          "src/components/admin/admin-i18n.ts"
+        ]
+      }
+    },
+    {
+      "id": "ux-5",
+      "category": "ux",
+      "title": "Progressive Disclosure And Section Status",
+      "description": "Dense Content Edit sections are progressively disclosed by default, and each collapsed section exposes validation or dirty-state summaries so operators can navigate directly to the area that needs work.",
+      "steps": [
+        "Verify: long homepage and section-editor forms can be operated by opening one focused section at a time.",
+        "Verify: collapsed sections surface missing required content or dirty status without hiding blockers.",
+        "Verify: disclosure controls are keyboard reachable and keep native semantics or equivalent Radix semantics.",
+        "Verify: optional image details remain secondary and do not clutter default data-entry flow."
+      ],
+      "passes": true,
+      "metadata": {
+        "depends_on": [
+          "CMS Form Shell And Status Layout",
+          "Home Content Section Editors"
+        ],
+        "parallel": false,
+        "conflicts_with": [],
+        "files": [
+          "src/components/admin/tabs/HomeEditorTab.tsx",
+          "src/components/admin/page-section-editor.tsx",
+          "src/components/admin/cms-form-shell.tsx",
+          "src/components/admin/home-content-sections.tsx",
+          "src/components/admin/admin-i18n.ts"
+        ]
+      }
+    },
+    {
+      "id": "qa-2",
+      "category": "qa",
+      "title": "Form Refactor Verification And Handoff",
+      "description": "The form architecture refactor has static gates, build gates, and updated progress notes documenting any remaining authenticated-browser QA gap.",
+      "steps": [
+        "Verify: rtk npm run lint",
+        "Verify: rtk tsc --noEmit --pretty false",
+        "Verify: rtk npm run build",
+        "Verify: authenticated /auth -> /admin -> Content Edit smoke test is run when an admin Supabase session is available, or the missing session is recorded as a manual QA gap.",
+        "Verify: progress notes identify form-refactor files changed, commands run, warnings, and remaining risks."
+      ],
+      "passes": true,
+      "metadata": {
+        "depends_on": [
+          "Progressive Disclosure And Section Status"
+        ],
+        "parallel": false,
+        "conflicts_with": [],
+        "files": [
+          ".beads/artifacts/gpclub_final-my4/progress.txt"
+        ]
+      }
+    }
+  ],
+  "context": {
+    "patterns": [
+      "Admin chrome language uses AdminLang and gpclub-admin-lang; content language must be separate.",
+      "Public content model is vi/en localized JSON in home_content rows.",
+      "Home content and page content use separate TypeScript shapes and merge helpers.",
+      "Public routes consume useI18n().lang and page/home content hooks.",
+      "HomeEditorTab should orchestrate CMS state while shared form shell, field, media, and section components own presentation.",
+      "Image descriptions are optional operator metadata and must not become save blockers."
+    ],
+    "keyFiles": [
+      "src/components/admin/tabs/HomeEditorTab.tsx",
+      "src/components/admin/page-section-editor.tsx",
+      "src/components/admin/cms-form-shell.tsx",
+      "src/components/admin/cms-form-fields.tsx",
+      "src/components/admin/cms-media-field.tsx",
+      "src/components/admin/home-content-sections.tsx",
+      "src/lib/home-content.tsx",
+      "src/lib/page-content.tsx",
+      "src/components/admin/admin-i18n.ts",
+      "src/lib/i18n.tsx"
+    ],
+    "nonGoals": [
+      "No Korean public content locale",
+      "No Supabase schema migration",
+      "No unrelated admin tab migration",
+      "No machine translation generation",
+      "No schema-driven CMS form builder in this phase",
+      "No dynamic add/remove/reorder for fixed-shape CMS arrays"
+    ]
+  },
+  "beadMetadata": {
+    "depends_on": [],
+    "parallel": false,
+    "conflicts_with": [
+      "gpclub_final-u1l"
+    ],
+    "blocks": [],
+    "estimated_hours": 28
+  }
+}

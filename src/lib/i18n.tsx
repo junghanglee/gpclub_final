@@ -33,7 +33,10 @@ export const STRINGS: Dict = {
   "footer.address": { vi: "Địa chỉ", en: "Address" },
 
   // Common CTAs
-  "cta.b2bInquiry": { vi: "Yêu cầu hợp tác B2B", en: "B2B Partnership Inquiry" },
+  "cta.b2bInquiry": {
+    vi: "Yêu cầu hợp tác B2B",
+    en: "B2B Partnership Inquiry",
+  },
   "cta.contactUs": { vi: "Liên hệ", en: "Contact Us" },
   "cta.discover": { vi: "Tìm hiểu thêm", en: "Discover" },
   "cta.viewAll": { vi: "Xem tất cả", en: "View all" },
@@ -53,6 +56,18 @@ const I18nCtx = React.createContext<Ctx>({
 
 const LS_KEY = "gpclub.lang";
 
+function applyDocumentLang(lang: Lang) {
+  if (typeof document !== "undefined") {
+    document.documentElement.lang = lang;
+  }
+}
+
+function getQueryLang(): Lang | null {
+  if (typeof window === "undefined") return null;
+  const value = new URLSearchParams(window.location.search).get("lang");
+  return value === "vi" || value === "en" ? value : null;
+}
+
 function detectDefaultLang(): Lang {
   if (typeof navigator === "undefined") return "en";
   const langs = [navigator.language, ...(navigator.languages ?? [])]
@@ -69,14 +84,26 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
 
   React.useEffect(() => {
     try {
+      const queryLang = getQueryLang();
+      if (queryLang) {
+        setLangState(queryLang);
+        applyDocumentLang(queryLang);
+        return;
+      }
+
       const stored = localStorage.getItem(LS_KEY) as Lang | null;
       if (stored === "vi" || stored === "en") {
         setLangState(stored);
+        applyDocumentLang(stored);
       } else {
-        setLangState(detectDefaultLang());
+        const detectedLang = detectDefaultLang();
+        setLangState(detectedLang);
+        applyDocumentLang(detectedLang);
       }
     } catch {
-      setLangState(detectDefaultLang());
+      const detectedLang = detectDefaultLang();
+      setLangState(detectedLang);
+      applyDocumentLang(detectedLang);
     }
   }, []);
 
@@ -87,9 +114,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     } catch {
       /* noop */
     }
-    if (typeof document !== "undefined") {
-      document.documentElement.lang = l;
-    }
+    applyDocumentLang(l);
   }, []);
 
   const t = React.useCallback(

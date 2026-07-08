@@ -81,9 +81,9 @@ const DEFAULT_FOOTER: FooterInfo = {
   taglineEn:
     "Official partner platform for JMsolution, Jmella and Trois Touch in Vietnam - supporting supply, wholesale and channel growth.",
   taglineVi:
-    "Nen tang doi tac chinh thuc cho JMsolution, Jmella va Trois Touch tai Viet Nam - ho tro nguon hang, ban si va tang truong kenh phan phoi.",
+    "Nền tảng đối tác chính thức cho JMsolution, Jmella và Trois Touch tại Việt Nam - hỗ trợ nguồn hàng, bán sỉ và tăng trưởng kênh phân phối.",
   copyrightEn: "All rights reserved.",
-  copyrightVi: "Da dang ky ban quyen.",
+  copyrightVi: "Đã đăng ký bản quyền.",
   brandLine: "JMsolution - Jmella - Trois Touch",
   zaloVnPhone: "0703321243",
   zaloEnPhone: "0911412309",

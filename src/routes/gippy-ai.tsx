@@ -120,14 +120,71 @@ const QUICK_ACTIONS = [
   },
 ] as const;
 
+function renderSuggestionIcon(icon: string) {
+  if (icon === "package") return <Package className="h-4 w-4" />;
+  if (icon === "briefcase") return <Briefcase className="h-4 w-4" />;
+  if (icon === "message") return <MessageCircle className="h-4 w-4" />;
+  return <Sparkle className="h-4 w-4" />;
+}
+
+function renderQuickActionIcon(icon: string) {
+  if (icon === "search") return <Search className="h-4 w-4" />;
+  if (icon === "briefcase") return <Briefcase className="h-4 w-4" />;
+  return <MessageCircle className="h-4 w-4" />;
+}
+
 function GippyAIPage() {
   const { lang } = useI18n();
   const { content: page, loading: pageLoading } = usePageContent("gippy-ai");
   const pick = (text: { vi: string; en: string }) => text[lang];
+  const gippySections = page.sections.gippyAi;
+  const guide = gippySections?.guide;
+  const suggestions =
+    gippySections?.suggestions ??
+    SUGGESTIONS.map((item, index) => ({
+      id: item.title.en,
+      icon: (["sparkle", "package", "briefcase", "message"] as const)[index] ?? "message",
+      title: item.title,
+      sub: item.sub,
+      prompt: item.prompt,
+    }));
+  const quickActions =
+    gippySections?.quickActions ??
+    QUICK_ACTIONS.map((item, index) => ({
+      id: item.kind,
+      icon: (["message", "search", "briefcase"] as const)[index] ?? "message",
+      label: item.label,
+      body: item.body,
+      prompt:
+        item.kind === "gippy"
+          ? {
+              vi: "Tôi muốn hỏi Gippy về sản phẩm, cách bán hoặc hướng hợp tác với GPCLUB.",
+              en: "I want to ask Gippy about GPCLUB products, selling angles, or partnership options.",
+            }
+          : { vi: "", en: "" },
+      kind: item.kind,
+    }));
+  const statChips = gippySections?.statChips ?? [
+    {
+      id: "product",
+      top: "Product",
+      bottom: { vi: "Gợi ý sản phẩm", en: "Partner catalog" },
+    },
+    {
+      id: "sales",
+      top: "Sales",
+      bottom: { vi: "Câu chuyện bán hàng", en: "Sales story" },
+    },
+    {
+      id: "b2b",
+      top: "B2B",
+      bottom: { vi: "Yêu cầu đối tác", en: "B2B inquiry" },
+    },
+  ];
 
   return (
     <main className="min-h-[calc(100vh-5rem)] bg-gradient-to-b from-background via-background to-secondary/30">
-      <GippyHeroSection page={page} loading={pageLoading} />
+      <GippyHeroSection page={page} loading={pageLoading} statChips={statChips} />
       <section
         id="gippy-guide"
         className="border-t border-border/60 bg-background/90 py-10 md:py-14"
@@ -136,28 +193,30 @@ function GippyAIPage() {
           <div className="mb-6 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
             <div>
               <div className="text-[11px] font-bold uppercase tracking-[0.24em] text-primary">
-                Gippy Quick Guide
+                {guide?.kicker ?? "Gippy Quick Guide"}
               </div>
               <h2 className="mt-2 font-display text-2xl font-black tracking-tight text-foreground md:text-3xl">
-                {lang === "vi" ? "Chọn chủ đề tư vấn" : "Choose your consultation topic"}
+                {guide?.title[lang] ??
+                  (lang === "vi" ? "Chọn chủ đề tư vấn" : "Choose your consultation topic")}
               </h2>
             </div>
             <p className="max-w-xl text-sm font-medium leading-relaxed text-muted-foreground">
-              {lang === "vi"
-                ? "Chọn chủ đề để Gippy mở cuộc trò chuyện đúng mục đích, hoặc đi thẳng đến danh mục sản phẩm và biểu mẫu B2B."
-                : "Choose a topic to open the right Gippy conversation, or go directly to products and the B2B inquiry flow."}
+              {guide?.description[lang] ??
+                (lang === "vi"
+                  ? "Chọn chủ đề để Gippy mở cuộc trò chuyện đúng mục đích, hoặc đi thẳng đến danh mục sản phẩm và biểu mẫu B2B."
+                  : "Choose a topic to open the right Gippy conversation, or go directly to products and the B2B inquiry flow.")}
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {SUGGESTIONS.map((item) => (
+            {suggestions.map((item) => (
               <button
-                key={item.title.en}
+                key={item.id}
                 type="button"
                 onClick={() => openGippy(item.prompt[lang])}
                 className="group rounded-3xl border border-border bg-card p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-md"
               >
                 <div className="mb-4 grid h-10 w-10 place-items-center rounded-full bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
-                  {item.icon}
+                  {renderSuggestionIcon(item.icon)}
                 </div>
                 <h3 className="font-display text-base font-bold text-foreground">
                   {pick(item.title)}
@@ -166,18 +225,18 @@ function GippyAIPage() {
                   {pick(item.sub)}
                 </p>
                 <div className="mt-4 inline-flex items-center text-xs font-bold uppercase tracking-[0.16em] text-primary">
-                  {lang === "vi" ? "Hỏi Gippy" : "Ask Gippy"}{" "}
+                  {guide?.askLabel[lang] ?? (lang === "vi" ? "Hỏi Gippy" : "Ask Gippy")}{" "}
                   <ArrowRight className="ml-1 h-3.5 w-3.5" />
                 </div>
               </button>
             ))}
           </div>
           <div className="mt-8 grid gap-3 md:grid-cols-3">
-            {QUICK_ACTIONS.map((item) => {
+            {quickActions.map((item) => {
               const content = (
                 <>
                   <div className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary text-primary">
-                    {item.icon}
+                    {renderQuickActionIcon(item.icon)}
                   </div>
                   <div>
                     <div className="font-display text-sm font-bold text-foreground">
@@ -193,7 +252,7 @@ function GippyAIPage() {
               if (item.kind === "products") {
                 return (
                   <Link
-                    key={item.kind}
+                    key={item.id}
                     to="/products"
                     className="flex gap-3 rounded-2xl border border-border bg-background p-4 transition hover:border-primary/50 hover:bg-primary/5"
                   >
@@ -205,7 +264,7 @@ function GippyAIPage() {
               if (item.kind === "b2b") {
                 return (
                   <Link
-                    key={item.kind}
+                    key={item.id}
                     to="/b2b"
                     className="flex gap-3 rounded-2xl border border-border bg-background p-4 transition hover:border-primary/50 hover:bg-primary/5"
                   >
@@ -216,15 +275,9 @@ function GippyAIPage() {
 
               return (
                 <button
-                  key={item.kind}
+                  key={item.id}
                   type="button"
-                  onClick={() =>
-                    openGippy(
-                      lang === "vi"
-                        ? "Xin chào Gippy, hãy hướng dẫn tôi cách chọn chủ đề tư vấn phù hợp."
-                        : "Hi Gippy, please guide me to the right consultation topic.",
-                    )
-                  }
+                  onClick={() => openGippy(item.prompt[lang] || item.body[lang])}
                   className="flex gap-3 rounded-2xl border border-border bg-background p-4 text-left transition hover:border-primary/50 hover:bg-primary/5"
                 >
                   {content}
@@ -243,11 +296,19 @@ function GippyAIPage() {
 function GippyHeroSection({
   page,
   loading,
+  statChips,
 }: {
   page: ReturnType<typeof usePageContent>["content"];
   loading: boolean;
+  statChips: Array<{
+    id: string;
+    top: string;
+    bottom: { vi: string; en: string };
+  }>;
 }) {
   const { lang } = useI18n();
+  const heroImageSrc = page.heroImage.url || gippyAiHero;
+  const heroImageAlt = page.heroImage.alt[lang] || "Gippy AI K-Beauty partner consultant mascot";
   if (loading) {
     return (
       <section className="relative isolate overflow-hidden border-b border-border/60 bg-gradient-luxe">
@@ -266,8 +327,8 @@ function GippyHeroSection({
           <div className="relative flex justify-center lg:col-span-5 lg:justify-end">
             <div className="relative aspect-[4/5] w-full max-w-[342px] sm:max-w-[342px]">
               <img
-                src={gippyAiHero}
-                alt="Gippy AI K-Beauty partner consultant mascot"
+                src={heroImageSrc}
+                alt={heroImageAlt}
                 loading="eager"
                 decoding="async"
                 className="relative z-10 h-full w-full object-contain"
@@ -329,19 +390,17 @@ function GippyHeroSection({
             </Button>
           </div>
           <div className="mt-8 grid grid-cols-3 gap-2 text-left sm:max-w-xl">
-            {[
-              ["Product", lang === "vi" ? "Gợi ý sản phẩm" : "Partner catalog"],
-              ["Sales", lang === "vi" ? "Câu chuyện bán hàng" : "Sales story"],
-              ["B2B", lang === "vi" ? "Yêu cầu đối tác" : "B2B inquiry"],
-            ].map(([top, bottom]) => (
+            {statChips.map((chip) => (
               <div
-                key={top}
+                key={chip.id}
                 className="rounded-2xl border border-border/70 bg-background/70 p-3 shadow-sm backdrop-blur"
               >
                 <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary">
-                  {top}
+                  {chip.top}
                 </div>
-                <div className="mt-1 text-xs font-semibold text-foreground/75">{bottom}</div>
+                <div className="mt-1 text-xs font-semibold text-foreground/75">
+                  {chip.bottom[lang]}
+                </div>
               </div>
             ))}
           </div>
@@ -354,8 +413,8 @@ function GippyHeroSection({
               className="absolute left-[10%] top-[8%] h-10 w-10 rounded-full bg-primary/20 blur-sm"
             />
             <img
-              src={gippyAiHero}
-              alt="Gippy AI K-Beauty partner consultant mascot"
+              src={heroImageSrc}
+              alt={heroImageAlt}
               loading="eager"
               decoding="async"
               className="relative z-10 h-full w-full object-contain "
