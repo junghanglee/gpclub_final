@@ -25,10 +25,10 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
@@ -37,7 +37,7 @@ jobs:
         run: npm ci
 
       - name: Set up Supabase CLI
-        uses: supabase/setup-cli@v1
+        uses: supabase/setup-cli@v2
         with:
           version: latest
 
@@ -80,7 +80,7 @@ jobs:
           echo "BACKUP_ARCHIVE=${archive}.gpg" >> "$GITHUB_ENV"
 
       - name: Upload encrypted backup artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ env.BACKUP_ARCHIVE }}
           path: |
