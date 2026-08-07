@@ -57,6 +57,12 @@ jobs:
           supabase db dump --linked --file backup/database/schema.sql
           supabase db dump --linked --file backup/database/data.sql --data-only --use-copy
 
+      - name: Verify full recovery coverage
+        run: |
+          node scripts/verify-database-backup.mjs \
+            backup/database/data.sql \
+            backup/database/coverage-manifest.json
+
       - name: Download Storage objects
         run: node scripts/backup-supabase-storage.mjs backup/storage
 

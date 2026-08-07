@@ -7,11 +7,14 @@
 - PostgreSQL 역할 백업: `database/roles.sql`
 - 애플리케이션 스키마 백업: `database/schema.sql`
 - 애플리케이션 데이터 백업: `database/data.sql`
+- 복구 필수 스키마 포함 검사: `database/coverage-manifest.json`
 - 모든 Supabase Storage 버킷과 원본 파일
 - 버킷 설정, 파일 크기 및 SHA-256이 포함된 `storage/storage-manifest.json`
 - GPG AES-256으로 암호화된 전체 압축파일과 SHA-256 체크섬
 
 백업은 GitHub Actions artifact로 30일간 보관된다. Actions 화면에서 `Supabase backup` 실행을 선택하면 수동 백업도 가능하다.
+
+workflow는 `public` 데이터, `auth.users`, `storage.buckets`, `storage.objects`가 `data.sql`에 모두 포함된 경우에만 암호화 artifact를 업로드한다. 하나라도 누락되면 실행을 실패 처리한다.
 
 ## 최초 1회 설정
 
@@ -29,7 +32,7 @@ GitHub 저장소의 `Settings > Secrets and variables > Actions`에 다음 Repos
 2. 실행 화면의 artifact를 내려받는다.
 3. `.sha256` 파일로 암호화 파일의 체크섬을 확인한다.
 4. 아래 명령으로 복호화한다.
-5. 압축을 풀어 `roles.sql`, `schema.sql`, `data.sql`, `storage-manifest.json`이 존재하는지 확인한다.
+5. 압축을 풀어 `roles.sql`, `schema.sql`, `data.sql`, `coverage-manifest.json`, `storage-manifest.json`이 존재하는지 확인한다.
 
 ```bash
 sha256sum --check gpclub-supabase-*.tar.gz.gpg.sha256
@@ -56,7 +59,7 @@ psql --set ON_ERROR_STOP=on \
   --file=database/data.sql
 ```
 
-Supabase 전용 확장이나 역할 때문에 오류가 발생하면 Cloudzy의 PostgreSQL 버전과 필요한 확장을 먼저 맞춘다. Supabase CLI 백업은 플랫폼이 관리하는 `auth`, `storage` 등의 내부 스키마를 제외한다. 관리자 계정은 새 인증 시스템에서 다시 만들고, Storage 파일과 버킷 설정은 별도 manifest로 복구한다.
+Supabase 전용 확장이나 역할 때문에 오류가 발생하면 Cloudzy의 PostgreSQL 버전과 필요한 확장을 먼저 맞춘다. `auth.users`가 복구되면 비밀번호 해시도 유지되지만 기존 JWT는 새 VPS의 서명키와 다르므로 모든 사용자가 다시 로그인해야 한다. Storage 실제 파일은 별도 manifest와 파일 묶음으로 복구한다.
 
 ## Storage 복구 원칙
 
