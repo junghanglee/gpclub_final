@@ -50,6 +50,7 @@ import { isOptimisticConflict } from "@/lib/admin-save-errors";
 import { validateAdminMediaFile, verifyBrowserVideo } from "@/lib/admin-media-validation";
 import { verifyBrowserImage } from "@/lib/admin-image-validation";
 import { jsonRecordContains } from "@/lib/json-value-equality";
+import { recordAdminAudit } from "@/lib/admin-audit";
 
 type EventRow = Database["public"]["Tables"]["events"]["Row"];
 type EventItem = {
@@ -187,6 +188,11 @@ export default function EventsTab({ lang }: { lang: AdminLang }) {
       return toast.error("The event save could not be verified. Your draft is still open.");
     }
     toast.success(t("saved"));
+    void recordAdminAudit({
+      action: editing.id ? "update" : "create",
+      entityType: "event",
+      entityId: res.data?.id ?? editing.id,
+    });
     setOpen(false);
     setEditing(null);
     load();

@@ -42,6 +42,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database, Json } from "@/integrations/supabase/types";
 import { isOptimisticConflict } from "@/lib/admin-save-errors";
 import { jsonRecordContains } from "@/lib/json-value-equality";
+import { recordAdminAudit } from "@/lib/admin-audit";
 import type {
   CatalogProduct,
   ProductLocale,
@@ -314,6 +315,11 @@ export default function ProductsAdminTab({ lang }: { lang: AdminLang }) {
       return;
     }
     toast.success(t("saved"));
+    void recordAdminAudit({
+      action: editing.id ? "update" : "create",
+      entityType: "product",
+      entityId: result.data?.id ?? editing.id,
+    });
     setOpen(false);
     setEditing(null);
     await load();

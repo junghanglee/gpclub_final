@@ -1,5 +1,5 @@
-import { Plus, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Plus, RefreshCw, Trash2 } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { type ADMIN_I18N, type AdminLang, tx } from "@/components/admin/admin-i18n";
 import { Button } from "@/components/ui/button";
@@ -14,10 +14,13 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import type { BrandSocial, FooterInfo, SeoInfo, SocialLink } from "@/lib/site-settings";
 import { jsonValuesEqual } from "@/lib/json-value-equality";
+import { recordAdminAudit } from "@/lib/admin-audit";
 
 type ContactValues = Record<string, string>;
+type AuditRow = Database["public"]["Tables"]["admin_audit_logs"]["Row"];
 
 const CONTACT_FIELDS: {
   key: string;
@@ -122,13 +125,33 @@ export default function SettingsTab({ lang }: { lang: AdminLang }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [updatedAt, setUpdatedAt] = useState<Record<string, string | null>>({});
+  const [auditRows, setAuditRows] = useState<AuditRow[]>([]);
+  const [auditLoading, setAuditLoading] = useState(false);
 
-  const load = async () => {
-    setLoading(true);
+  const loadAuditRows = useCallback(async () => {
+    setAuditLoading(true);
     const { data, error } = await supabase
-      .from("site_settings")
-      .select("key,value,updated_at")
-      .in("key", ["contact", "seo", "footer", "brand_socials"]);
+      .from("admin_audit_logs")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(50);
+    setAuditLoading(false);
+    if (error) {
+      toast.error(`Could not load administrator activity: ${error.message}`);
+      return;
+    }
+    setAuditRows(data ?? []);
+  }, []);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const [{ data, error }] = await Promise.all([
+      supabase
+        .from("site_settings")
+        .select("key,value,updated_at")
+        .in("key", ["contact", "seo", "footer", "brand_socials"]),
+      loadAuditRows(),
+    ]);
     if (error) toast.error(error.message);
     const settings = Object.fromEntries((data ?? []).map((row) => [row.key, row.value]));
     setUpdatedAt(Object.fromEntries((data ?? []).map((row) => [row.key, row.updated_at])));
@@ -143,11 +166,11 @@ export default function SettingsTab({ lang }: { lang: AdminLang }) {
     });
     setBrandSocials((settings.brand_socials as BrandSocial[] | undefined) ?? DEFAULT_SOCIALS);
     setLoading(false);
-  };
+  }, [loadAuditRows]);
 
   useEffect(() => {
-    load();
-  }, []);
+    void load();
+  }, [load]);
 
   const save = async () => {
     setSaving(true);
@@ -190,6 +213,11 @@ export default function SettingsTab({ lang }: { lang: AdminLang }) {
       return toast.error("The settings save could not be verified. Your draft was kept.");
     setUpdatedAt(Object.fromEntries((savedRows ?? []).map((row) => [row.key, row.updated_at])));
     setBrandSocials(cleanedSocials.length ? cleanedSocials : DEFAULT_SOCIALS);
+    void recordAdminAudit({
+      action: "update",
+      entityType: "site_settings",
+      metadata: { keys: Object.keys(values) },
+    }).then(loadAuditRows);
     toast.success(t("saved"));
   };
 
@@ -460,6 +488,52 @@ export default function SettingsTab({ lang }: { lang: AdminLang }) {
             </div>
           ))}
         </div>
+      </Section>
+
+      <Section
+        title="Recent Administrator Activity"
+        action={
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={loadAuditRows}
+            disabled={auditLoading}
+            aria-label="Refresh administrator activity"
+            title="Refresh administrator activity"
+          >
+            <RefreshCw className={`h-4 w-4 ${auditLoading ? "animate-spin" : ""}`} />
+          </Button>
+        }
+      >
+        {auditRows.length ? (
+          <div className="divide-y divide-border/60">
+            {auditRows.map((row) => (
+              <div
+                key={row.id}
+                className="grid gap-1 py-3 text-sm md:grid-cols-[170px_1fr_180px] md:items-center"
+              >
+                <time className="text-muted-foreground" dateTime={row.created_at}>
+                  {new Intl.DateTimeFormat(lang === "vi" ? "vi-VN" : "en-US", {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  }).format(new Date(row.created_at))}
+                </time>
+                <span className="font-medium text-foreground">
+                  {row.action} {row.entity_type}
+                  {row.entity_id ? ` (${row.entity_id})` : ""}
+                </span>
+                <span className="truncate text-xs text-muted-foreground" title={row.actor_id ?? ""}>
+                  Admin {row.actor_id?.slice(0, 8) ?? "unknown"}
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            {auditLoading ? t("loading") : "No administrator activity has been recorded yet."}
+          </p>
+        )}
       </Section>
     </div>
   );

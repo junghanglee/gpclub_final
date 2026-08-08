@@ -23,6 +23,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database, Json } from "@/integrations/supabase/types";
 import { DEFAULT_HOME_CONTENT, type HomeAdminContent, mergeHomeContent } from "@/lib/home-content";
 import { jsonValuesEqual } from "@/lib/json-value-equality";
+import { recordAdminAudit } from "@/lib/admin-audit";
 import { invalidatePublicDataCache } from "@/lib/public-data-timeout";
 import {
   DEFAULT_PAGE_CONTENT,
@@ -456,6 +457,12 @@ export default function HomeEditorTab({ lang }: { lang: AdminLang }) {
       invalidatePublicDataCache(`page-content:${selectedPage}`);
     }
     if (selectedPage === "home") invalidatePublicDataCache("home-content:home");
+    void recordAdminAudit({
+      action: "save",
+      entityType: "home_content",
+      entityId: key,
+      metadata: { page: selectedPage, language: contentLang },
+    });
     toast.success(t("saved"));
   };
 

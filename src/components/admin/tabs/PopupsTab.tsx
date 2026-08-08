@@ -30,6 +30,7 @@ import type { Database } from "@/integrations/supabase/types";
 import { isOptimisticConflict } from "@/lib/admin-save-errors";
 import { validateAdminImageFile, verifyBrowserImage } from "@/lib/admin-image-validation";
 import { jsonRecordContains } from "@/lib/json-value-equality";
+import { recordAdminAudit } from "@/lib/admin-audit";
 
 type PopupRow = Database["public"]["Tables"]["popups"]["Row"];
 type Popup = {
@@ -169,6 +170,11 @@ export default function PopupsTab({ lang }: { lang: AdminLang }) {
       return toast.error("The popup save could not be verified. Your draft is still open.");
     }
     toast.success(t("saved"));
+    void recordAdminAudit({
+      action: editing.id ? "update" : "create",
+      entityType: "popup",
+      entityId: res.data?.id ?? editing.id,
+    });
     setOpen(false);
     setEditing(null);
     load();
