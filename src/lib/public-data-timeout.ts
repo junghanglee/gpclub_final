@@ -8,6 +8,11 @@ type CacheEntry<T> = {
 
 const publicDataCache = new Map<string, CacheEntry<unknown>>();
 
+export function invalidatePublicDataCache(key?: string) {
+  if (key) publicDataCache.delete(key);
+  else publicDataCache.clear();
+}
+
 export function readPublicDataCache<T>(key: string): T | undefined {
   const entry = publicDataCache.get(key) as CacheEntry<T> | undefined;
   if (!entry || entry.expiresAt <= Date.now()) {

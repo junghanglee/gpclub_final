@@ -15,6 +15,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import type { BrandSocial, FooterInfo, SeoInfo, SocialLink } from "@/lib/site-settings";
+import { jsonValuesEqual } from "@/lib/json-value-equality";
 
 type ContactValues = Record<string, string>;
 
@@ -120,15 +121,17 @@ export default function SettingsTab({ lang }: { lang: AdminLang }) {
   const [brandSocials, setBrandSocials] = useState<BrandSocial[]>(DEFAULT_SOCIALS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [updatedAt, setUpdatedAt] = useState<Record<string, string | null>>({});
 
   const load = async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("site_settings")
-      .select("key,value")
+      .select("key,value,updated_at")
       .in("key", ["contact", "seo", "footer", "brand_socials"]);
     if (error) toast.error(error.message);
     const settings = Object.fromEntries((data ?? []).map((row) => [row.key, row.value]));
+    setUpdatedAt(Object.fromEntries((data ?? []).map((row) => [row.key, row.updated_at])));
     setContact((settings.contact as ContactValues | undefined) ?? {});
     setSeo({
       ...DEFAULT_SEO,
@@ -161,14 +164,31 @@ export default function SettingsTab({ lang }: { lang: AdminLang }) {
           .filter((link) => link.url),
       }))
       .filter((brand) => brand.brand && brand.links.length);
-    const { error } = await supabase.from("site_settings").upsert([
-      { key: "contact", value: contact },
-      { key: "seo", value: seo },
-      { key: "footer", value: footer },
-      { key: "brand_socials", value: cleanedSocials },
-    ]);
+    const values = {
+      contact,
+      seo,
+      footer,
+      brand_socials: cleanedSocials,
+    };
+    const { data: savedRows, error } = await supabase.rpc("save_site_settings_version", {
+      p_values: values,
+      p_expected_updated_at: updatedAt,
+    });
     setSaving(false);
-    if (error) return toast.error(error.message);
+    if (error) {
+      if (error.code === "40001") {
+        toast.error("Site settings changed in another editor. Your draft was kept.");
+        return;
+      }
+      return toast.error(error.message);
+    }
+    const savedByKey = Object.fromEntries((savedRows ?? []).map((row) => [row.key, row]));
+    const verified = Object.entries(values).every(
+      ([key, value]) => savedByKey[key] && jsonValuesEqual(savedByKey[key].value, value),
+    );
+    if (!verified)
+      return toast.error("The settings save could not be verified. Your draft was kept.");
+    setUpdatedAt(Object.fromEntries((savedRows ?? []).map((row) => [row.key, row.updated_at])));
     setBrandSocials(cleanedSocials.length ? cleanedSocials : DEFAULT_SOCIALS);
     toast.success(t("saved"));
   };

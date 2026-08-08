@@ -18,8 +18,10 @@ import jmellaImg from "@/assets/brand-jmella.jpg";
 import jmsolutionImg from "@/assets/brand-jmsolution.jpg";
 import labImg from "@/assets/brand-lab.jpg";
 import gippyBrandHero from "@/assets/gippy-brand-hero.png";
+import { HeroBackground } from "@/components/site/HeroBackground";
 import { HeroCopySkeleton } from "@/components/site/SectionSkeletons";
 import { Button } from "@/components/ui/button";
+import { resolveBrandCardImage } from "@/lib/brand-card-image";
 import { useI18n } from "@/lib/i18n";
 import { usePageContent } from "@/lib/page-content";
 
@@ -207,10 +209,10 @@ function BrandPage() {
     (item, index) => ({
       ...item,
       key: "id" in item ? item.id : item.key,
-      image:
-        "image" in item && typeof item.image === "string" && item.image.trim().length > 0
-          ? item.image
-          : (BRANDS[index]?.image ?? labImg),
+      image: resolveBrandCardImage(
+        "image" in item ? item.image : undefined,
+        BRANDS[index]?.image ?? labImg,
+      ),
       bullets: BRANDS[index]?.bullets ?? [],
     }),
   );
@@ -238,6 +240,7 @@ function BrandPage() {
   return (
     <>
       <section className="relative overflow-hidden bg-gradient-luxe">
+        <HeroBackground background={page.heroBackground} />
         <div
           aria-hidden
           className="pointer-events-none absolute -top-40 right-[-10%] h-[520px] w-[520px] rounded-full bg-primary/10 blur-3xl"

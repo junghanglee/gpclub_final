@@ -13,6 +13,7 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 import gippyContactHero from "@/assets/gippy-contact-hero.png";
+import { HeroBackground } from "@/components/site/HeroBackground";
 import {
   ContactRowSkeleton,
   FaqSkeletonItems,
@@ -267,6 +268,7 @@ function ContactPage() {
     <>
       {/* Hero */}
       <section className="relative overflow-hidden bg-gradient-luxe">
+        <HeroBackground background={page.heroBackground} />
         <div
           aria-hidden
           className="pointer-events-none absolute -top-20 right-0 h-[360px] w-[360px] rounded-full bg-primary/10 blur-3xl"

@@ -27,6 +27,9 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
+import { isOptimisticConflict } from "@/lib/admin-save-errors";
+import { validateAdminImageFile, verifyBrowserImage } from "@/lib/admin-image-validation";
+import { jsonRecordContains } from "@/lib/json-value-equality";
 
 type PopupRow = Database["public"]["Tables"]["popups"]["Row"];
 type Popup = {
@@ -40,6 +43,7 @@ type Popup = {
   priority: number;
   starts_at: string | null;
   ends_at: string | null;
+  updated_at?: string;
 };
 
 const emptyPopup: Popup = {
@@ -108,6 +112,7 @@ export default function PopupsTab({ lang }: { lang: AdminLang }) {
   const [page, setPage] = useState(0);
   const [totalRows, setTotalRows] = useState(0);
   const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -130,20 +135,39 @@ export default function PopupsTab({ lang }: { lang: AdminLang }) {
   }, [load]);
 
   const save = async () => {
-    if (!editing) return;
+    if (!editing || saving || uploading) return;
     if (!editing.title.trim()) return toast.error(t("titleRequired"));
     const payload = {
-      ...editing,
+      title: editing.title,
       content: editing.content || null,
       image_url: editing.image_url || null,
       cta_label: editing.cta_label || null,
       cta_url: editing.cta_url || null,
+      active: editing.active,
       priority: Number(editing.priority) || 0,
+      starts_at: editing.starts_at,
+      ends_at: editing.ends_at,
     };
+    setSaving(true);
     const res = editing.id
-      ? await supabase.from("popups").update(payload).eq("id", editing.id)
-      : await supabase.from("popups").insert(payload);
-    if (res.error) return toast.error(res.error.message);
+      ? await supabase
+          .from("popups")
+          .update(payload)
+          .eq("id", editing.id)
+          .eq("updated_at", editing.updated_at ?? "")
+          .select("*")
+          .single()
+      : await supabase.from("popups").insert(payload).select("*").single();
+    setSaving(false);
+    if (res.error) {
+      if (editing.id && isOptimisticConflict(res.error)) {
+        return toast.error("This popup changed in another editor. Your draft was kept.");
+      }
+      return toast.error(res.error.message);
+    }
+    if (!jsonRecordContains(res.data, payload)) {
+      return toast.error("The popup save could not be verified. Your draft is still open.");
+    }
     toast.success(t("saved"));
     setOpen(false);
     setEditing(null);
@@ -152,8 +176,9 @@ export default function PopupsTab({ lang }: { lang: AdminLang }) {
 
   const uploadImageFile = async (file: File) => {
     if (!editing) return;
-    if (!file.type.startsWith("image/")) {
-      toast.error("Only image files can be uploaded.");
+    const validationError = validateAdminImageFile(file);
+    if (validationError) {
+      toast.error(validationError);
       return;
     }
 
@@ -161,20 +186,30 @@ export default function PopupsTab({ lang }: { lang: AdminLang }) {
     const path = `popups/${new Date().toISOString().slice(0, 10)}/${crypto.randomUUID()}-${safeFileName(
       file.name,
     )}`;
-    const { error } = await supabase.storage.from(POPUP_MEDIA_BUCKET).upload(path, file, {
-      cacheControl: "31536000",
-      contentType: file.type || undefined,
-      upsert: false,
-    });
-    if (error) {
+    const localUrl = URL.createObjectURL(file);
+    try {
+      await verifyBrowserImage(localUrl);
+      const { error } = await supabase.storage.from(POPUP_MEDIA_BUCKET).upload(path, file, {
+        cacheControl: "31536000",
+        contentType: file.type,
+        upsert: false,
+      });
+      if (error) throw error;
+      const { data } = supabase.storage.from(POPUP_MEDIA_BUCKET).getPublicUrl(path);
+      try {
+        await verifyBrowserImage(data.publicUrl);
+      } catch (error) {
+        await supabase.storage.from(POPUP_MEDIA_BUCKET).remove([path]);
+        throw error;
+      }
+      setEditing((current) => (current ? { ...current, image_url: data.publicUrl } : current));
+      toast.success("Popup image uploaded and verified. Save to publish it.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Popup image upload failed.");
+    } finally {
+      URL.revokeObjectURL(localUrl);
       setUploading(false);
-      toast.error(error.message);
-      return;
     }
-    const { data } = supabase.storage.from(POPUP_MEDIA_BUCKET).getPublicUrl(path);
-    setEditing({ ...editing, image_url: data.publicUrl });
-    setUploading(false);
-    toast.success("Popup image uploaded.");
   };
 
   const remove = async (id: string) => {
@@ -432,11 +467,11 @@ export default function PopupsTab({ lang }: { lang: AdminLang }) {
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>
+            <Button variant="outline" onClick={() => setOpen(false)} disabled={saving}>
               {t("cancel")}
             </Button>
-            <Button onClick={save} disabled={uploading}>
-              {t("save")}
+            <Button onClick={save} disabled={uploading || saving}>
+              {saving ? "Saving..." : t("save")}
             </Button>
           </DialogFooter>
         </DialogContent>

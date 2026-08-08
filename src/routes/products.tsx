@@ -3,6 +3,7 @@ import { ArrowRight, ChevronDown, Search, Sparkles, Star } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import gippyProductsHero from "@/assets/gippy-products-hero.png";
 import { B2BInquiryDialog } from "@/components/site/B2BInquiryDialog";
+import { HeroBackground } from "@/components/site/HeroBackground";
 import {
   HeroCopySkeleton,
   ProductCardSkeletonGrid,
@@ -29,6 +30,7 @@ import {
   type CatalogProduct,
   fetchPublishedCatalogProductById,
   getCoverImage,
+  getLocalizedProduct,
   productSearchText,
   useCatalogProducts,
   usePublishedCatalogBrandSummaries,
@@ -115,6 +117,10 @@ function ProductsPage() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [inquiryOpen, setInquiryOpen] = useState(false);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const localizedRows = useMemo(
+    () => rows.map((product) => ({ ...product, ...getLocalizedProduct(product, lang) })),
+    [lang, rows],
+  );
 
   const totalPublishedProducts = useMemo(
     () => brandSummaries.reduce((total, item) => total + item.count, 0),
@@ -127,24 +133,26 @@ function ProductsPage() {
   }, [brand, brandSummaries, t.allBrands]);
 
   const typeOptions = useMemo(() => {
-    const types = Array.from(new Set(rows.map((p) => p.product_type.trim()).filter(Boolean)));
+    const types = Array.from(
+      new Set(localizedRows.map((p) => p.product_type.trim()).filter(Boolean)),
+    );
     return ["All", ...types.sort((a, b) => a.localeCompare(b))];
-  }, [rows]);
+  }, [localizedRows]);
 
   const typeCounts = useMemo(() => {
     const counts = new Map<string, number>();
-    rows.forEach((p) => counts.set(p.product_type, (counts.get(p.product_type) || 0) + 1));
+    localizedRows.forEach((p) => counts.set(p.product_type, (counts.get(p.product_type) || 0) + 1));
     return counts;
-  }, [rows]);
+  }, [localizedRows]);
 
   const filtered = useMemo(() => {
     const normalizedQuery = q.trim().toLowerCase();
-    return rows.filter((p) => {
+    return localizedRows.filter((p) => {
       if (cat !== "All" && p.product_type !== cat) return false;
       if (normalizedQuery && !productSearchText(p).includes(normalizedQuery)) return false;
       return true;
     });
-  }, [rows, q, cat]);
+  }, [localizedRows, q, cat]);
 
   useEffect(() => {
     setVisibleCount(INITIAL_PRODUCT_COUNT);
@@ -163,7 +171,9 @@ function ProductsPage() {
 
     fetchPublishedCatalogProductById(selected.id)
       .then((detail) => {
-        if (active) setSelectedDetail(detail);
+        if (active) {
+          setSelectedDetail(detail ? { ...detail, ...getLocalizedProduct(detail, lang) } : null);
+        }
       })
       .finally(() => {
         if (active) setDetailLoading(false);
@@ -172,7 +182,7 @@ function ProductsPage() {
     return () => {
       active = false;
     };
-  }, [selected?.id]);
+  }, [lang, selected?.id]);
 
   useEffect(() => {
     if (loading) return;
@@ -206,6 +216,7 @@ function ProductsPage() {
   return (
     <>
       <section className="relative isolate overflow-hidden border-b border-border/60 bg-gradient-luxe">
+        <HeroBackground background={page.heroBackground} />
         <div
           aria-hidden
           className="pointer-events-none absolute -top-36 right-[-12%] h-[520px] w-[520px] rounded-full bg-primary/10 blur-3xl"
@@ -290,7 +301,9 @@ function ProductsPage() {
                 options={typeOptions.map((c) => ({
                   value: c,
                   label:
-                    c === "All" ? `${t.all} (${rows.length})` : `${c} (${typeCounts.get(c) || 0})`,
+                    c === "All"
+                      ? `${t.all} (${localizedRows.length})`
+                      : `${c} (${typeCounts.get(c) || 0})`,
                 }))}
               />
               <div className="flex items-center gap-2 rounded-md border border-input bg-background px-3">

@@ -1,5 +1,13 @@
 import { ImagePlus, PackageOpen, Pencil, Plus, RefreshCw, Trash2, UploadCloud } from "lucide-react";
-import { type DragEvent, type Ref, type RefObject, useEffect, useRef, useState } from "react";
+import {
+  type DragEvent,
+  type Ref,
+  type RefObject,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { toast } from "sonner";
 import { type ADMIN_I18N, type AdminLang, tx } from "@/components/admin/admin-i18n";
 import { pageRange } from "@/components/admin/admin-shared";
@@ -38,6 +46,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
+import { isOptimisticConflict } from "@/lib/admin-save-errors";
+import { validateAdminMediaFile, verifyBrowserVideo } from "@/lib/admin-media-validation";
+import { verifyBrowserImage } from "@/lib/admin-image-validation";
+import { jsonRecordContains } from "@/lib/json-value-equality";
 
 type EventRow = Database["public"]["Tables"]["events"]["Row"];
 type EventItem = {
@@ -58,6 +70,7 @@ type EventItem = {
   featured: boolean;
   published: boolean;
   post_type: "event" | "new_product";
+  updated_at?: string;
 };
 
 const emptyEvent: EventItem = {
@@ -101,10 +114,11 @@ export default function EventsTab({ lang }: { lang: AdminLang }) {
   const [page, setPage] = useState(0);
   const [totalRows, setTotalRows] = useState(0);
   const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const bodyViEditorRef = useRef<ProductDetailEditorHandle>(null);
   const bodyEnEditorRef = useRef<ProductDetailEditorHandle>(null);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     const { from, to } = pageRange(page);
     const { data, error, count } = await supabase
@@ -121,13 +135,13 @@ export default function EventsTab({ lang }: { lang: AdminLang }) {
       setTotalRows(count ?? data?.length ?? 0);
     }
     setLoading(false);
-  };
+  }, [page]);
   useEffect(() => {
     load();
-  }, [page]);
+  }, [load]);
 
   const save = async () => {
-    if (!editing) return;
+    if (!editing || saving || uploading) return;
     const bodyVi = bodyViEditorRef.current?.commit() ?? editing.body_vi;
     const bodyEn = bodyEnEditorRef.current?.commit() ?? editing.body_en;
     if (!editing.title_vi.trim() || !editing.title_en.trim()) {
@@ -135,23 +149,43 @@ export default function EventsTab({ lang }: { lang: AdminLang }) {
       return;
     }
     const payload = {
-      ...editing,
+      title_vi: editing.title_vi,
+      title_en: editing.title_en,
       summary_vi: editing.summary_vi || null,
       summary_en: editing.summary_en || null,
       body_vi: bodyVi || null,
       body_en: bodyEn || null,
       media_url: editing.media_url || null,
+      media_type: editing.media_type,
       cta_label_vi: editing.cta_label_vi || null,
       cta_label_en: editing.cta_label_en || null,
       cta_url: editing.cta_url || null,
       event_date: editing.event_date || null,
       sort_order: Number(editing.sort_order) || 0,
+      featured: editing.featured,
+      published: editing.published,
       post_type: editing.post_type || "event",
     };
+    setSaving(true);
     const res = editing.id
-      ? await supabase.from("events").update(payload).eq("id", editing.id)
-      : await supabase.from("events").insert(payload);
-    if (res.error) return toast.error(res.error.message);
+      ? await supabase
+          .from("events")
+          .update(payload)
+          .eq("id", editing.id)
+          .eq("updated_at", editing.updated_at ?? "")
+          .select("*")
+          .single()
+      : await supabase.from("events").insert(payload).select("*").single();
+    setSaving(false);
+    if (res.error) {
+      if (editing.id && isOptimisticConflict(res.error)) {
+        return toast.error("This event changed in another editor. Your draft was kept.");
+      }
+      return toast.error(res.error.message);
+    }
+    if (!jsonRecordContains(res.data, payload)) {
+      return toast.error("The event save could not be verified. Your draft is still open.");
+    }
     toast.success(t("saved"));
     setOpen(false);
     setEditing(null);
@@ -160,8 +194,9 @@ export default function EventsTab({ lang }: { lang: AdminLang }) {
 
   const uploadMediaFile = async (file: File) => {
     if (!editing) return;
-    if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) {
-      toast.error("Only image or video files can be uploaded.");
+    const validationError = validateAdminMediaFile(file);
+    if (validationError) {
+      toast.error(validationError);
       return;
     }
 
@@ -169,24 +204,34 @@ export default function EventsTab({ lang }: { lang: AdminLang }) {
     const path = `${new Date().toISOString().slice(0, 10)}/${crypto.randomUUID()}-${safeFileName(
       file.name,
     )}`;
-    const { error } = await supabase.storage.from(EVENT_MEDIA_BUCKET).upload(path, file, {
-      cacheControl: "31536000",
-      contentType: file.type || undefined,
-      upsert: false,
-    });
-    if (error) {
+    const localUrl = URL.createObjectURL(file);
+    const mediaType = inferMediaType(file);
+    const verify = mediaType === "video" ? verifyBrowserVideo : verifyBrowserImage;
+    try {
+      await verify(localUrl);
+      const { error } = await supabase.storage.from(EVENT_MEDIA_BUCKET).upload(path, file, {
+        cacheControl: "31536000",
+        contentType: file.type,
+        upsert: false,
+      });
+      if (error) throw error;
+      const { data } = supabase.storage.from(EVENT_MEDIA_BUCKET).getPublicUrl(path);
+      try {
+        await verify(data.publicUrl);
+      } catch (error) {
+        await supabase.storage.from(EVENT_MEDIA_BUCKET).remove([path]);
+        throw error;
+      }
+      setEditing((current) =>
+        current ? { ...current, media_url: data.publicUrl, media_type: mediaType } : current,
+      );
+      toast.success("Media uploaded and verified. Save to publish it.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Media upload failed.");
+    } finally {
+      URL.revokeObjectURL(localUrl);
       setUploading(false);
-      toast.error(error.message);
-      return;
     }
-    const { data } = supabase.storage.from(EVENT_MEDIA_BUCKET).getPublicUrl(path);
-    setEditing({
-      ...editing,
-      media_url: data.publicUrl,
-      media_type: inferMediaType(file),
-    });
-    setUploading(false);
-    toast.success("Media uploaded.");
   };
 
   const remove = async (id: string) => {
@@ -470,11 +515,11 @@ export default function EventsTab({ lang }: { lang: AdminLang }) {
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>
+            <Button variant="outline" onClick={() => setOpen(false)} disabled={saving}>
               {t("cancel")}
             </Button>
-            <Button onClick={save} disabled={uploading}>
-              {t("save")}
+            <Button onClick={save} disabled={uploading || saving}>
+              {saving ? "Saving..." : t("save")}
             </Button>
           </DialogFooter>
         </DialogContent>

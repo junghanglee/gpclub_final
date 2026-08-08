@@ -24,6 +24,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import gippyB2BHero from "@/assets/gippy-b2b-hero.png";
+import { HeroBackground } from "@/components/site/HeroBackground";
 import {
   BrandImageSkeleton,
   HeroCopySkeleton,
@@ -512,6 +513,7 @@ function B2BPage() {
   return (
     <>
       <section className="relative overflow-hidden bg-gradient-luxe">
+        <HeroBackground background={page.heroBackground} />
         <div
           aria-hidden
           className="pointer-events-none absolute -top-20 right-0 h-[420px] w-[420px] rounded-full bg-primary/10 blur-3xl"

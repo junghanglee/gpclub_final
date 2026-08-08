@@ -9,6 +9,7 @@ import {
   type CatalogProduct,
   fetchPublishedCatalogProductById,
   getCoverImage,
+  getLocalizedProduct,
 } from "@/lib/catalog-products";
 import { useI18n } from "@/lib/i18n";
 import { sanitizeProductDetailHtml } from "@/lib/product-detail-html";
@@ -86,6 +87,7 @@ function ProductDetailPage() {
 
   const visibleConditions = product.conditions.filter((c) => c.visible);
   const cover = getCoverImage(product);
+  const localized = getLocalizedProduct(product, lang);
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
@@ -101,7 +103,7 @@ function ProductDetailPage() {
             {cover ? (
               <img
                 src={cover}
-                alt={product.product_name}
+                alt={localized.product_name}
                 className="aspect-square w-full object-cover"
               />
             ) : (
@@ -121,7 +123,7 @@ function ProductDetailPage() {
                   {m.type === "image" ? (
                     <img
                       src={m.url}
-                      alt={m.alt || product.product_name}
+                      alt={m.alt || localized.product_name}
                       className="aspect-square w-full object-cover transition group-hover:scale-105"
                     />
                   ) : (
@@ -159,9 +161,9 @@ function ProductDetailPage() {
             ) : null}
           </div>
           <h1 className="mt-5 font-display text-4xl font-black leading-tight md:text-6xl">
-            {product.product_name}
+            {localized.product_name}
           </h1>
-          <p className="mt-5 text-lg leading-relaxed text-foreground/70">{product.short_intro}</p>
+          <p className="mt-5 text-lg leading-relaxed text-foreground/70">{localized.short_intro}</p>
 
           {visibleConditions.length > 0 ? (
             <div className="mt-8 rounded-3xl border border-border bg-card p-5">
@@ -188,7 +190,7 @@ function ProductDetailPage() {
             <div
               className="prose prose-sm mt-4 max-w-none text-foreground/75 [&_img]:rounded-2xl [&_img]:border [&_img]:border-border"
               dangerouslySetInnerHTML={{
-                __html: sanitizeProductDetailHtml(product.detail_html),
+                __html: sanitizeProductDetailHtml(localized.detail_html),
               }}
             />
           </div>
@@ -208,12 +210,12 @@ function ProductDetailPage() {
         onOpenChange={setInquiryOpen}
         product={{
           brandName: product.brand_name,
-          productName: product.product_name,
+          productName: localized.product_name,
           productType: product.product_type,
           imageUrl: cover || undefined,
         }}
         source="Product detail page"
-        defaultMessage={`I am interested in B2B opportunities for ${product.brand_name} - ${product.product_name}.`}
+        defaultMessage={`I am interested in B2B opportunities for ${product.brand_name} - ${localized.product_name}.`}
         title="Register B2B inquiry without leaving this product"
       />
     </section>

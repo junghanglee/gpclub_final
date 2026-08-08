@@ -15,6 +15,13 @@ export type ProductCondition = {
   value: string;
   visible: boolean;
 };
+export type ProductLocale = "vi" | "en";
+export type ProductTranslation = {
+  product_name: string;
+  short_intro: string;
+  detail_html: string;
+};
+export type ProductTranslations = Record<ProductLocale, ProductTranslation>;
 
 export type CatalogProduct = {
   id: string;
@@ -37,6 +44,7 @@ export type CatalogProduct = {
   is_featured: boolean;
   skin_types: string[];
   concerns: string[];
+  translations: ProductTranslations;
   created_at?: string;
   updated_at?: string;
 };
@@ -69,9 +77,9 @@ type CatalogBrandSummaryRow = {
 };
 
 const CATALOG_PRODUCT_LIST_COLUMNS =
-  "id,brand_id,brand_name,product_name,product_type,short_intro,cover_image_url,sort_order,published,is_new,is_popular,is_featured,created_at,updated_at,brands!inner(id,key,slug,name,sort_order,published)";
+  "id,brand_id,brand_name,product_name,product_type,short_intro,detail_html,translations,cover_image_url,sort_order,published,is_new,is_popular,is_featured,created_at,updated_at,brands!inner(id,key,slug,name,sort_order,published)";
 const LEGACY_CATALOG_PRODUCT_LIST_COLUMNS =
-  "id,brand_name,product_name,product_type,short_intro,cover_image_url,sort_order,published,is_new,is_popular,is_featured,created_at,updated_at";
+  "id,brand_name,product_name,product_type,short_intro,detail_html,translations,cover_image_url,sort_order,published,is_new,is_popular,is_featured,created_at,updated_at";
 export const catalogProductsQueryKey = ["catalog-products", "published"] as const;
 export const catalogBrandSummariesQueryKey = [
   "catalog-products",
@@ -104,6 +112,11 @@ export function productSearchText(p: CatalogProduct) {
       p.product_type,
       p.short_intro,
       productDetailTextFromHtml(p.detail_html),
+      ...Object.values(p.translations || {}).flatMap((translation) => [
+        translation.product_name,
+        translation.short_intro,
+        productDetailTextFromHtml(translation.detail_html),
+      ]),
       (p.conditions ?? []).map((c) => `${c.label} ${c.value}`).join(" "),
     ].join(" "),
   );
@@ -131,6 +144,27 @@ function normalizeCatalogProductRow(row: CatalogProductRow): CatalogProduct {
   const joinedBrand = getJoinedBrand(row);
   const brandDisplayName = joinedBrand?.name || row.brand_name || "";
 
+  const rawTranslations = row.translations;
+  const translationRecord =
+    rawTranslations && typeof rawTranslations === "object" && !Array.isArray(rawTranslations)
+      ? (rawTranslations as Record<string, unknown>)
+      : {};
+  const makeTranslation = (locale: ProductLocale): ProductTranslation => {
+    const value = translationRecord[locale];
+    const record =
+      value && typeof value === "object" && !Array.isArray(value)
+        ? (value as Record<string, unknown>)
+        : {};
+    return {
+      product_name:
+        typeof record.product_name === "string" ? record.product_name : row.product_name || "",
+      short_intro:
+        typeof record.short_intro === "string" ? record.short_intro : row.short_intro || "",
+      detail_html:
+        typeof record.detail_html === "string" ? record.detail_html : row.detail_html || "",
+    };
+  };
+
   return {
     id: row.id || "",
     brand_id: row.brand_id ?? joinedBrand?.id ?? null,
@@ -152,9 +186,21 @@ function normalizeCatalogProductRow(row: CatalogProductRow): CatalogProduct {
     is_featured: row.is_featured ?? false,
     skin_types: Array.isArray(row.skin_types) ? row.skin_types : [],
     concerns: Array.isArray(row.concerns) ? row.concerns : [],
+    translations: { vi: makeTranslation("vi"), en: makeTranslation("en") },
     created_at: row.created_at,
     updated_at: row.updated_at,
   };
+}
+
+export function getLocalizedProduct(product: CatalogProduct, locale: ProductLocale) {
+  return (
+    product.translations?.[locale] ??
+    product.translations?.en ?? {
+      product_name: product.product_name,
+      short_intro: product.short_intro,
+      detail_html: product.detail_html || "",
+    }
+  );
 }
 
 function normalizeLegacyCatalogProductRow(row: CatalogProductRow): CatalogProduct {

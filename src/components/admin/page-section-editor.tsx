@@ -5,6 +5,9 @@ import {
   PlainTextField,
 } from "@/components/admin/cms-form-fields";
 import { CmsMediaField } from "@/components/admin/cms-media-field";
+import aiAssistantImg from "@/assets/brand-ai-assistant.jpg";
+import jmellaImg from "@/assets/brand-jmella.jpg";
+import jmsolutionImg from "@/assets/brand-jmsolution.jpg";
 import type {
   B2BSectionContent,
   BrandSectionContent,
@@ -38,6 +41,7 @@ function ImageAssetField({
   contentLang,
   compareMode,
   t,
+  fallbackPreviewUrl,
 }: {
   label: string;
   value: PageImageAsset;
@@ -46,6 +50,7 @@ function ImageAssetField({
   contentLang: ContentLang;
   compareMode: boolean;
   t: T;
+  fallbackPreviewUrl?: string;
 }) {
   return (
     <CmsMediaField
@@ -62,6 +67,7 @@ function ImageAssetField({
       clearLabel={t("clearImage")}
       chooseLabel={t("chooseSectionImage")}
       uploadingLabel={t("uploadingImage")}
+      fallbackPreviewUrl={fallbackPreviewUrl}
     />
   );
 }
@@ -237,6 +243,20 @@ function BrandSectionsEditor({
                 }}
                 multiline
               />
+              <ImageAssetField
+                label={`Brand card image ${index + 1}`}
+                value={item.image}
+                onChange={(image) => {
+                  const items = [...value.brands];
+                  items[index] = { ...item, image };
+                  onChange({ ...value, brands: items });
+                }}
+                uploadPrefix={`page-content/sections/brand/card-${index + 1}`}
+                contentLang={contentLang}
+                compareMode={compareMode}
+                t={t}
+                fallbackPreviewUrl={index === 0 ? jmsolutionImg : jmellaImg}
+              />
             </div>
           ))}
         </div>
@@ -270,6 +290,7 @@ function BrandSectionsEditor({
           contentLang={contentLang}
           compareMode={compareMode}
           t={t}
+          fallbackPreviewUrl={aiAssistantImg}
         />
       </CmsPanel>
 

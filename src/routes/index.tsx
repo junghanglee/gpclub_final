@@ -1,7 +1,7 @@
 ﻿import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion, useScroll, useSpring, useTransform } from "framer-motion";
 import { ArrowRight, Download, FlaskConical, Globe2, ShieldCheck, Sparkles } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import gippyMainHero from "@/assets/gippy-main-hero.png";
 import { B2BInquiryDialog } from "@/components/site/B2BInquiryDialog";
 import {
@@ -10,7 +10,12 @@ import {
   SectionHeaderSkeleton,
 } from "@/components/site/SectionSkeletons";
 import { Button } from "@/components/ui/button";
-import { getCoverImage, useCatalogProducts } from "@/lib/catalog-products";
+import {
+  type CatalogProduct,
+  getCoverImage,
+  getLocalizedProduct,
+  useCatalogProducts,
+} from "@/lib/catalog-products";
 import { HomeContentProvider, useHomeContent } from "@/lib/home-content";
 import { useI18n } from "@/lib/i18n";
 import { useRepresentativeCatalog } from "@/lib/product-catalogs";
@@ -211,7 +216,22 @@ function HomePage() {
   const mascotY = useTransform(smooth, [0, 1], [0, -120]);
   const headlineY = useTransform(smooth, [0, 1], [0, 80]);
   const headlineOpacity = useTransform(smooth, [0, 0.8], [1, 0]);
+  const campaignVideoRef = useRef<HTMLVideoElement>(null);
+  const campaignVideoBackdropRef = useRef<HTMLVideoElement>(null);
   const [inquiryOpen, setInquiryOpen] = useState(false);
+
+  useEffect(() => {
+    const videos = [campaignVideoBackdropRef.current, campaignVideoRef.current].filter(
+      (video): video is HTMLVideoElement => Boolean(video),
+    );
+
+    videos.forEach((video) => {
+      video.muted = true;
+      void video.play().catch(() => {
+        // Some browsers defer autoplay until the tab becomes active.
+      });
+    });
+  }, []);
 
   return (
     <>
@@ -328,6 +348,42 @@ function HomePage() {
               />
             </div>
           </motion.div>
+        </div>
+      </section>
+
+      <section
+        aria-label="Jmella campaign video"
+        className="relative isolate overflow-hidden border-y border-border bg-black"
+      >
+        <div className="relative h-[clamp(220px,23.8vw,430px)] w-full overflow-hidden">
+          <video
+            ref={campaignVideoBackdropRef}
+            className="pointer-events-none absolute inset-[-8%] h-[116%] w-[116%] scale-110 object-cover opacity-75 blur-2xl saturate-125"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            aria-hidden="true"
+          >
+            <source src="/videos/jmella-hero.mp4" type="video/mp4" />
+          </video>
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 z-10 bg-[linear-gradient(90deg,rgba(0,0,0,0.28)_0%,rgba(0,0,0,0.04)_24%,rgba(0,0,0,0)_50%,rgba(0,0,0,0.04)_76%,rgba(0,0,0,0.28)_100%)]"
+          />
+          <video
+            ref={campaignVideoRef}
+            className="relative z-20 block h-full w-full object-contain object-center"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            aria-label="Jmella campaign film"
+          >
+            <source src="/videos/jmella-hero.mp4" type="video/mp4" />
+          </video>
         </div>
       </section>
 
@@ -519,32 +575,7 @@ function HomePage() {
           ) : (
             <div className="mt-10 grid gap-4 md:mt-14 md:grid-cols-3">
               {homeProducts.map((product) => (
-                <Link
-                  key={product.id}
-                  to="/products/$productId"
-                  params={{ productId: product.id }}
-                  className="group overflow-hidden border border-border bg-card transition hover:-translate-y-1 hover:shadow-soft"
-                >
-                  {getCoverImage(product) ? (
-                    <img
-                      src={getCoverImage(product)}
-                      alt={product.product_name}
-                      className="aspect-[4/3] w-full object-cover transition duration-500 group-hover:scale-105"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <ImagePlaceholder label={product.product_name} />
-                  )}
-                  <div className="p-5">
-                    <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary">
-                      {product.brand_name}
-                    </div>
-                    <h3 className="mt-2 font-display text-xl font-black">{product.product_name}</h3>
-                    <p className="mt-2 line-clamp-2 text-sm text-foreground/65">
-                      {product.short_intro}
-                    </p>
-                  </div>
-                </Link>
+                <HomeProductCard key={product.id} product={product} lang={lang} />
               ))}
               {homeProducts.length === 0 &&
                 homeContent.images.labels[lang].map((label, index) => (
@@ -610,6 +641,37 @@ function BilingualCard({ title, text }: { title: string; text: string }) {
       <h3 className="font-display text-xl font-black">{title}</h3>
       <p className="mt-4 text-sm leading-relaxed text-foreground/70">{text}</p>
     </article>
+  );
+}
+
+function HomeProductCard({ product, lang }: { product: CatalogProduct; lang: "vi" | "en" }) {
+  const localized = getLocalizedProduct(product, lang);
+  const cover = getCoverImage(product);
+
+  return (
+    <Link
+      to="/products/$productId"
+      params={{ productId: product.id }}
+      className="group overflow-hidden border border-border bg-card transition hover:-translate-y-1 hover:shadow-soft"
+    >
+      {cover ? (
+        <img
+          src={cover}
+          alt={localized.product_name}
+          className="aspect-[4/3] w-full object-cover transition duration-500 group-hover:scale-105"
+          loading="lazy"
+        />
+      ) : (
+        <ImagePlaceholder label={localized.product_name} />
+      )}
+      <div className="p-5">
+        <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary">
+          {product.brand_name}
+        </div>
+        <h3 className="mt-2 font-display text-xl font-black">{localized.product_name}</h3>
+        <p className="mt-2 line-clamp-2 text-sm text-foreground/65">{localized.short_intro}</p>
+      </div>
+    </Link>
   );
 }
 

@@ -1,7 +1,8 @@
-import { Pencil, Plus, RefreshCw, Trash2, X } from "lucide-react";
+import { CheckCircle2, Pencil, Plus, RefreshCw, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { type ADMIN_I18N, type AdminLang, tx } from "@/components/admin/admin-i18n";
+import { AdminImageUploader } from "@/components/admin/admin-image-uploader";
 import { PaginationControls } from "@/components/admin/admin-pagination-controls";
 import { ADMIN_PAGE_SIZE, pageRange } from "@/components/admin/admin-shared";
 import {
@@ -28,6 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -38,8 +40,15 @@ import {
 } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database, Json } from "@/integrations/supabase/types";
-import type { CatalogProduct, ProductMedia } from "@/lib/catalog-products";
-import { sanitizeProductDetailHtml } from "@/lib/product-detail-html";
+import { isOptimisticConflict } from "@/lib/admin-save-errors";
+import { jsonRecordContains } from "@/lib/json-value-equality";
+import type {
+  CatalogProduct,
+  ProductLocale,
+  ProductMedia,
+  ProductTranslations,
+} from "@/lib/catalog-products";
+import { productDetailTextFromHtml, sanitizeProductDetailHtml } from "@/lib/product-detail-html";
 
 type AdminProductUpdate = Database["public"]["Tables"]["admin_products"]["Update"];
 
@@ -50,6 +59,23 @@ type BrandOption = {
   published: boolean;
   sort_order: number;
 };
+
+const PRODUCT_LOCALES: Array<{ value: ProductLocale; label: string }> = [
+  { value: "vi", label: "Tiếng Việt" },
+  { value: "en", label: "English" },
+];
+
+function productTranslations(product: CatalogProduct): ProductTranslations {
+  const fallback = {
+    product_name: product.product_name || "",
+    short_intro: product.short_intro || "",
+    detail_html: product.detail_html || "",
+  };
+  return {
+    vi: { ...fallback, ...product.translations?.vi },
+    en: { ...fallback, ...product.translations?.en },
+  };
+}
 function ProductTagField({
   label,
   placeholder,
@@ -127,6 +153,10 @@ function emptyProduct(): CatalogProduct {
     is_featured: false,
     skin_types: [],
     concerns: [],
+    translations: {
+      vi: { product_name: "", short_intro: "", detail_html: "" },
+      en: { product_name: "", short_intro: "", detail_html: "" },
+    },
   };
 }
 
@@ -138,10 +168,16 @@ export default function ProductsAdminTab({ lang }: { lang: AdminLang }) {
   const [editing, setEditing] = useState<CatalogProduct | null>(null);
   const [search, setSearch] = useState("");
   const [brandFilter, setBrandFilter] = useState("All");
+  const [publicationFilter, setPublicationFilter] = useState<"all" | "published">("all");
   const [brands, setBrands] = useState<BrandOption[]>([]);
   const [page, setPage] = useState(0);
   const [totalRows, setTotalRows] = useState(0);
-  const detailEditorRef = useRef<ProductDetailEditorHandle>(null);
+  const [saving, setSaving] = useState(false);
+  const [productLocale, setProductLocale] = useState<ProductLocale>("vi");
+  const detailEditorRefs = useRef<Record<ProductLocale, ProductDetailEditorHandle | null>>({
+    vi: null,
+    en: null,
+  });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -163,6 +199,9 @@ export default function ProductsAdminTab({ lang }: { lang: AdminLang }) {
     if (brandFilter !== "All") {
       query = query.eq("brand_id", brandFilter);
     }
+    if (publicationFilter === "published") {
+      query = query.eq("published", true);
+    }
     if (trimmedSearch) {
       query = query.ilike("product_name", `%${trimmedSearch}%`);
     }
@@ -175,7 +214,7 @@ export default function ProductsAdminTab({ lang }: { lang: AdminLang }) {
       setTotalRows(productResult.count ?? productResult.data?.length ?? 0);
     }
     setLoading(false);
-  }, [brandFilter, page, search]);
+  }, [brandFilter, page, publicationFilter, search]);
 
   useEffect(() => {
     void load();
@@ -183,7 +222,7 @@ export default function ProductsAdminTab({ lang }: { lang: AdminLang }) {
 
   useEffect(() => {
     setPage(0);
-  }, [search, brandFilter]);
+  }, [search, brandFilter, publicationFilter]);
 
   const startNew = () => {
     const primaryBrand = brands.find((brand) => brand.published) ?? brands[0];
@@ -197,24 +236,49 @@ export default function ProductsAdminTab({ lang }: { lang: AdminLang }) {
       brand_id: primaryBrand.id,
       brand_name: primaryBrand.name,
     });
+    setProductLocale("vi");
     setOpen(true);
   };
 
   const save = async () => {
-    if (!editing) return;
+    if (!editing || saving) return;
     const selectedBrand = brands.find((brand) => brand.id === editing.brand_id);
     if (!selectedBrand) {
       toast.error("Select a brand before saving this product.");
       return;
     }
-    const detailHtml = detailEditorRef.current?.commit() ?? editing.detail_html;
+    const translations = productTranslations(editing);
+    for (const locale of PRODUCT_LOCALES.map(({ value }) => value)) {
+      translations[locale].detail_html = sanitizeProductDetailHtml(
+        detailEditorRefs.current[locale]?.commit() ?? translations[locale].detail_html,
+      );
+    }
+
+    const incompleteLocale = PRODUCT_LOCALES.find(({ value }) => {
+      const localized = translations[value];
+      return (
+        !localized.product_name.trim() ||
+        !localized.short_intro.trim() ||
+        !productDetailTextFromHtml(localized.detail_html)
+      );
+    });
+    if (incompleteLocale) {
+      setProductLocale(incompleteLocale.value);
+      toast.error(
+        `${incompleteLocale.label}: product name, short intro, and details are required.`,
+      );
+      return;
+    }
+
+    const canonical = translations.en;
     const payload = {
       brand_id: selectedBrand.id,
       brand_name: selectedBrand.name,
-      product_name: editing.product_name,
+      product_name: canonical.product_name,
       product_type: editing.product_type,
-      short_intro: editing.short_intro,
-      detail_html: sanitizeProductDetailHtml(detailHtml),
+      short_intro: canonical.short_intro,
+      detail_html: canonical.detail_html,
+      translations: translations as unknown as Json,
       media: editing.media,
       conditions: editing.conditions,
       cover_image_url: editing.cover_image_url || null,
@@ -226,11 +290,27 @@ export default function ProductsAdminTab({ lang }: { lang: AdminLang }) {
       skin_types: editing.skin_types ?? [],
       concerns: editing.concerns ?? [],
     };
+    setSaving(true);
     const result = editing.id
-      ? await supabase.from("admin_products").update(payload).eq("id", editing.id)
-      : await supabase.from("admin_products").insert(payload);
+      ? await supabase
+          .from("admin_products")
+          .update(payload)
+          .eq("id", editing.id)
+          .eq("updated_at", editing.updated_at ?? "")
+          .select("*")
+          .single()
+      : await supabase.from("admin_products").insert(payload).select("*").single();
+    setSaving(false);
     if (result.error) {
+      if (editing.id && isOptimisticConflict(result.error)) {
+        toast.error("This product changed in another editor. Your draft was kept.");
+        return;
+      }
       toast.error(result.error.message);
+      return;
+    }
+    if (!jsonRecordContains(result.data, payload)) {
+      toast.error("The product save could not be verified. Your draft was kept.");
       return;
     }
     toast.success(t("saved"));
@@ -320,7 +400,7 @@ export default function ProductsAdminTab({ lang }: { lang: AdminLang }) {
         </div>
       </div>
 
-      <div className="mb-4 grid gap-3 rounded-2xl border border-border/60 bg-muted/20 p-3 md:grid-cols-[1fr_180px_140px]">
+      <div className="mb-4 grid gap-3 rounded-2xl border border-border/60 bg-muted/20 p-3 md:grid-cols-[minmax(240px,1fr)_180px_auto_140px]">
         <Input
           placeholder="Search product name, brand, type"
           value={search}
@@ -339,6 +419,33 @@ export default function ProductsAdminTab({ lang }: { lang: AdminLang }) {
             ))}
           </SelectContent>
         </Select>
+        <div
+          className="inline-flex h-10 items-center rounded-md border border-border bg-card p-1"
+          role="group"
+          aria-label="Publication status filter"
+        >
+          <Button
+            type="button"
+            size="sm"
+            variant={publicationFilter === "all" ? "secondary" : "ghost"}
+            className="h-8 px-3"
+            aria-pressed={publicationFilter === "all"}
+            onClick={() => setPublicationFilter("all")}
+          >
+            {t("all")}
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={publicationFilter === "published" ? "secondary" : "ghost"}
+            className="h-8 px-3"
+            aria-pressed={publicationFilter === "published"}
+            onClick={() => setPublicationFilter("published")}
+          >
+            <CheckCircle2 className="h-3.5 w-3.5" />
+            {t("published")}
+          </Button>
+        </div>
         <div className="flex items-center justify-center rounded-md border bg-card px-3 text-sm font-bold">
           {rows.length} / {totalRows}
         </div>
@@ -432,7 +539,8 @@ export default function ProductsAdminTab({ lang }: { lang: AdminLang }) {
                       variant="ghost"
                       size="icon"
                       onClick={() => {
-                        setEditing(row);
+                        setEditing({ ...row, translations: productTranslations(row) });
+                        setProductLocale("vi");
                         setOpen(true);
                       }}
                     >
@@ -497,14 +605,6 @@ export default function ProductsAdminTab({ lang }: { lang: AdminLang }) {
                   </Select>
                 </div>
                 <div>
-                  <Label>{t("productName")}</Label>
-                  <Input
-                    className="mt-1.5"
-                    value={editing.product_name}
-                    onChange={(e) => setEditing({ ...editing, product_name: e.target.value })}
-                  />
-                </div>
-                <div>
                   <Label>{t("productType")}</Label>
                   <Input
                     className="mt-1.5"
@@ -536,20 +636,129 @@ export default function ProductsAdminTab({ lang }: { lang: AdminLang }) {
                   />
                 </div>
               </div>
-              <div>
-                <Label>{t("shortIntro")}</Label>
-                <Input
-                  className="mt-1.5"
-                  value={editing.short_intro}
-                  onChange={(e) => setEditing({ ...editing, short_intro: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label>{t("coverImage")}</Label>
-                <Input
-                  className="mt-1.5"
+              <Tabs
+                value={productLocale}
+                onValueChange={(value) => setProductLocale(value as ProductLocale)}
+                className="rounded-2xl border border-border p-4"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-sm font-semibold">Localized product content</h3>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Complete both languages before saving.
+                    </p>
+                  </div>
+                  <TabsList aria-label="Product content language">
+                    {PRODUCT_LOCALES.map((locale) => (
+                      <TabsTrigger key={locale.value} value={locale.value}>
+                        {locale.label}
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                </div>
+
+                {PRODUCT_LOCALES.map((locale) => {
+                  const translations = productTranslations(editing);
+                  const localized = translations[locale.value];
+                  return (
+                    <TabsContent
+                      key={locale.value}
+                      value={locale.value}
+                      forceMount
+                      className="space-y-4 data-[state=inactive]:hidden"
+                    >
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div>
+                          <Label htmlFor={`product-name-${locale.value}`}>
+                            {t("productName")} ({locale.label})
+                          </Label>
+                          <Input
+                            id={`product-name-${locale.value}`}
+                            className="mt-1.5"
+                            value={localized.product_name}
+                            onChange={(event) =>
+                              setEditing({
+                                ...editing,
+                                translations: {
+                                  ...translations,
+                                  [locale.value]: {
+                                    ...localized,
+                                    product_name: event.target.value,
+                                  },
+                                },
+                              })
+                            }
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor={`product-intro-${locale.value}`}>
+                            {t("shortIntro")} ({locale.label})
+                          </Label>
+                          <Input
+                            id={`product-intro-${locale.value}`}
+                            className="mt-1.5"
+                            value={localized.short_intro}
+                            onChange={(event) =>
+                              setEditing({
+                                ...editing,
+                                translations: {
+                                  ...translations,
+                                  [locale.value]: {
+                                    ...localized,
+                                    short_intro: event.target.value,
+                                  },
+                                },
+                              })
+                            }
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <Label
+                          id={`product-detail-editor-label-${locale.value}`}
+                          className="mb-2 block"
+                        >
+                          {t("detailEditor")} ({locale.label})
+                        </Label>
+                        <ProductDetailEditor
+                          ref={(instance) => {
+                            detailEditorRefs.current[locale.value] = instance;
+                          }}
+                          labelId={`product-detail-editor-label-${locale.value}`}
+                          value={localized.detail_html}
+                          onChange={(detail_html) =>
+                            setEditing((current) => {
+                              if (!current) return current;
+                              const currentTranslations = productTranslations(current);
+                              return {
+                                ...current,
+                                translations: {
+                                  ...currentTranslations,
+                                  [locale.value]: {
+                                    ...currentTranslations[locale.value],
+                                    detail_html,
+                                  },
+                                },
+                              };
+                            })
+                          }
+                        />
+                      </div>
+                    </TabsContent>
+                  );
+                })}
+              </Tabs>
+              <div className="rounded-2xl border border-border p-4">
+                <AdminImageUploader
+                  label={t("coverImage")}
                   value={editing.cover_image_url || ""}
-                  onChange={(e) => setEditing({ ...editing, cover_image_url: e.target.value })}
+                  onChange={(cover_image_url) => setEditing({ ...editing, cover_image_url })}
+                  uploadPrefix="products/cover"
+                  previewAlt={editing.product_name || t("coverImage")}
+                  hint="Enter an image URL or choose an image from your computer."
+                  clearLabel="Remove cover image"
+                  chooseLabel="Choose cover image"
+                  uploadingLabel="Uploading cover image..."
                 />
               </div>
 
@@ -598,18 +807,6 @@ export default function ProductsAdminTab({ lang }: { lang: AdminLang }) {
                   placeholder="e.g. Hydration, Brightening, Anti-aging, Pores, Fragrance, Body care"
                   values={editing.concerns ?? []}
                   onChange={(next) => setEditing({ ...editing, concerns: next })}
-                />
-              </div>
-
-              <div>
-                <Label id="product-detail-editor-label" className="mb-2 block">
-                  {t("detailEditor")}
-                </Label>
-                <ProductDetailEditor
-                  ref={detailEditorRef}
-                  labelId="product-detail-editor-label"
-                  value={editing.detail_html || ""}
-                  onChange={(detail_html) => setEditing({ ...editing, detail_html })}
                 />
               </div>
 
@@ -739,10 +936,12 @@ export default function ProductsAdminTab({ lang }: { lang: AdminLang }) {
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>
+            <Button variant="outline" onClick={() => setOpen(false)} disabled={saving}>
               {t("cancel")}
             </Button>
-            <Button onClick={save}>{t("save")}</Button>
+            <Button onClick={save} disabled={saving}>
+              {saving ? "Saving..." : t("save")}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

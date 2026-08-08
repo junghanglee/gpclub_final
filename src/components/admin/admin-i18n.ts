@@ -448,6 +448,21 @@ export const ADMIN_I18N = {
     vi: "Mô tả ảnh",
     ko: "Image description",
   },
+  restoreSavedHero: {
+    en: "Restore saved hero images",
+    vi: "Khôi phục ảnh hero đã lưu",
+    ko: "저장된 히어로 이미지로 초기화",
+  },
+  restoreSavedHeroHint: {
+    en: "Reverts the foreground, desktop background, and mobile background to the last saved version.",
+    vi: "Khôi phục ảnh chính, nền máy tính và nền di động về phiên bản đã lưu gần nhất.",
+    ko: "전경 이미지와 PC 및 모바일 배경을 마지막 저장 상태로 되돌립니다.",
+  },
+  restoredSavedHero: {
+    en: "Saved hero images restored.",
+    vi: "Đã khôi phục ảnh hero đã lưu.",
+    ko: "저장된 히어로 이미지를 복원했습니다.",
+  },
   masksValue: { en: "Masks value", vi: "Giá trị khẩu trang", ko: "마스크 값" },
   countriesValue: {
     en: "Countries value",

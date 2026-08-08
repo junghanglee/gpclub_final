@@ -9,6 +9,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import gippyAiHero from "@/assets/gippy-ai-hero.png";
+import { HeroBackground } from "@/components/site/HeroBackground";
 import { HeroCopySkeleton } from "@/components/site/SectionSkeletons";
 import { Button } from "@/components/ui/button";
 import { openGippy } from "@/lib/gippy-bus";
@@ -312,6 +313,7 @@ function GippyHeroSection({
   if (loading) {
     return (
       <section className="relative isolate overflow-hidden border-b border-border/60 bg-gradient-luxe">
+        <HeroBackground background={page.heroBackground} />
         <div
           aria-hidden
           className="pointer-events-none absolute -top-36 right-[-12%] h-[520px] w-[520px] rounded-full bg-primary/10 blur-3xl"
@@ -341,6 +343,7 @@ function GippyHeroSection({
   }
   return (
     <section className="relative isolate overflow-hidden border-b border-border/60 bg-gradient-luxe">
+      <HeroBackground background={page.heroBackground} />
       <div
         aria-hidden
         className="pointer-events-none absolute -top-36 right-[-12%] h-[520px] w-[520px] rounded-full bg-primary/10 blur-3xl"

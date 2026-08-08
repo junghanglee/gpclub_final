@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { CalendarDays, ExternalLink, PackageOpen, PlayCircle, Sparkles } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import gippyEventHero from "@/assets/gippy-event-hero.png";
+import { HeroBackground } from "@/components/site/HeroBackground";
 import {
   EventCardSkeleton,
   EventMediaSkeleton,
@@ -135,6 +136,7 @@ function EventsPage() {
   return (
     <main className="overflow-hidden bg-background">
       <section className="relative isolate overflow-hidden border-b border-border/60 bg-gradient-luxe">
+        <HeroBackground background={page.heroBackground} />
         <div
           aria-hidden
           className="pointer-events-none absolute -top-36 right-[-12%] h-[520px] w-[520px] rounded-full bg-primary/10 blur-3xl"

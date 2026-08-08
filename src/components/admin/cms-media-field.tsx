@@ -24,6 +24,7 @@ export function CmsMediaField({
   clearLabel,
   chooseLabel,
   uploadingLabel,
+  fallbackPreviewUrl,
 }: {
   label: string;
   value: CmsImageAsset;
@@ -38,6 +39,7 @@ export function CmsMediaField({
   clearLabel: string;
   chooseLabel: string;
   uploadingLabel: string;
+  fallbackPreviewUrl?: string;
 }) {
   return (
     <div className="space-y-3 rounded-xl border border-border/60 bg-background/50 p-4">
@@ -47,6 +49,7 @@ export function CmsMediaField({
         onChange={(url) => onChange({ ...value, url })}
         uploadPrefix={uploadPrefix}
         previewAlt={value.alt.en || value.alt.vi || label}
+        fallbackPreviewUrl={fallbackPreviewUrl}
         hint={uploadHint}
         clearLabel={clearLabel}
         chooseLabel={chooseLabel}

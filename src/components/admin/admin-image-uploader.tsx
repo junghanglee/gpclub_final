@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
+import { validateAdminImageFile, verifyBrowserImage } from "@/lib/admin-image-validation";
 
 const ADMIN_IMAGE_BUCKET = "event-media";
 const ADMIN_IMAGE_ACCEPT = "image/*";
@@ -25,6 +26,7 @@ type AdminImageUploaderProps = {
   onChange: (value: string) => void;
   uploadPrefix: string;
   previewAlt: string;
+  fallbackPreviewUrl?: string;
   hint?: string;
   clearLabel?: string;
   chooseLabel?: string;
@@ -37,6 +39,7 @@ export function AdminImageUploader({
   onChange,
   uploadPrefix,
   previewAlt,
+  fallbackPreviewUrl,
   hint,
   clearLabel = "Clear image",
   chooseLabel = "Choose image",
@@ -45,28 +48,45 @@ export function AdminImageUploader({
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [uploading, setUploading] = useState(false);
   const [dragging, setDragging] = useState(false);
+  const previewUrl = value || fallbackPreviewUrl || "";
 
   const uploadFile = async (file: File) => {
-    if (!file.type.startsWith("image/")) {
-      toast.error("Please upload an image file.");
+    const validationError = validateAdminImageFile(file);
+    if (validationError) {
+      toast.error(validationError);
       return;
     }
 
     setUploading(true);
     const path = `${uploadPrefix}/${todayPath()}/${crypto.randomUUID()}-${safeFileName(file.name)}`;
-    const { error } = await supabase.storage.from(ADMIN_IMAGE_BUCKET).upload(path, file, {
-      cacheControl: "3600",
-      upsert: true,
-    });
-    setUploading(false);
+    const localPreviewUrl = URL.createObjectURL(file);
 
-    if (error) {
-      toast.error(error.message);
-      return;
+    try {
+      await verifyBrowserImage(localPreviewUrl);
+      const { error } = await supabase.storage.from(ADMIN_IMAGE_BUCKET).upload(path, file, {
+        cacheControl: "31536000",
+        contentType: file.type,
+        upsert: false,
+      });
+      if (error) throw error;
+
+      const { data } = supabase.storage.from(ADMIN_IMAGE_BUCKET).getPublicUrl(path);
+      try {
+        await verifyBrowserImage(data.publicUrl);
+      } catch (error) {
+        await supabase.storage.from(ADMIN_IMAGE_BUCKET).remove([path]);
+        throw error;
+      }
+      onChange(data.publicUrl);
+      toast.success("Image uploaded and verified. Save the page to publish it.");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Image upload failed. Please try again.",
+      );
+    } finally {
+      URL.revokeObjectURL(localPreviewUrl);
+      setUploading(false);
     }
-
-    const { data } = supabase.storage.from(ADMIN_IMAGE_BUCKET).getPublicUrl(path);
-    onChange(data.publicUrl);
   };
 
   const handleFile = (file?: File) => {
@@ -116,13 +136,16 @@ export function AdminImageUploader({
         <input
           ref={inputRef}
           type="file"
-          accept={ADMIN_IMAGE_ACCEPT}
+          accept="image/jpeg,image/png,image/webp"
           className="hidden"
-          onChange={(event) => handleFile(event.target.files?.[0])}
+          onChange={(event) => {
+            handleFile(event.target.files?.[0]);
+            event.target.value = "";
+          }}
         />
-        {value ? (
+        {previewUrl ? (
           <img
-            src={value}
+            src={previewUrl}
             alt={previewAlt || label}
             className="max-h-56 w-full rounded-xl object-cover"
           />

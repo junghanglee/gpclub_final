@@ -15,6 +15,11 @@ export type PageHeroImage = {
   alt: PageLocalizedText;
 };
 
+export type PageHeroBackground = {
+  desktopUrl: string;
+  mobileUrl: string;
+};
+
 export type PageImageAsset = {
   url: string;
   alt: PageLocalizedText;
@@ -39,6 +44,7 @@ export type BrandSectionContent = {
     headline: PageLocalizedText;
     quote: PageLocalizedText;
     body: PageLocalizedText;
+    image: PageImageAsset;
   }>;
   advisor: {
     kicker: string;
@@ -148,11 +154,13 @@ export type PageEditableContent = {
   primaryCta: PageLocalizedText;
   secondaryCta: PageLocalizedText;
   heroImage: PageHeroImage;
+  heroBackground: PageHeroBackground;
   sections: PageSections;
 };
 
 const text = (vi: string, en: string): PageLocalizedText => ({ vi, en });
 const emptyHeroImage = (): PageHeroImage => ({ url: "", alt: text("", "") });
+const emptyHeroBackground = (): PageHeroBackground => ({ desktopUrl: "", mobileUrl: "" });
 const emptyImageAsset = (): PageImageAsset => ({ url: "", alt: text("", "") });
 
 const DEFAULT_BRAND_SECTIONS: BrandSectionContent = {
@@ -214,6 +222,7 @@ const DEFAULT_BRAND_SECTIONS: BrandSectionContent = {
         "JMsolution kết hợp công nghệ da liễu hiện đại với các thành phần hoạt tính được chọn lọc trên toàn thế giới.",
         "JMsolution combines advanced dermatological technology with selected active ingredients from around the world.",
       ),
+      image: emptyImageAsset(),
     },
     {
       id: "jmella",
@@ -231,6 +240,7 @@ const DEFAULT_BRAND_SECTIONS: BrandSectionContent = {
         "Jmella kết hợp công nghệ chăm sóc da/tóc với nghệ thuật chế tác hương thơm cao cấp từ Pháp.",
         "Jmella bridges advanced skin and haircare technology with premium French fragrance artistry.",
       ),
+      image: emptyImageAsset(),
     },
   ],
   advisor: {
@@ -585,6 +595,7 @@ export const DEFAULT_PAGE_CONTENT: Record<PageContentKey, PageEditableContent> =
     primaryCta: text("Trở thành đối tác", "Become a Partner"),
     secondaryCta: text("Xem sản phẩm", "View Products"),
     heroImage: emptyHeroImage(),
+    heroBackground: emptyHeroBackground(),
     sections: { brand: DEFAULT_BRAND_SECTIONS },
   },
   products: {
@@ -598,6 +609,7 @@ export const DEFAULT_PAGE_CONTENT: Record<PageContentKey, PageEditableContent> =
     primaryCta: text("gửi yêu cầu B2B", "start a B2B inquiry"),
     secondaryCta: text("Brochure", "Brochure"),
     heroImage: emptyHeroImage(),
+    heroBackground: emptyHeroBackground(),
     sections: {},
   },
   "gippy-ai": {
@@ -611,6 +623,7 @@ export const DEFAULT_PAGE_CONTENT: Record<PageContentKey, PageEditableContent> =
     primaryCta: text("Liên hệ GPCLUB", "Contact GPCLUB"),
     secondaryCta: text("Xem chủ đề", "View topics"),
     heroImage: emptyHeroImage(),
+    heroBackground: emptyHeroBackground(),
     sections: { gippyAi: DEFAULT_GIPPY_AI_SECTIONS },
   },
   events: {
@@ -624,6 +637,7 @@ export const DEFAULT_PAGE_CONTENT: Record<PageContentKey, PageEditableContent> =
     primaryCta: text("", ""),
     secondaryCta: text("", ""),
     heroImage: emptyHeroImage(),
+    heroBackground: emptyHeroBackground(),
     sections: {},
   },
   b2b: {
@@ -637,6 +651,7 @@ export const DEFAULT_PAGE_CONTENT: Record<PageContentKey, PageEditableContent> =
     primaryCta: text("Gửi yêu cầu hợp tác", "Start partnership inquiry"),
     secondaryCta: text("", ""),
     heroImage: emptyHeroImage(),
+    heroBackground: emptyHeroBackground(),
     sections: { b2b: DEFAULT_B2B_SECTIONS },
   },
   contact: {
@@ -653,6 +668,7 @@ export const DEFAULT_PAGE_CONTENT: Record<PageContentKey, PageEditableContent> =
     primaryCta: text("", ""),
     secondaryCta: text("", ""),
     heroImage: emptyHeroImage(),
+    heroBackground: emptyHeroBackground(),
     sections: {},
   },
 };
@@ -674,6 +690,14 @@ function mergeHeroImage(base: PageHeroImage, extra: unknown): PageHeroImage {
   return {
     url: typeof src.url === "string" ? src.url : base.url,
     alt: mergeLocalized(base.alt, src.alt),
+  };
+}
+
+function mergeHeroBackground(base: PageHeroBackground, extra: unknown): PageHeroBackground {
+  const src = isObj(extra) ? extra : {};
+  return {
+    desktopUrl: typeof src.desktopUrl === "string" ? src.desktopUrl : base.desktopUrl,
+    mobileUrl: typeof src.mobileUrl === "string" ? src.mobileUrl : base.mobileUrl,
   };
 }
 
@@ -722,6 +746,7 @@ function mergeBrandSections(base: BrandSectionContent, extra: unknown): BrandSec
         headline: mergeLocalized(item.headline, next.headline),
         quote: mergeLocalized(item.quote, next.quote),
         body: mergeLocalized(item.body, next.body),
+        image: mergeImageAsset(item.image, next.image),
       };
     }),
     advisor: {
@@ -886,6 +911,7 @@ export function mergePageContent(key: PageContentKey, value: unknown): PageEdita
     primaryCta: mergeLocalized(base.primaryCta, src.primaryCta),
     secondaryCta: mergeLocalized(base.secondaryCta, src.secondaryCta),
     heroImage: mergeHeroImage(base.heroImage, src.heroImage),
+    heroBackground: mergeHeroBackground(base.heroBackground, src.heroBackground),
     sections: mergePageSections(base.sections, src.sections),
   };
 }

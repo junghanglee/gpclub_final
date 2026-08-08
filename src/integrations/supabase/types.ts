@@ -26,6 +26,7 @@ export type Database = {
           published: boolean;
           short_intro: string;
           skin_types: string[];
+          translations: Json;
           concerns: string[];
           sort_order: number;
           updated_at: string;
@@ -48,6 +49,7 @@ export type Database = {
           published?: boolean;
           short_intro?: string;
           skin_types?: string[];
+          translations?: Json;
           sort_order?: number;
           updated_at?: string;
         };
@@ -69,6 +71,7 @@ export type Database = {
           published?: boolean;
           short_intro?: string;
           skin_types?: string[];
+          translations?: Json;
           sort_order?: number;
           updated_at?: string;
         };
@@ -620,6 +623,30 @@ export type Database = {
         };
         Relationships: [];
       };
+      home_content_revisions: {
+        Row: {
+          content_key: string;
+          created_at: string;
+          created_by: string | null;
+          id: string;
+          value: Json;
+        };
+        Insert: {
+          content_key: string;
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          value: Json;
+        };
+        Update: {
+          content_key?: string;
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          value?: Json;
+        };
+        Relationships: [];
+      };
       popups: {
         Row: {
           active: boolean;
@@ -715,6 +742,21 @@ export type Database = {
           _user_id: string;
         };
         Returns: boolean;
+      };
+      save_home_content_version: {
+        Args: {
+          p_expected_updated_at?: string;
+          p_key: string;
+          p_value: Json;
+        };
+        Returns: Database["public"]["Tables"]["home_content"]["Row"];
+      };
+      save_site_settings_version: {
+        Args: {
+          p_expected_updated_at?: Json;
+          p_values: Json;
+        };
+        Returns: Database["public"]["Tables"]["site_settings"]["Row"][];
       };
     };
     Enums: {
