@@ -34,6 +34,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { type CatalogProduct, getCoverImage, normalizedSearchText } from "@/lib/catalog-products";
 import { resolveCatalogCoverImage } from "@/lib/catalog-cover";
+import { selectCatalogTemplate, toggleCatalogProduct } from "@/lib/catalog-editor-state";
 import { CATALOG_TEMPLATES, type CatalogTemplate } from "@/lib/catalog-templates";
 import {
   createCatalogId,
@@ -234,11 +235,9 @@ export default function ProductCatalogsAdminTab({ lang }: { lang: AdminLang }) {
   };
 
   const toggleProduct = (productId: string, checked: boolean) => {
-    if (!editing) return;
-    const productIds = checked
-      ? Array.from(new Set([...editing.product_ids, productId]))
-      : editing.product_ids.filter((id) => id !== productId);
-    setEditing({ ...editing, product_ids: productIds });
+    setEditing((current) =>
+      current ? toggleCatalogProduct(current, productId, checked) : current,
+    );
   };
 
   const setSelectedProducts = (productIds: string[]) => {
@@ -680,7 +679,11 @@ export default function ProductCatalogsAdminTab({ lang }: { lang: AdminLang }) {
                         key={template.id}
                         type="button"
                         aria-pressed={editing.template === template.id}
-                        onClick={() => setEditing({ ...editing, template: template.id })}
+                        onClick={() =>
+                          setEditing((current) =>
+                            current ? selectCatalogTemplate(current, template.id) : current,
+                          )
+                        }
                         className={`group overflow-hidden rounded-xl border text-left transition ${editing.template === template.id ? "border-primary ring-2 ring-primary/40" : "border-white/20 hover:border-white/50"}`}
                       >
                         <CatalogTemplateThumbnail template={template.id} />
