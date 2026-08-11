@@ -14,6 +14,7 @@ import { HeroCopySkeleton } from "@/components/site/SectionSkeletons";
 import { Button } from "@/components/ui/button";
 import { openGippy } from "@/lib/gippy-bus";
 import { useI18n } from "@/lib/i18n";
+import { isHeroImageEnabled } from "@/lib/hero-image-visibility";
 import { usePageContent } from "@/lib/page-content";
 
 export const Route = createFileRoute("/gippy-ai")({
@@ -310,6 +311,7 @@ function GippyHeroSection({
   const { lang } = useI18n();
   const heroImageSrc = page.heroImage.url || gippyAiHero;
   const heroImageAlt = page.heroImage.alt[lang] || "Gippy AI K-Beauty partner consultant mascot";
+  const showHeroImage = isHeroImageEnabled(page.heroImage);
   if (loading) {
     return (
       <section className="relative isolate overflow-hidden border-b border-border/60 bg-gradient-luxe">
@@ -323,20 +325,24 @@ function GippyHeroSection({
           className="pointer-events-none absolute -bottom-44 -left-24 h-[420px] w-[420px] rounded-full bg-accent/60 blur-3xl"
         />
         <div className="relative mx-auto grid min-h-[560px] w-full max-w-[1200px] grid-cols-1 items-center gap-8 px-4 py-12 sm:min-h-[620px] sm:px-6 md:py-16 lg:min-h-[640px] lg:grid-cols-12 lg:px-10">
-          <div className="text-center lg:col-span-7 lg:text-left">
+          <div
+            className={`text-center lg:text-left ${showHeroImage ? "lg:col-span-7" : "lg:col-span-12 lg:max-w-4xl"}`}
+          >
             <HeroCopySkeleton withCta />
           </div>
-          <div className="relative flex justify-center lg:col-span-5 lg:justify-end">
-            <div className="relative aspect-[4/5] w-full max-w-[342px] sm:max-w-[342px]">
-              <img
-                src={heroImageSrc}
-                alt={heroImageAlt}
-                loading="eager"
-                decoding="async"
-                className="relative z-10 h-full w-full object-contain"
-              />
+          {showHeroImage ? (
+            <div className="relative flex justify-center lg:col-span-5 lg:justify-end">
+              <div className="relative aspect-[4/5] w-full max-w-[342px] sm:max-w-[342px]">
+                <img
+                  src={heroImageSrc}
+                  alt={heroImageAlt}
+                  loading="eager"
+                  decoding="async"
+                  className="relative z-10 h-full w-full object-contain"
+                />
+              </div>
             </div>
-          </div>
+          ) : null}
         </div>
       </section>
     );
@@ -353,7 +359,9 @@ function GippyHeroSection({
         className="pointer-events-none absolute -bottom-44 -left-24 h-[420px] w-[420px] rounded-full bg-accent/60 blur-3xl"
       />
       <div className="relative mx-auto grid min-h-[560px] w-full max-w-[1200px] grid-cols-1 items-center gap-8 px-4 py-12 sm:min-h-[620px] sm:px-6 md:py-16 lg:min-h-[640px] lg:grid-cols-12 lg:px-10">
-        <div className="text-center lg:col-span-7 lg:text-left">
+        <div
+          className={`text-center lg:text-left ${showHeroImage ? "lg:col-span-7" : "lg:col-span-12 lg:max-w-4xl"}`}
+        >
           <div className="inline-flex items-center gap-2 border-b border-primary/40 pb-1 text-[11px] font-bold uppercase tracking-[0.28em] text-primary">
             <Sparkles className="h-3 w-3" /> {page.kicker[lang]}
           </div>
@@ -409,21 +417,23 @@ function GippyHeroSection({
           </div>
         </div>
 
-        <div className="relative flex justify-center lg:col-span-5 lg:justify-end">
-          <div className="relative aspect-[4/5] w-full max-w-[342px] sm:max-w-[342px]">
-            <div
-              aria-hidden
-              className="absolute left-[10%] top-[8%] h-10 w-10 rounded-full bg-primary/20 blur-sm"
-            />
-            <img
-              src={heroImageSrc}
-              alt={heroImageAlt}
-              loading="eager"
-              decoding="async"
-              className="relative z-10 h-full w-full object-contain "
-            />
+        {showHeroImage ? (
+          <div className="relative flex justify-center lg:col-span-5 lg:justify-end">
+            <div className="relative aspect-[4/5] w-full max-w-[342px] sm:max-w-[342px]">
+              <div
+                aria-hidden
+                className="absolute left-[10%] top-[8%] h-10 w-10 rounded-full bg-primary/20 blur-sm"
+              />
+              <img
+                src={heroImageSrc}
+                alt={heroImageAlt}
+                loading="eager"
+                decoding="async"
+                className="relative z-10 h-full w-full object-contain "
+              />
+            </div>
           </div>
-        </div>
+        ) : null}
       </div>
     </section>
   );

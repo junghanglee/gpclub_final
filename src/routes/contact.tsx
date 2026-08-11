@@ -31,6 +31,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
+import { isHeroImageEnabled } from "@/lib/hero-image-visibility";
 import { usePageContent } from "@/lib/page-content";
 import { fetchCachedPublicData, withPublicDataTimeout } from "@/lib/public-data-timeout";
 import {
@@ -183,6 +184,7 @@ function ContactPage() {
   const whatsappLink = () => buildWhatsappLink(COMPANY.whatsappPhone);
   const heroImageSrc = page.heroImage.url || gippyContactHero;
   const heroImageAlt = page.heroImage.alt[lang] || "Gippy AI contact consultant mascot";
+  const showHeroImage = isHeroImageEnabled(page.heroImage);
   const offices = [
     {
       city: t.hq,
@@ -274,7 +276,9 @@ function ContactPage() {
           className="pointer-events-none absolute -top-20 right-0 h-[360px] w-[360px] rounded-full bg-primary/10 blur-3xl"
         />
         <div className="relative mx-auto grid min-h-[560px] max-w-[1100px] items-center gap-10 px-4 py-20 sm:min-h-[620px] sm:px-6 md:py-28 lg:min-h-[640px] lg:grid-cols-12 lg:px-10">
-          <div className="text-center lg:col-span-7 lg:text-left">
+          <div
+            className={`text-center lg:text-left ${showHeroImage ? "lg:col-span-7" : "lg:col-span-12 lg:max-w-4xl"}`}
+          >
             {pageLoading ? (
               <HeroCopySkeleton />
             ) : (
@@ -294,15 +298,17 @@ function ContactPage() {
               </>
             )}
           </div>
-          <div className="flex justify-center lg:col-span-5 lg:justify-end">
-            <img
-              src={heroImageSrc}
-              alt={heroImageAlt}
-              loading="eager"
-              decoding="async"
-              className="aspect-[3/4] max-h-[414px] w-full max-w-[311px] object-contain"
-            />
-          </div>
+          {showHeroImage ? (
+            <div className="flex justify-center lg:col-span-5 lg:justify-end">
+              <img
+                src={heroImageSrc}
+                alt={heroImageAlt}
+                loading="eager"
+                decoding="async"
+                className="aspect-[3/4] max-h-[414px] w-full max-w-[311px] object-contain"
+              />
+            </div>
+          ) : null}
         </div>
       </section>
 

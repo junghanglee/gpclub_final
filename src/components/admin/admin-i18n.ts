@@ -324,6 +324,16 @@ export const ADMIN_I18N = {
     vi: "Dán URL ảnh công khai hoặc tải ảnh hero lên. Để trống để giữ ảnh mặc định của trang.",
     ko: "Paste a public image URL or upload a hero image. Leave blank to keep the route default.",
   },
+  useHeroImage: {
+    en: "Use hero image",
+    vi: "Sử dụng ảnh hero",
+    ko: "히어로 이미지 사용",
+  },
+  heroImageDisabledHint: {
+    en: "The image is saved but hidden on the public page.",
+    vi: "Ảnh vẫn được lưu nhưng sẽ không hiển thị trên trang công khai.",
+    ko: "이미지는 저장되지만 사용자 페이지에는 표시되지 않습니다.",
+  },
   clearImage: {
     en: "Clear image",
     vi: "Xóa ảnh",

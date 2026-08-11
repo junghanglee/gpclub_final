@@ -17,6 +17,7 @@ export type HomeAdminContent = {
     secondaryCta: LocalizedText;
     imageUrl: string;
     imageAlt: LocalizedText;
+    imageEnabled: boolean;
   };
   stats: {
     masksValue: string;
@@ -82,6 +83,7 @@ export const DEFAULT_HOME_CONTENT: HomeAdminContent = {
     primaryCta: { vi: "Trở thành đối tác", en: "Become a partner" },
     secondaryCta: { vi: "Danh mục sản phẩm", en: "View Product Catalog" },
     imageUrl: "",
+    imageEnabled: true,
     imageAlt: {
       vi: "K-Beauty bởi GPCLUB Vietnam",
       en: "K-Beauty by GPCLUB Vietnam",

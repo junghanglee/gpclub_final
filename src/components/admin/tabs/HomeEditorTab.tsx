@@ -285,6 +285,8 @@ function PageTextEditor({
           chooseLabel={t("chooseHeroImage")}
           uploadingLabel={t("uploadingImage")}
           fallbackPreviewUrl={PAGE_DEFAULT_HERO_IMAGES[pageKey]}
+          enabledLabel={t("useHeroImage")}
+          disabledHint={t("heroImageDisabledHint")}
         />
         <HeroBackgroundEditor
           value={form.heroBackground}

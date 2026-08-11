@@ -6,6 +6,7 @@ import {
 } from "@/components/admin/cms-form-fields";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import type { HomeAdminContent } from "@/lib/home-content";
 
 type LocalizedFieldProps = {
@@ -87,6 +88,19 @@ export function HomeContentSections({
           value={form.hero.secondaryCta}
           onChange={(v) => patchHero({ secondaryCta: v })}
         />
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border/60 bg-muted/20 p-3">
+          <div>
+            <Label htmlFor="home-hero-image-enabled">{t("useHeroImage")}</Label>
+            {!form.hero.imageEnabled ? (
+              <p className="mt-1 text-xs text-muted-foreground">{t("heroImageDisabledHint")}</p>
+            ) : null}
+          </div>
+          <Switch
+            id="home-hero-image-enabled"
+            checked={form.hero.imageEnabled}
+            onCheckedChange={(imageEnabled) => patchHero({ imageEnabled })}
+          />
+        </div>
         <div>
           <Label>{t("heroImageUrl")}</Label>
           <Input

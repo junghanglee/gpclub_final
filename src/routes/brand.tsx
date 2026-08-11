@@ -23,6 +23,7 @@ import { HeroCopySkeleton } from "@/components/site/SectionSkeletons";
 import { Button } from "@/components/ui/button";
 import { resolveBrandCardImage } from "@/lib/brand-card-image";
 import { resolveBrandCoreValuesHeading } from "@/lib/brand-core-values-heading";
+import { isHeroImageEnabled } from "@/lib/hero-image-visibility";
 import { useI18n } from "@/lib/i18n";
 import { usePageContent } from "@/lib/page-content";
 
@@ -187,6 +188,7 @@ function BrandPage() {
   const pick = (copy: LocalText) => copy[lang];
   const heroImageSrc = page.heroImage.url || gippyBrandHero;
   const heroImageAlt = page.heroImage.alt[lang] || "GPCLUB Vietnam brand partner mascot";
+  const showHeroImage = isHeroImageEnabled(page.heroImage);
   const brandSections = page.sections.brand;
   const brandPositioningBody = brandSections?.positioning.body?.length
     ? brandSections.positioning.body
@@ -248,7 +250,9 @@ function BrandPage() {
           className="pointer-events-none absolute -top-40 right-[-10%] h-[520px] w-[520px] rounded-full bg-primary/10 blur-3xl"
         />
         <div className="relative mx-auto grid min-h-[560px] max-w-[1200px] items-center gap-12 px-4 py-20 sm:min-h-[620px] sm:px-6 md:py-28 lg:min-h-[640px] lg:grid-cols-12 lg:px-10">
-          <div className="text-center lg:col-span-7 lg:text-left">
+          <div
+            className={`text-center lg:text-left ${showHeroImage ? "lg:col-span-7" : "lg:col-span-12 lg:max-w-4xl"}`}
+          >
             {pageLoading ? (
               <HeroCopySkeleton withCta />
             ) : (
@@ -287,15 +291,17 @@ function BrandPage() {
               </>
             )}
           </div>
-          <div className="lg:col-span-5">
-            <img
-              src={heroImageSrc}
-              alt={heroImageAlt}
-              loading="eager"
-              decoding="async"
-              className="mx-auto aspect-[3/4] max-h-[414px] w-full max-w-[311px] object-contain lg:ml-auto"
-            />
-          </div>
+          {showHeroImage ? (
+            <div className="lg:col-span-5">
+              <img
+                src={heroImageSrc}
+                alt={heroImageAlt}
+                loading="eager"
+                decoding="async"
+                className="mx-auto aspect-[3/4] max-h-[414px] w-full max-w-[311px] object-contain lg:ml-auto"
+              />
+            </div>
+          ) : null}
         </div>
       </section>
 

@@ -193,6 +193,7 @@ function HomePage() {
     secondaryCta: homeContent.hero.secondaryCta[lang],
     imageUrl: homeContent.hero.imageUrl,
     imageAlt: homeContent.hero.imageAlt[lang],
+    imageEnabled: homeContent.hero.imageEnabled,
     stats: {
       masksValue: homeContent.stats.masksValue,
       masks: homeContent.stats.masksLabel[lang],
@@ -251,7 +252,7 @@ function HomePage() {
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, ease: "easeOut" }}
-            className="col-span-12 text-center lg:col-span-7 lg:text-left"
+            className={`col-span-12 text-center lg:text-left ${hero.imageEnabled ? "lg:col-span-7" : "lg:max-w-4xl"}`}
           >
             {homeContentLoading ? (
               <>
@@ -315,39 +316,41 @@ function HomePage() {
             )}
           </motion.div>
 
-          <motion.div
-            className="relative col-span-12 lg:col-span-5"
-            style={{ y: mascotY }}
-            initial={{ opacity: 0, scale: 0.96 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1, ease: "easeOut" }}
-          >
-            <div className="relative mx-auto aspect-[4/5] w-full max-w-[300px] sm:max-w-[380px] lg:ml-auto lg:mr-0 lg:max-w-[421px]">
-              <PinkStar
-                className="absolute left-[6%] top-[14%] h-10 w-10 rotate-[12deg]"
-                delay={0}
-              />
-              <PinkStar
-                className="absolute right-[12%] top-[6%] h-16 w-16 -rotate-12"
-                delay={0.4}
-              />
-              <PinkStar
-                className="absolute right-[4%] top-[40%] h-8 w-8 rotate-[24deg]"
-                delay={0.8}
-              />
-              <motion.img
-                src={hero.imageUrl || gippyMainHero}
-                alt={hero.imageAlt}
-                className="relative z-10 h-full w-full object-contain drop-shadow-[0_40px_60px_oklch(0.70_0.18_350/0.25)]"
-                animate={{ y: [0, -16, 0] }}
-                transition={{
-                  duration: 6,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-              />
-            </div>
-          </motion.div>
+          {hero.imageEnabled ? (
+            <motion.div
+              className="relative col-span-12 lg:col-span-5"
+              style={{ y: mascotY }}
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 1, ease: "easeOut" }}
+            >
+              <div className="relative mx-auto aspect-[4/5] w-full max-w-[300px] sm:max-w-[380px] lg:ml-auto lg:mr-0 lg:max-w-[421px]">
+                <PinkStar
+                  className="absolute left-[6%] top-[14%] h-10 w-10 rotate-[12deg]"
+                  delay={0}
+                />
+                <PinkStar
+                  className="absolute right-[12%] top-[6%] h-16 w-16 -rotate-12"
+                  delay={0.4}
+                />
+                <PinkStar
+                  className="absolute right-[4%] top-[40%] h-8 w-8 rotate-[24deg]"
+                  delay={0.8}
+                />
+                <motion.img
+                  src={hero.imageUrl || gippyMainHero}
+                  alt={hero.imageAlt}
+                  className="relative z-10 h-full w-full object-contain drop-shadow-[0_40px_60px_oklch(0.70_0.18_350/0.25)]"
+                  animate={{ y: [0, -16, 0] }}
+                  transition={{
+                    duration: 6,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                />
+              </div>
+            </motion.div>
+          ) : null}
         </div>
       </section>
 

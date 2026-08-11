@@ -14,6 +14,7 @@ export type PageLocalizedText = Record<SiteLang, string>;
 export type PageHeroImage = {
   url: string;
   alt: PageLocalizedText;
+  enabled?: boolean;
 };
 
 export type PageHeroBackground = {
@@ -161,7 +162,7 @@ export type PageEditableContent = {
 };
 
 const text = (vi: string, en: string): PageLocalizedText => ({ vi, en });
-const emptyHeroImage = (): PageHeroImage => ({ url: "", alt: text("", "") });
+const emptyHeroImage = (): PageHeroImage => ({ url: "", alt: text("", ""), enabled: true });
 const emptyHeroBackground = (): PageHeroBackground => ({ desktopUrl: "", mobileUrl: "" });
 const emptyImageAsset = (): PageImageAsset => ({ url: "", alt: text("", "") });
 
@@ -696,6 +697,7 @@ function mergeHeroImage(base: PageHeroImage, extra: unknown): PageHeroImage {
   return {
     url: typeof src.url === "string" ? src.url : base.url,
     alt: mergeLocalized(base.alt, src.alt),
+    enabled: typeof src.enabled === "boolean" ? src.enabled : true,
   };
 }
 
