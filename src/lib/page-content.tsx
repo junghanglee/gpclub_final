@@ -5,6 +5,7 @@ import {
   readPublicDataCache,
   withPublicDataTimeout,
 } from "@/lib/public-data-timeout";
+import type { BrandCoreValuesHeading } from "@/lib/brand-core-values-heading";
 
 export type SiteLang = "vi" | "en";
 export type PageContentKey = "brand" | "products" | "gippy-ai" | "events" | "b2b" | "contact";
@@ -32,6 +33,7 @@ export type BrandSectionContent = {
     highlight: PageLocalizedText;
     body: PageLocalizedText[];
   };
+  coreValuesHeading: BrandCoreValuesHeading;
   coreValues: Array<{
     id: string;
     label: string;
@@ -178,6 +180,10 @@ const DEFAULT_BRAND_SECTIONS: BrandSectionContent = {
         "GPVN turns skin and hair care into a daily journey of cherishing and building personal value.",
       ),
     ],
+  },
+  coreValuesHeading: {
+    kicker: text("GIÁ TRỊ CỐT LÕI", "CORE VALUES"),
+    title: text("Đam mê. Đổi mới. Chuyên môn.", "Passion. Innovation. Expertise."),
   },
   coreValues: [
     {
@@ -718,6 +724,7 @@ function mergeBrandSections(base: BrandSectionContent, extra: unknown): BrandSec
   const src = isObj(extra) ? extra : {};
   const positioning = isObj(src.positioning) ? src.positioning : {};
   const advisor = isObj(src.advisor) ? src.advisor : {};
+  const coreValuesHeading = isObj(src.coreValuesHeading) ? src.coreValuesHeading : {};
   const coreValues = Array.isArray(src.coreValues) ? src.coreValues : [];
   const brands = Array.isArray(src.brands) ? src.brands : [];
   const imageSlots = Array.isArray(src.imageSlots) ? src.imageSlots : [];
@@ -728,6 +735,10 @@ function mergeBrandSections(base: BrandSectionContent, extra: unknown): BrandSec
       title: mergeLocalized(base.positioning.title, positioning.title),
       highlight: mergeLocalized(base.positioning.highlight, positioning.highlight),
       body: mergeLocalizedList(base.positioning.body, positioning.body),
+    },
+    coreValuesHeading: {
+      kicker: mergeLocalized(base.coreValuesHeading.kicker, coreValuesHeading.kicker),
+      title: mergeLocalized(base.coreValuesHeading.title, coreValuesHeading.title),
     },
     coreValues: base.coreValues.map((item, index) => {
       const next = isObj(coreValues[index]) ? coreValues[index] : {};

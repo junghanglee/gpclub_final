@@ -158,6 +158,31 @@ function BrandSectionsEditor({
       </CmsPanel>
 
       <CmsPanel title={t("brandCoreValuesSection")} issueCount={coreValueIssues}>
+        <div className="grid gap-4 md:grid-cols-2">
+          <LocalizedTextField
+            {...localizedFieldProps}
+            label={t("kicker")}
+            value={value.coreValuesHeading.kicker}
+            onChange={(kicker) =>
+              onChange({
+                ...value,
+                coreValuesHeading: { ...value.coreValuesHeading, kicker },
+              })
+            }
+          />
+          <LocalizedTextField
+            {...localizedFieldProps}
+            label={t("title")}
+            value={value.coreValuesHeading.title}
+            onChange={(title) =>
+              onChange({
+                ...value,
+                coreValuesHeading: { ...value.coreValuesHeading, title },
+              })
+            }
+            multiline
+          />
+        </div>
         <div className="grid gap-4 lg:grid-cols-3">
           {value.coreValues.map((item, index) => (
             <div key={item.id} className="space-y-3 rounded-xl border border-border/60 p-4">

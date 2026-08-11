@@ -22,6 +22,7 @@ import { HeroBackground } from "@/components/site/HeroBackground";
 import { HeroCopySkeleton } from "@/components/site/SectionSkeletons";
 import { Button } from "@/components/ui/button";
 import { resolveBrandCardImage } from "@/lib/brand-card-image";
+import { resolveBrandCoreValuesHeading } from "@/lib/brand-core-values-heading";
 import { useI18n } from "@/lib/i18n";
 import { usePageContent } from "@/lib/page-content";
 
@@ -205,6 +206,7 @@ function BrandPage() {
     ...item,
     icon: CORE_VALUES[index]?.icon ?? Sparkles,
   }));
+  const coreValuesHeading = resolveBrandCoreValuesHeading(brandSections?.coreValuesHeading, lang);
   const brandCards = (brandSections?.brands?.length ? brandSections.brands : BRANDS).map(
     (item, index) => ({
       ...item,
@@ -320,10 +322,10 @@ function BrandPage() {
         <div className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-10">
           <div className="max-w-2xl">
             <div className="text-[11px] font-bold uppercase tracking-[0.32em] text-primary">
-              CORE VALUES
+              {coreValuesHeading.kicker}
             </div>
             <h2 className="mt-4 font-display text-3xl font-black leading-tight md:text-5xl">
-              Passion. Innovation. Expertise.
+              {coreValuesHeading.title}
             </h2>
           </div>
           <div className="mt-12 grid gap-px overflow-hidden border border-border bg-border md:grid-cols-3">
