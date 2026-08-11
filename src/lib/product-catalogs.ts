@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { CatalogProduct } from "@/lib/catalog-products";
+import { normalizeCatalogTemplate, type CatalogTemplate } from "@/lib/catalog-templates";
+import { catalogSelectionWasPersisted } from "@/lib/catalog-persistence";
+import {
+  invalidateProductCatalogCache,
+  PRODUCT_CATALOG_CACHE_KEY,
+} from "@/lib/product-catalog-cache";
 import { fetchCachedPublicData, withPublicDataTimeout } from "@/lib/public-data-timeout";
 
 export type ProductCatalog = {
@@ -8,7 +14,7 @@ export type ProductCatalog = {
   title: string;
   subtitle: string;
   description: string;
-  template: "premium" | "compact" | "lineup";
+  template: CatalogTemplate;
   product_ids: string[];
   cover_image_url: string;
   cover_product_id: string | null;
@@ -31,8 +37,7 @@ function normalizeCatalog(value: Partial<ProductCatalog>): ProductCatalog {
     title: String(value.title || "GPCLUB Vietnam Product Catalog"),
     subtitle: String(value.subtitle || "Curated K-Beauty portfolio for B2B partners"),
     description: String(value.description || ""),
-    template:
-      value.template === "compact" || value.template === "lineup" ? value.template : "premium",
+    template: normalizeCatalogTemplate(value.template),
     product_ids: Array.isArray(value.product_ids) ? value.product_ids.map(String) : [],
     cover_image_url: String(value.cover_image_url || ""),
     cover_product_id: value.cover_product_id ? String(value.cover_product_id) : null,
@@ -49,7 +54,7 @@ function normalizeCatalogs(value: unknown) {
 
 export async function fetchProductCatalogs(options: { fallbackOnError?: boolean } = {}) {
   try {
-    return await fetchCachedPublicData("product-catalogs", async () => {
+    return await fetchCachedPublicData(PRODUCT_CATALOG_CACHE_KEY, async () => {
       const { data, error } = await withPublicDataTimeout(
         supabase.from("home_content").select("value").eq("key", PRODUCT_CATALOGS_KEY).maybeSingle(),
         "product catalogs",
@@ -70,11 +75,18 @@ export async function saveProductCatalogs(catalogs: ProductCatalog[]) {
     is_representative:
       catalog.is_representative && catalogs.findIndex((item) => item.is_representative) === index,
   }));
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("home_content")
-    .upsert({ key: PRODUCT_CATALOGS_KEY, value: normalized });
+    .upsert({ key: PRODUCT_CATALOGS_KEY, value: normalized })
+    .select("value")
+    .single();
   if (error) throw error;
-  return normalized;
+  const persisted = normalizeCatalogs(data?.value);
+  if (!normalized.every((catalog) => catalogSelectionWasPersisted(persisted, catalog))) {
+    throw new Error("Catalog save could not be verified. Your selections were kept in the editor.");
+  }
+  invalidateProductCatalogCache();
+  return persisted;
 }
 
 export async function fetchRepresentativeCatalog() {

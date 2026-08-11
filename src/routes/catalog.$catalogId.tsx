@@ -145,7 +145,7 @@ function CatalogProductsSection({
       </div>
     );
   }
-  if (catalog.template === "compact") {
+  if (catalog.template === "compact" || catalog.template === "minimal") {
     return (
       <div className="catalog-section grid gap-3 px-8 py-10 print:grid-cols-2 print:gap-2 print:px-0 print:py-0">
         {products.map((product, index) => (
@@ -154,7 +154,7 @@ function CatalogProductsSection({
       </div>
     );
   }
-  if (catalog.template === "lineup") {
+  if (catalog.template === "lineup" || catalog.template === "editorial") {
     return (
       <div className="catalog-section grid gap-4 px-8 py-10 sm:grid-cols-2 lg:grid-cols-3 print:grid-cols-3 print:gap-3 print:px-0 print:py-0">
         {products.map((product, index) => (
@@ -185,8 +185,12 @@ function CatalogCover({
   const heroImage = resolveCatalogCoverImage(catalog, products);
 
   return (
-    <section className="catalog-cover relative isolate grid min-h-[820px] overflow-hidden bg-[#151014] text-white md:grid-cols-2 print:min-h-[980px] print:grid-cols-2">
-      <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_20%_20%,rgba(236,72,153,0.45),transparent_34%),linear-gradient(135deg,#120e11,#2a1622_55%,#f7b6c9)]" />
+    <section
+      className={`catalog-cover relative isolate grid min-h-[820px] overflow-hidden text-white md:grid-cols-2 print:min-h-[980px] print:grid-cols-2 ${catalog.template === "spotlight" ? "bg-[#2a2114]" : catalog.template === "minimal" ? "bg-[#e8e2d8] text-slate-950" : "bg-[#151014]"}`}
+    >
+      <div
+        className={`absolute inset-0 -z-10 ${catalog.template === "spotlight" ? "bg-[linear-gradient(135deg,#20170c,#60421d_56%,#d9b86c)]" : catalog.template === "minimal" ? "bg-[linear-gradient(135deg,#f7f4ef,#d9d0c4)]" : catalog.template === "editorial" ? "bg-[linear-gradient(135deg,#10282e,#28717a_58%,#c3e6dd)]" : "bg-[radial-gradient(circle_at_20%_20%,rgba(236,72,153,0.45),transparent_34%),linear-gradient(135deg,#120e11,#2a1622_55%,#f7b6c9)]"}`}
+      />
       <div className="flex flex-col justify-between p-10 md:p-14 print:p-12">
         <div>
           <div className="inline-flex items-center gap-2 border-b border-white/40 pb-2 text-xs font-black uppercase tracking-[0.34em] text-pink-100">

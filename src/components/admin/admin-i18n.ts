@@ -154,6 +154,9 @@ export const ADMIN_I18N = {
     vi: "Lưới sản phẩm",
     ko: "라인업 그리드",
   },
+  editorialTemplate: { en: "Editorial story", vi: "Câu chuyện biên tập", ko: "에디토리얼 스토리" },
+  minimalTemplate: { en: "Minimal white", vi: "Tối giản trắng", ko: "미니멀 화이트" },
+  spotlightTemplate: { en: "Spotlight feature", vi: "Điểm nhấn sản phẩm", ko: "스포트라이트" },
   noCatalogs: {
     en: "No catalogs yet",
     vi: "Chưa có catalog",

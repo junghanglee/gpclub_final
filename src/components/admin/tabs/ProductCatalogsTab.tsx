@@ -34,6 +34,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { type CatalogProduct, getCoverImage, normalizedSearchText } from "@/lib/catalog-products";
 import { resolveCatalogCoverImage } from "@/lib/catalog-cover";
+import { CATALOG_TEMPLATES, type CatalogTemplate } from "@/lib/catalog-templates";
 import {
   createCatalogId,
   fetchProductCatalogs,
@@ -54,6 +55,78 @@ function displayBrandName(product: CatalogProductWithBrand) {
   if (product.brand_display_name) return product.brand_display_name;
   const joinedBrand = Array.isArray(product.brands) ? product.brands[0] : product.brands;
   return joinedBrand?.name || product.brand_name;
+}
+
+function CatalogTemplateThumbnail({ template }: { template: CatalogTemplate }) {
+  const background =
+    template === "premium"
+      ? "bg-gradient-to-br from-[#2b1223] to-[#d58ca7]"
+      : template === "compact"
+        ? "bg-gradient-to-br from-[#20242d] to-[#667085]"
+        : template === "lineup"
+          ? "bg-gradient-to-br from-[#813d37] to-[#f1b08a]"
+          : template === "editorial"
+            ? "bg-gradient-to-br from-[#142d36] to-[#a9d6d0]"
+            : template === "minimal"
+              ? "bg-gradient-to-br from-[#f3efe8] to-[#d8d1c7]"
+              : "bg-gradient-to-br from-[#3c2a13] to-[#e1ba70]";
+
+  if (template === "compact")
+    return (
+      <span className={`grid h-20 grid-cols-3 gap-1 p-2 ${background}`}>
+        <span className="col-span-1 rounded-sm bg-white/70" />
+        <span className="col-span-2 grid content-center gap-1">
+          <span className="h-1.5 bg-white/80" />
+          <span className="h-1 bg-white/45" />
+          <span className="h-1 bg-white/45" />
+        </span>
+      </span>
+    );
+  if (template === "lineup")
+    return (
+      <span className={`grid h-20 grid-cols-3 gap-1.5 p-2 ${background}`}>
+        {[0, 1, 2].map((item) => (
+          <span key={item} className="grid content-end rounded-sm bg-white/70 p-1">
+            <span className="h-1 bg-black/25" />
+          </span>
+        ))}
+      </span>
+    );
+  if (template === "editorial")
+    return (
+      <span className={`grid h-20 grid-cols-[1.4fr_1fr] gap-2 p-2 ${background}`}>
+        <span className="rounded-sm bg-white/75" />
+        <span className="grid content-center gap-1">
+          <span className="h-2 bg-white/90" />
+          <span className="h-1 bg-white/55" />
+          <span className="h-1 w-2/3 bg-white/55" />
+        </span>
+      </span>
+    );
+  if (template === "minimal")
+    return (
+      <span className={`grid h-20 place-items-center p-3 ${background}`}>
+        <span className="grid h-full w-2/3 place-items-center border border-slate-600/30">
+          <span className="h-1 w-1/2 bg-slate-700/50" />
+        </span>
+      </span>
+    );
+  if (template === "spotlight")
+    return (
+      <span className={`relative block h-20 p-2 ${background}`}>
+        <span className="absolute inset-y-2 right-3 w-1/2 rounded-full bg-white/75" />
+        <span className="absolute bottom-3 left-2 h-2 w-1/3 bg-white/80" />
+      </span>
+    );
+  return (
+    <span className={`grid h-20 grid-cols-2 gap-2 p-2 ${background}`}>
+      <span className="grid content-center gap-1">
+        <span className="h-2 bg-white/90" />
+        <span className="h-1 bg-white/55" />
+      </span>
+      <span className="rounded-md bg-white/75" />
+    </span>
+  );
 }
 
 function emptyCatalog(rows: CatalogProduct[]): ProductCatalog {
@@ -243,11 +316,8 @@ export default function ProductCatalogsAdminTab({ lang }: { lang: AdminLang }) {
   const openCatalog = (id: string) =>
     window.open(`/catalog/${id}`, "_blank", "noopener,noreferrer");
 
-  const templateLabel = (template: ProductCatalog["template"]) => {
-    if (template === "compact") return t("compactTemplate");
-    if (template === "lineup") return t("lineupTemplate");
-    return t("premiumTemplate");
-  };
+  const templateLabel = (template: CatalogTemplate) =>
+    t(CATALOG_TEMPLATES.find((item) => item.id === template)?.labelKey as keyof typeof ADMIN_I18N);
 
   return (
     <div className="rounded-3xl border border-border bg-card p-5 shadow-soft md:p-6">
@@ -468,27 +538,6 @@ export default function ProductCatalogsAdminTab({ lang }: { lang: AdminLang }) {
                   </div>
                 )}
               </div>
-              <div>
-                <Label>{t("catalogTemplate")}</Label>
-                <Select
-                  value={editing.template}
-                  onValueChange={(value) =>
-                    setEditing({
-                      ...editing,
-                      template: value as ProductCatalog["template"],
-                    })
-                  }
-                >
-                  <SelectTrigger className="mt-1.5">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="premium">{t("premiumTemplate")}</SelectItem>
-                    <SelectItem value="compact">{t("compactTemplate")}</SelectItem>
-                    <SelectItem value="lineup">{t("lineupTemplate")}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
               <div className="flex items-center justify-between rounded-2xl border border-border p-4">
                 <div>
                   <Label>{t("representativeCatalog")}</Label>
@@ -625,17 +674,20 @@ export default function ProductCatalogsAdminTab({ lang }: { lang: AdminLang }) {
                 </div>
                 <div>
                   <Label className="text-white">{t("catalogPreview")}</Label>
-                  <div className="mt-3 grid grid-cols-3 gap-2">
-                    {(["premium", "compact", "lineup"] as const).map((template) => (
-                      <Button
-                        key={template}
+                  <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                    {CATALOG_TEMPLATES.map((template) => (
+                      <button
+                        key={template.id}
                         type="button"
-                        size="sm"
-                        variant={editing.template === template ? "secondary" : "outline"}
-                        onClick={() => setEditing({ ...editing, template })}
+                        aria-pressed={editing.template === template.id}
+                        onClick={() => setEditing({ ...editing, template: template.id })}
+                        className={`group overflow-hidden rounded-xl border text-left transition ${editing.template === template.id ? "border-primary ring-2 ring-primary/40" : "border-white/20 hover:border-white/50"}`}
                       >
-                        {templateLabel(template)}
-                      </Button>
+                        <CatalogTemplateThumbnail template={template.id} />
+                        <span className="block px-2 py-1.5 text-[11px] font-semibold text-white">
+                          {templateLabel(template.id)}
+                        </span>
+                      </button>
                     ))}
                   </div>
                   <h3 className="mt-6 font-display text-2xl font-black">{editing.title}</h3>
