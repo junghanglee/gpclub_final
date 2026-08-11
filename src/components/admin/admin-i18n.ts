@@ -119,6 +119,25 @@ export const ADMIN_I18N = {
     vi: "Xem trước bìa và mẫu",
     ko: "표지 미리보기 및 템플릿",
   },
+  chooseCatalogTemplate: {
+    en: "Choose a catalog template",
+    vi: "Chọn mẫu catalog",
+    ko: "카탈로그 템플릿 선택",
+  },
+  chooseCatalogTemplateHint: {
+    en: "Select the layout before choosing the cover image and products.",
+    vi: "Chọn bố cục trước khi chọn ảnh bìa và sản phẩm.",
+    ko: "표지 이미지와 상품을 고르기 전에 레이아웃을 선택하세요.",
+  },
+  catalogCoverPreview: { en: "Cover preview", vi: "Xem trước bìa", ko: "표지 미리보기" },
+  reviewCatalog: { en: "Review catalog", vi: "Kiểm tra catalog", ko: "카탈로그 검토" },
+  catalogReviewHint: {
+    en: "Confirm the cover, template, and selected products before saving.",
+    vi: "Kiểm tra ảnh bìa, mẫu và sản phẩm trước khi lưu.",
+    ko: "저장 전에 표지, 템플릿, 선택 상품을 확인하세요.",
+  },
+  backToEdit: { en: "Back to edit", vi: "Quay lại chỉnh sửa", ko: "편집으로 돌아가기" },
+  saveCatalog: { en: "Save catalog", vi: "Lưu catalog", ko: "카탈로그 저장" },
   noProductImages: { en: "No image selected", vi: "Chưa chọn ảnh", ko: "선택된 이미지 없음" },
   selectedProducts: {
     en: "Selected products",

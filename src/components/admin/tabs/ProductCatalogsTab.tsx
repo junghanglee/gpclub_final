@@ -159,6 +159,7 @@ export default function ProductCatalogsAdminTab({ lang }: { lang: AdminLang }) {
   const [typeFilter, setTypeFilter] = useState("All");
   const [coverSource, setCoverSource] = useState<"product" | "upload">("product");
   const [coverSearch, setCoverSearch] = useState("");
+  const [reviewing, setReviewing] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -230,6 +231,7 @@ export default function ProductCatalogsAdminTab({ lang }: { lang: AdminLang }) {
     setTypeFilter("All");
     setCoverSource("product");
     setCoverSearch("");
+    setReviewing(false);
     setEditing(emptyCatalog(products));
     setOpen(true);
   };
@@ -253,6 +255,10 @@ export default function ProductCatalogsAdminTab({ lang }: { lang: AdminLang }) {
     }
     if (editing.product_ids.length === 0) {
       toast.error(t("selectedProducts"));
+      return;
+    }
+    if (!reviewing) {
+      setReviewing(true);
       return;
     }
     const payload: ProductCatalog = {
@@ -283,6 +289,7 @@ export default function ProductCatalogsAdminTab({ lang }: { lang: AdminLang }) {
     toast.success(t("saved"));
     setOpen(false);
     setEditing(null);
+    setReviewing(false);
     await load();
   };
 
@@ -343,27 +350,27 @@ export default function ProductCatalogsAdminTab({ lang }: { lang: AdminLang }) {
         <p className="text-sm text-muted-foreground">{t("noCatalogs")}</p>
       ) : (
         <div className="overflow-x-auto">
-          <Table>
+          <Table className="min-w-[980px] table-fixed">
             <TableHeader>
               <TableRow>
-                <TableHead>{t("catalogTitle")}</TableHead>
-                <TableHead>{t("catalogTemplate")}</TableHead>
-                <TableHead>{t("selectedProducts")}</TableHead>
-                <TableHead>{t("status")}</TableHead>
-                <TableHead className="text-right">{t("edit")}</TableHead>
+                <TableHead className="w-[29%]">{t("catalogTitle")}</TableHead>
+                <TableHead className="w-[16%]">{t("catalogTemplate")}</TableHead>
+                <TableHead className="w-[28%]">{t("selectedProducts")}</TableHead>
+                <TableHead className="w-[15%]">{t("status")}</TableHead>
+                <TableHead className="w-[12%] text-right">{t("edit")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {rows.map((row) => (
                 <TableRow key={row.id}>
-                  <TableCell>
+                  <TableCell className="align-top">
                     <div className="font-semibold">{row.title}</div>
                     <div className="mt-1 text-xs text-muted-foreground">{row.subtitle}</div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="align-top">
                     <Badge variant="outline">{templateLabel(row.template)}</Badge>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="align-top">
                     <div className="text-sm font-medium">{row.product_ids.length} products</div>
                     <div className="mt-1 line-clamp-1 text-xs text-muted-foreground">
                       {row.product_ids
@@ -372,7 +379,7 @@ export default function ProductCatalogsAdminTab({ lang }: { lang: AdminLang }) {
                         .join(", ")}
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="align-top">
                     {row.is_representative ? (
                       <Badge className="gap-1 bg-primary text-primary-foreground">
                         <Star className="h-3 w-3" /> {t("representativeCatalog")}
@@ -383,7 +390,7 @@ export default function ProductCatalogsAdminTab({ lang }: { lang: AdminLang }) {
                       </Button>
                     )}
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="whitespace-nowrap text-right align-top">
                     <Button
                       variant="ghost"
                       size="icon"
@@ -405,6 +412,7 @@ export default function ProductCatalogsAdminTab({ lang }: { lang: AdminLang }) {
                       size="icon"
                       onClick={() => {
                         setEditing(row);
+                        setReviewing(false);
                         setOpen(true);
                       }}
                     >
@@ -421,259 +429,63 @@ export default function ProductCatalogsAdminTab({ lang }: { lang: AdminLang }) {
         </div>
       )}
 
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog
+        open={open}
+        onOpenChange={(next) => {
+          setOpen(next);
+          if (!next) setReviewing(false);
+        }}
+      >
         <DialogContent className="max-h-[92vh] max-w-5xl overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editing?.id ? t("catalogManagement") : t("newCatalog")}</DialogTitle>
+            <DialogTitle>
+              {reviewing
+                ? t("reviewCatalog")
+                : editing && rows.some((row) => row.id === editing.id)
+                  ? t("catalogManagement")
+                  : t("newCatalog")}
+            </DialogTitle>
           </DialogHeader>
           {editing ? (
-            <div className="space-y-5">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <Label>{t("catalogTitle")}</Label>
-                  <Input
-                    className="mt-1.5"
-                    value={editing.title}
-                    onChange={(e) => setEditing({ ...editing, title: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label>{t("catalogSubtitle")}</Label>
-                  <Input
-                    className="mt-1.5"
-                    value={editing.subtitle}
-                    onChange={(e) => setEditing({ ...editing, subtitle: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div>
-                <Label>{t("catalogDescription")}</Label>
-                <Textarea
-                  className="mt-1.5"
-                  value={editing.description}
-                  onChange={(e) => setEditing({ ...editing, description: e.target.value })}
-                />
-              </div>
-              <div className="rounded-2xl border border-border p-4">
-                <div className="flex items-center justify-between gap-3">
+            <>
+              <div className={reviewing ? "hidden" : "space-y-5"}>
+                <div className="grid gap-4 md:grid-cols-2">
                   <div>
-                    <Label>{t("catalogCoverImage")}</Label>
-                    <p className="mt-1 text-xs text-muted-foreground">{t("catalogCoverHint")}</p>
-                  </div>
-                  <div className="inline-flex rounded-md border p-1">
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant={coverSource === "product" ? "secondary" : "ghost"}
-                      onClick={() => setCoverSource("product")}
-                    >
-                      <ImagePlus className="mr-1 h-4 w-4" />
-                      {t("chooseProductImage")}
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant={coverSource === "upload" ? "secondary" : "ghost"}
-                      onClick={() => setCoverSource("upload")}
-                    >
-                      {t("uploadCoverImage")}
-                    </Button>
-                  </div>
-                </div>
-                {coverSource === "upload" ? (
-                  <div className="mt-3">
-                    <AdminImageUploader
-                      label={t("uploadCoverImage")}
-                      value={editing.cover_image_url}
-                      onChange={(value) =>
-                        setEditing({ ...editing, cover_image_url: value, cover_product_id: null })
-                      }
-                      uploadPrefix={`catalogs/${editing.id}/cover`}
-                      previewAlt={editing.title}
-                      hint="JPG, PNG, or WebP"
-                    />
-                  </div>
-                ) : (
-                  <div className="mt-3 space-y-2">
+                    <Label>{t("catalogTitle")}</Label>
                     <Input
-                      value={coverSearch}
-                      onChange={(event) => setCoverSearch(event.target.value)}
-                      placeholder={t("searchProducts")}
+                      className="mt-1.5"
+                      value={editing.title}
+                      onChange={(e) => setEditing({ ...editing, title: e.target.value })}
                     />
-                    <div className="grid max-h-48 grid-cols-3 gap-2 overflow-y-auto">
-                      {products
-                        .filter((product) =>
-                          normalizedSearchText(
-                            `${product.product_name} ${displayBrandName(product)}`,
-                          ).includes(normalizedSearchText(coverSearch)),
-                        )
-                        .map((product) => {
-                          const image = getCoverImage(product);
-                          return (
-                            <button
-                              type="button"
-                              key={product.id}
-                              className={`overflow-hidden rounded-lg border text-left ${editing.cover_product_id === product.id ? "border-primary ring-2 ring-primary/30" : "border-border"}`}
-                              onClick={() =>
-                                setEditing({
-                                  ...editing,
-                                  cover_product_id: product.id,
-                                  cover_image_url: image,
-                                })
-                              }
-                            >
-                              {image ? (
-                                <img src={image} alt="" className="h-20 w-full object-cover" />
-                              ) : (
-                                <div className="h-20 bg-muted" />
-                              )}
-                              <span className="block truncate p-1 text-[10px]">
-                                {product.product_name}
-                              </span>
-                            </button>
-                          );
-                        })}
-                    </div>
                   </div>
-                )}
-              </div>
-              <div className="flex items-center justify-between rounded-2xl border border-border p-4">
-                <div>
-                  <Label>{t("representativeCatalog")}</Label>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Main hero catalog download button will use this catalog.
-                  </p>
-                </div>
-                <Switch
-                  checked={editing.is_representative}
-                  onCheckedChange={(v) => setEditing({ ...editing, is_representative: v })}
-                />
-              </div>
-              <div className="rounded-2xl border border-border p-4">
-                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <Label>{t("selectedProducts")}</Label>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Filter products, then bulk-select the current result.
-                    </p>
-                  </div>
-                  <Badge variant="secondary">
-                    {editing.product_ids.length} / {products.length}
-                  </Badge>
-                </div>
-                <div className="mb-4 grid gap-3 md:grid-cols-[1fr_180px_180px]">
-                  <Input
-                    value={productSearch}
-                    onChange={(e) => setProductSearch(e.target.value)}
-                    placeholder={t("searchProducts")}
-                  />
-                  <Select value={brandFilter} onValueChange={setBrandFilter}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="All">{t("allBrands")}</SelectItem>
-                      {brands.map((brand) => (
-                        <SelectItem key={brand.id} value={brand.id}>
-                          {brand.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Select value={typeFilter} onValueChange={setTypeFilter}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {productTypes.map((type) => (
-                        <SelectItem key={type} value={type}>
-                          {type === "All" ? t("allTypes") : type}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="mb-4 flex flex-wrap gap-2">
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setSelectedProducts(products.map((product) => product.id))}
-                  >
-                    {t("selectAll")}
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={() =>
-                      setSelectedProducts(filteredProducts.map((product) => product.id))
-                    }
-                  >
-                    {t("selectFiltered")}
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setSelectedProducts([])}
-                  >
-                    {t("clearSelected")}
-                  </Button>
-                  <Badge variant="outline" className="px-3">
-                    {filteredProducts.length} shown
-                  </Badge>
-                </div>
-                <div className="grid max-h-[460px] gap-2 overflow-y-auto pr-1 md:grid-cols-2">
-                  {filteredProducts.map((product) => {
-                    const image = getCoverImage(product);
-                    return (
-                      <label
-                        key={product.id}
-                        className="flex cursor-pointer items-start gap-3 rounded-xl border border-border/70 p-3 transition hover:bg-muted/40"
-                      >
-                        <input
-                          type="checkbox"
-                          className="mt-1 h-4 w-4 accent-primary"
-                          checked={editing.product_ids.includes(product.id)}
-                          onChange={(e) => toggleProduct(product.id, e.target.checked)}
-                        />
-                        <span className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-muted">
-                          {image ? (
-                            <img src={image} alt="" className="h-full w-full object-cover" />
-                          ) : null}
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <span className="block text-xs font-bold uppercase tracking-[0.18em] text-primary">
-                            {displayBrandName(product)}
-                          </span>
-                          <span className="mt-1 block font-semibold">{product.product_name}</span>
-                          <span className="mt-1 block text-xs text-muted-foreground">
-                            {product.product_type}
-                          </span>
-                        </span>
-                      </label>
-                    );
-                  })}
-                </div>
-              </div>
-              <div className="grid gap-4 rounded-2xl border border-border bg-[#171017] p-4 text-white md:grid-cols-[220px_1fr]">
-                <div className="aspect-[4/5] overflow-hidden rounded-lg bg-white/10">
-                  {resolveCatalogCoverImage(editing, products) ? (
-                    <img
-                      src={resolveCatalogCoverImage(editing, products)}
-                      alt=""
-                      className="h-full w-full object-cover"
+                    <Label>{t("catalogSubtitle")}</Label>
+                    <Input
+                      className="mt-1.5"
+                      value={editing.subtitle}
+                      onChange={(e) => setEditing({ ...editing, subtitle: e.target.value })}
                     />
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-xs text-white/60">
-                      {t("noProductImages")}
-                    </div>
-                  )}
+                  </div>
                 </div>
                 <div>
-                  <Label className="text-white">{t("catalogPreview")}</Label>
-                  <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                  <Label>{t("catalogDescription")}</Label>
+                  <Textarea
+                    className="mt-1.5"
+                    value={editing.description}
+                    onChange={(e) => setEditing({ ...editing, description: e.target.value })}
+                  />
+                </div>
+                <section className="border-y border-border py-5">
+                  <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
+                    <div>
+                      <h3 className="text-base font-bold">{t("chooseCatalogTemplate")}</h3>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {t("chooseCatalogTemplateHint")}
+                      </p>
+                    </div>
+                    <Badge variant="outline">{templateLabel(editing.template)}</Badge>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                     {CATALOG_TEMPLATES.map((template) => (
                       <button
                         key={template.id}
@@ -684,26 +496,311 @@ export default function ProductCatalogsAdminTab({ lang }: { lang: AdminLang }) {
                             current ? selectCatalogTemplate(current, template.id) : current,
                           )
                         }
-                        className={`group overflow-hidden rounded-xl border text-left transition ${editing.template === template.id ? "border-primary ring-2 ring-primary/40" : "border-white/20 hover:border-white/50"}`}
+                        className={`overflow-hidden rounded-lg border bg-card text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${editing.template === template.id ? "border-primary ring-2 ring-primary/30" : "border-border hover:border-primary/50"}`}
                       >
                         <CatalogTemplateThumbnail template={template.id} />
-                        <span className="block px-2 py-1.5 text-[11px] font-semibold text-white">
+                        <span className="block px-3 py-2 text-xs font-semibold">
                           {templateLabel(template.id)}
                         </span>
                       </button>
                     ))}
                   </div>
-                  <h3 className="mt-6 font-display text-2xl font-black">{editing.title}</h3>
-                  <p className="mt-2 text-sm text-white/70">{editing.subtitle}</p>
+                </section>
+                <div className="rounded-2xl border border-border p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <Label>{t("catalogCoverImage")}</Label>
+                      <p className="mt-1 text-xs text-muted-foreground">{t("catalogCoverHint")}</p>
+                    </div>
+                    <div className="inline-flex rounded-md border p-1">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant={coverSource === "product" ? "secondary" : "ghost"}
+                        onClick={() => setCoverSource("product")}
+                      >
+                        <ImagePlus className="mr-1 h-4 w-4" />
+                        {t("chooseProductImage")}
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant={coverSource === "upload" ? "secondary" : "ghost"}
+                        onClick={() => setCoverSource("upload")}
+                      >
+                        {t("uploadCoverImage")}
+                      </Button>
+                    </div>
+                  </div>
+                  {coverSource === "upload" ? (
+                    <div className="mt-3">
+                      <AdminImageUploader
+                        label={t("uploadCoverImage")}
+                        value={editing.cover_image_url}
+                        onChange={(value) =>
+                          setEditing({ ...editing, cover_image_url: value, cover_product_id: null })
+                        }
+                        uploadPrefix={`catalogs/${editing.id}/cover`}
+                        previewAlt={editing.title}
+                        hint="JPG, PNG, or WebP"
+                      />
+                    </div>
+                  ) : (
+                    <div className="mt-3 space-y-2">
+                      <Input
+                        value={coverSearch}
+                        onChange={(event) => setCoverSearch(event.target.value)}
+                        placeholder={t("searchProducts")}
+                      />
+                      <div className="grid max-h-48 grid-cols-3 gap-2 overflow-y-auto">
+                        {products
+                          .filter((product) =>
+                            normalizedSearchText(
+                              `${product.product_name} ${displayBrandName(product)}`,
+                            ).includes(normalizedSearchText(coverSearch)),
+                          )
+                          .map((product) => {
+                            const image = getCoverImage(product);
+                            return (
+                              <button
+                                type="button"
+                                key={product.id}
+                                className={`overflow-hidden rounded-lg border text-left ${editing.cover_product_id === product.id ? "border-primary ring-2 ring-primary/30" : "border-border"}`}
+                                onClick={() =>
+                                  setEditing({
+                                    ...editing,
+                                    cover_product_id: product.id,
+                                    cover_image_url: image,
+                                  })
+                                }
+                              >
+                                {image ? (
+                                  <img src={image} alt="" className="h-20 w-full object-cover" />
+                                ) : (
+                                  <div className="h-20 bg-muted" />
+                                )}
+                                <span className="block truncate p-1 text-[10px]">
+                                  {product.product_name}
+                                </span>
+                              </button>
+                            );
+                          })}
+                      </div>
+                    </div>
+                  )}
                 </div>
+                <div className="flex items-center justify-between rounded-2xl border border-border p-4">
+                  <div>
+                    <Label>{t("representativeCatalog")}</Label>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Main hero catalog download button will use this catalog.
+                    </p>
+                  </div>
+                  <Switch
+                    checked={editing.is_representative}
+                    onCheckedChange={(v) => setEditing({ ...editing, is_representative: v })}
+                  />
+                </div>
+                <div className="rounded-2xl border border-border p-4">
+                  <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <Label>{t("selectedProducts")}</Label>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Filter products, then bulk-select the current result.
+                      </p>
+                    </div>
+                    <Badge variant="secondary">
+                      {editing.product_ids.length} / {products.length}
+                    </Badge>
+                  </div>
+                  <div className="mb-4 grid gap-3 md:grid-cols-[1fr_180px_180px]">
+                    <Input
+                      value={productSearch}
+                      onChange={(e) => setProductSearch(e.target.value)}
+                      placeholder={t("searchProducts")}
+                    />
+                    <Select value={brandFilter} onValueChange={setBrandFilter}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="All">{t("allBrands")}</SelectItem>
+                        {brands.map((brand) => (
+                          <SelectItem key={brand.id} value={brand.id}>
+                            {brand.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select value={typeFilter} onValueChange={setTypeFilter}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {productTypes.map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {type === "All" ? t("allTypes") : type}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="mb-4 flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setSelectedProducts(products.map((product) => product.id))}
+                    >
+                      {t("selectAll")}
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() =>
+                        setSelectedProducts(filteredProducts.map((product) => product.id))
+                      }
+                    >
+                      {t("selectFiltered")}
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setSelectedProducts([])}
+                    >
+                      {t("clearSelected")}
+                    </Button>
+                    <Badge variant="outline" className="px-3">
+                      {filteredProducts.length} shown
+                    </Badge>
+                  </div>
+                  <div className="grid max-h-[460px] gap-2 overflow-y-auto pr-1 md:grid-cols-2">
+                    {filteredProducts.map((product) => {
+                      const image = getCoverImage(product);
+                      return (
+                        <label
+                          key={product.id}
+                          className="flex cursor-pointer items-start gap-3 rounded-xl border border-border/70 p-3 transition hover:bg-muted/40"
+                        >
+                          <input
+                            type="checkbox"
+                            className="mt-1 h-4 w-4 accent-primary"
+                            checked={editing.product_ids.includes(product.id)}
+                            onChange={(e) => toggleProduct(product.id, e.target.checked)}
+                          />
+                          <span className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-muted">
+                            {image ? (
+                              <img src={image} alt="" className="h-full w-full object-cover" />
+                            ) : null}
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block text-xs font-bold uppercase tracking-[0.18em] text-primary">
+                              {displayBrandName(product)}
+                            </span>
+                            <span className="mt-1 block font-semibold">{product.product_name}</span>
+                            <span className="mt-1 block text-xs text-muted-foreground">
+                              {product.product_type}
+                            </span>
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div className="grid gap-4 rounded-2xl border border-border bg-[#171017] p-4 text-white md:grid-cols-[220px_1fr]">
+                  <div className="aspect-[4/5] overflow-hidden rounded-lg bg-white/10">
+                    {resolveCatalogCoverImage(editing, products) ? (
+                      <img
+                        src={resolveCatalogCoverImage(editing, products)}
+                        alt=""
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-xs text-white/60">
+                        {t("noProductImages")}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <Label className="text-white">{t("catalogCoverPreview")}</Label>
+                    <Badge className="mt-3 bg-white/15 text-white hover:bg-white/15">
+                      {templateLabel(editing.template)}
+                    </Badge>
+                    <h3 className="mt-6 font-display text-2xl font-black">{editing.title}</h3>
+                    <p className="mt-2 text-sm text-white/70">{editing.subtitle}</p>
+                    <p className="mt-5 text-xs text-white/60">
+                      {editing.product_ids.length} {t("products")}
+                    </p>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setOpen(false);
+                      setReviewing(false);
+                    }}
+                  >
+                    {t("cancel")}
+                  </Button>
+                  <Button onClick={save}>{t("reviewCatalog")}</Button>
+                </DialogFooter>
               </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setOpen(false)}>
-                  {t("cancel")}
-                </Button>
-                <Button onClick={save}>{t("save")}</Button>
-              </DialogFooter>
-            </div>
+              {reviewing ? (
+                <div className="space-y-5">
+                  <div className="grid gap-6 border-y border-border py-6 md:grid-cols-[280px_1fr]">
+                    <div className="aspect-[4/5] overflow-hidden rounded-lg bg-muted">
+                      {resolveCatalogCoverImage(editing, products) ? (
+                        <img
+                          src={resolveCatalogCoverImage(editing, products)}
+                          alt=""
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                          {t("noProductImages")}
+                        </div>
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <Badge variant="outline">{templateLabel(editing.template)}</Badge>
+                      <h3 className="mt-4 font-display text-3xl font-black">{editing.title}</h3>
+                      <p className="mt-2 text-sm text-muted-foreground">{editing.subtitle}</p>
+                      <p className="mt-5 text-sm leading-6">{editing.description}</p>
+                      <div className="mt-6 border-t border-border pt-4">
+                        <div className="text-sm font-bold">
+                          {editing.product_ids.length} {t("selectedProducts")}
+                        </div>
+                        <p className="mt-2 line-clamp-4 text-xs leading-5 text-muted-foreground">
+                          {editing.product_ids
+                            .map((id) => selectedProductMap.get(id)?.product_name)
+                            .filter(Boolean)
+                            .join(", ")}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground">{t("catalogReviewHint")}</p>
+                  <DialogFooter>
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        setOpen(false);
+                        setReviewing(false);
+                      }}
+                    >
+                      {t("cancel")}
+                    </Button>
+                    <Button variant="outline" onClick={() => setReviewing(false)}>
+                      {t("backToEdit")}
+                    </Button>
+                    <Button onClick={save}>{t("saveCatalog")}</Button>
+                  </DialogFooter>
+                </div>
+              ) : null}
+            </>
           ) : null}
         </DialogContent>
       </Dialog>
