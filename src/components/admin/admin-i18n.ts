@@ -479,6 +479,12 @@ export const ADMIN_I18N = {
   subtitle: { en: "Subtitle", vi: "Phụ đề", ko: "부제목" },
   primaryCta: { en: "Primary CTA", vi: "CTA chính", ko: "기본 CTA" },
   secondaryCta: { en: "Secondary CTA", vi: "CTA phụ", ko: "보조 CTA" },
+  usePageCta: { en: "Use CTA buttons", vi: "Sử dụng nút CTA", ko: "CTA 버튼 사용" },
+  pageCtaDisabledHint: {
+    en: "Turn this off to save and publish the page without CTA buttons.",
+    vi: "Tắt để lưu và xuất bản trang mà không có nút CTA.",
+    ko: "사용하지 않으면 CTA 없이도 페이지를 저장하고 게시할 수 있습니다.",
+  },
   heroImageUrl: {
     en: "Hero image URL",
     vi: "URL ảnh hero",

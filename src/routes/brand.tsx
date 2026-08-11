@@ -269,25 +269,27 @@ function BrandPage() {
                 <p className="mx-auto mt-8 max-w-2xl text-[16px] leading-relaxed text-foreground/75 lg:mx-0">
                   {page.description[lang]}
                 </p>
-                <div className="mt-10 flex flex-wrap justify-center gap-3 lg:justify-start">
-                  <Button
-                    asChild
-                    size="lg"
-                    className="h-12 rounded-none bg-primary px-8 text-sm font-bold uppercase tracking-[0.18em] text-primary-foreground hover:bg-primary/90"
-                  >
-                    <Link to="/b2b">
-                      {page.primaryCta[lang]} <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
-                  </Button>
-                  <Button
-                    asChild
-                    variant="outline"
-                    size="lg"
-                    className="h-12 rounded-none px-8 text-sm font-bold uppercase tracking-[0.18em]"
-                  >
-                    <Link to="/products">{page.secondaryCta[lang]}</Link>
-                  </Button>
-                </div>
+                {page.ctaEnabled ? (
+                  <div className="mt-10 flex flex-wrap justify-center gap-3 lg:justify-start">
+                    <Button
+                      asChild
+                      size="lg"
+                      className="h-12 rounded-none bg-primary px-8 text-sm font-bold uppercase tracking-[0.18em] text-primary-foreground hover:bg-primary/90"
+                    >
+                      <Link to="/b2b">
+                        {page.primaryCta[lang]} <ArrowRight className="ml-2 h-4 w-4" />
+                      </Link>
+                    </Button>
+                    <Button
+                      asChild
+                      variant="outline"
+                      size="lg"
+                      className="h-12 rounded-none px-8 text-sm font-bold uppercase tracking-[0.18em]"
+                    >
+                      <Link to="/products">{page.secondaryCta[lang]}</Link>
+                    </Button>
+                  </div>
+                ) : null}
               </>
             )}
           </div>

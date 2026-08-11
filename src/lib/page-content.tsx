@@ -6,6 +6,7 @@ import {
   withPublicDataTimeout,
 } from "@/lib/public-data-timeout";
 import type { BrandCoreValuesHeading } from "@/lib/brand-core-values-heading";
+import { resolvePageCtaEnabled } from "@/lib/page-cta";
 
 export type SiteLang = "vi" | "en";
 export type PageContentKey = "brand" | "products" | "gippy-ai" | "events" | "b2b" | "contact";
@@ -156,6 +157,7 @@ export type PageEditableContent = {
   description: PageLocalizedText;
   primaryCta: PageLocalizedText;
   secondaryCta: PageLocalizedText;
+  ctaEnabled: boolean;
   heroImage: PageHeroImage;
   heroBackground: PageHeroBackground;
   sections: PageSections;
@@ -601,6 +603,7 @@ export const DEFAULT_PAGE_CONTENT: Record<PageContentKey, PageEditableContent> =
     ),
     primaryCta: text("Trở thành đối tác", "Become a Partner"),
     secondaryCta: text("Xem sản phẩm", "View Products"),
+    ctaEnabled: true,
     heroImage: emptyHeroImage(),
     heroBackground: emptyHeroBackground(),
     sections: { brand: DEFAULT_BRAND_SECTIONS },
@@ -615,6 +618,7 @@ export const DEFAULT_PAGE_CONTENT: Record<PageContentKey, PageEditableContent> =
     ),
     primaryCta: text("gửi yêu cầu B2B", "start a B2B inquiry"),
     secondaryCta: text("Brochure", "Brochure"),
+    ctaEnabled: true,
     heroImage: emptyHeroImage(),
     heroBackground: emptyHeroBackground(),
     sections: {},
@@ -629,6 +633,7 @@ export const DEFAULT_PAGE_CONTENT: Record<PageContentKey, PageEditableContent> =
     ),
     primaryCta: text("Liên hệ GPCLUB", "Contact GPCLUB"),
     secondaryCta: text("Xem chủ đề", "View topics"),
+    ctaEnabled: true,
     heroImage: emptyHeroImage(),
     heroBackground: emptyHeroBackground(),
     sections: { gippyAi: DEFAULT_GIPPY_AI_SECTIONS },
@@ -643,6 +648,7 @@ export const DEFAULT_PAGE_CONTENT: Record<PageContentKey, PageEditableContent> =
     ),
     primaryCta: text("", ""),
     secondaryCta: text("", ""),
+    ctaEnabled: false,
     heroImage: emptyHeroImage(),
     heroBackground: emptyHeroBackground(),
     sections: {},
@@ -657,6 +663,7 @@ export const DEFAULT_PAGE_CONTENT: Record<PageContentKey, PageEditableContent> =
     ),
     primaryCta: text("Gửi yêu cầu hợp tác", "Start partnership inquiry"),
     secondaryCta: text("", ""),
+    ctaEnabled: true,
     heroImage: emptyHeroImage(),
     heroBackground: emptyHeroBackground(),
     sections: { b2b: DEFAULT_B2B_SECTIONS },
@@ -674,6 +681,7 @@ export const DEFAULT_PAGE_CONTENT: Record<PageContentKey, PageEditableContent> =
     ),
     primaryCta: text("", ""),
     secondaryCta: text("", ""),
+    ctaEnabled: false,
     heroImage: emptyHeroImage(),
     heroBackground: emptyHeroBackground(),
     sections: {},
@@ -916,13 +924,19 @@ function mergePageSections(base: PageSections, extra: unknown): PageSections {
 export function mergePageContent(key: PageContentKey, value: unknown): PageEditableContent {
   const base = DEFAULT_PAGE_CONTENT[key];
   const src = isObj(value) ? value : {};
+  const mergedCtas = {
+    primaryCta: mergeLocalized(base.primaryCta, src.primaryCta),
+    secondaryCta: mergeLocalized(base.secondaryCta, src.secondaryCta),
+    ctaEnabled: typeof src.ctaEnabled === "boolean" ? src.ctaEnabled : undefined,
+  };
   return {
     kicker: mergeLocalized(base.kicker, src.kicker),
     title: mergeLocalized(base.title, src.title),
     highlight: mergeLocalized(base.highlight, src.highlight),
     description: mergeLocalized(base.description, src.description),
-    primaryCta: mergeLocalized(base.primaryCta, src.primaryCta),
-    secondaryCta: mergeLocalized(base.secondaryCta, src.secondaryCta),
+    primaryCta: mergedCtas.primaryCta,
+    secondaryCta: mergedCtas.secondaryCta,
+    ctaEnabled: resolvePageCtaEnabled(mergedCtas),
     heroImage: mergeHeroImage(base.heroImage, src.heroImage),
     heroBackground: mergeHeroBackground(base.heroBackground, src.heroBackground),
     sections: mergePageSections(base.sections, src.sections),

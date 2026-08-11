@@ -540,15 +540,17 @@ function B2BPage() {
                 <p className="mx-auto mt-8 max-w-2xl text-[15px] leading-relaxed text-foreground/75 lg:mx-0">
                   {page.description[lang]}
                 </p>
-                <Button
-                  asChild
-                  size="lg"
-                  className="mt-9 h-12 rounded-none bg-primary px-8 text-sm font-bold uppercase tracking-[0.18em] text-primary-foreground hover:bg-primary/90"
-                >
-                  <a href="#partner-form">
-                    {page.primaryCta[lang] || t.start} <ArrowRight className="ml-2 h-4 w-4" />
-                  </a>
-                </Button>
+                {page.ctaEnabled ? (
+                  <Button
+                    asChild
+                    size="lg"
+                    className="mt-9 h-12 rounded-none bg-primary px-8 text-sm font-bold uppercase tracking-[0.18em] text-primary-foreground hover:bg-primary/90"
+                  >
+                    <a href="#partner-form">
+                      {page.primaryCta[lang] || t.start} <ArrowRight className="ml-2 h-4 w-4" />
+                    </a>
+                  </Button>
+                ) : null}
               </>
             )}
           </div>

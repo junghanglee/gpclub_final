@@ -245,14 +245,19 @@ function ProductsPage() {
                   </span>
                 </h1>
                 <p className="mx-auto mt-8 max-w-2xl text-[16px] leading-relaxed text-foreground/75 lg:mx-0">
-                  {page.description[lang]}{" "}
-                  <Link
-                    to="/b2b"
-                    className="font-bold text-primary underline-offset-4 hover:underline"
-                  >
-                    {page.primaryCta[lang] || t.introLink}
-                  </Link>
-                  {t.introB}
+                  {page.description[lang]}
+                  {page.ctaEnabled ? (
+                    <>
+                      {" "}
+                      <Link
+                        to="/b2b"
+                        className="font-bold text-primary underline-offset-4 hover:underline"
+                      >
+                        {page.primaryCta[lang] || t.introLink}
+                      </Link>
+                      {t.introB}
+                    </>
+                  ) : null}
                 </p>
               </>
             )}

@@ -19,11 +19,14 @@ import { HomeContentSections } from "@/components/admin/home-content-sections";
 import { HeroBackgroundEditor } from "@/components/admin/hero-background-editor";
 import { PageSectionEditor } from "@/components/admin/page-section-editor";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database, Json } from "@/integrations/supabase/types";
 import { DEFAULT_HOME_CONTENT, type HomeAdminContent, mergeHomeContent } from "@/lib/home-content";
 import { jsonValuesEqual } from "@/lib/json-value-equality";
 import { recordAdminAudit } from "@/lib/admin-audit";
+import { collectPageCtaIssues, filterDisabledPageCtaIssues } from "@/lib/page-cta";
 import { invalidatePublicDataCache } from "@/lib/public-data-timeout";
 import {
   DEFAULT_PAGE_CONTENT,
@@ -177,16 +180,17 @@ function collectRequiredHomeIssues(form: HomeAdminContent, lang: ContentLang, pa
 }
 
 function collectRequiredPageIssues(form: PageEditableContent, lang: ContentLang, path: string) {
-  return collectMissingRequiredLocalized(
-    [
-      [`${path}.title`, form.title],
-      [`${path}.highlight`, form.highlight],
-      [`${path}.description`, form.description],
-      [`${path}.primaryCta`, form.primaryCta],
-      [`${path}.secondaryCta`, form.secondaryCta],
-    ],
-    lang,
-  );
+  return [
+    ...collectMissingRequiredLocalized(
+      [
+        [`${path}.title`, form.title],
+        [`${path}.highlight`, form.highlight],
+        [`${path}.description`, form.description],
+      ],
+      lang,
+    ),
+    ...collectPageCtaIssues(form, lang, path),
+  ];
 }
 
 function PageTextEditor({
@@ -249,18 +253,33 @@ function PageTextEditor({
           onChange={(v) => patch({ description: v })}
           multiline
         />
-        <LocalizedTextField
-          {...localizedFieldProps}
-          label={t("primaryCta")}
-          value={form.primaryCta}
-          onChange={(v) => patch({ primaryCta: v })}
-        />
-        <LocalizedTextField
-          {...localizedFieldProps}
-          label={t("secondaryCta")}
-          value={form.secondaryCta}
-          onChange={(v) => patch({ secondaryCta: v })}
-        />
+        <div className="flex min-h-14 items-center justify-between gap-4 border-y border-border/60 py-3">
+          <div>
+            <Label>{t("usePageCta")}</Label>
+            <p className="mt-1 text-xs text-muted-foreground">{t("pageCtaDisabledHint")}</p>
+          </div>
+          <Switch
+            checked={form.ctaEnabled}
+            onCheckedChange={(ctaEnabled) => patch({ ctaEnabled })}
+            aria-label={t("usePageCta")}
+          />
+        </div>
+        {form.ctaEnabled ? (
+          <div className="space-y-4">
+            <LocalizedTextField
+              {...localizedFieldProps}
+              label={t("primaryCta")}
+              value={form.primaryCta}
+              onChange={(v) => patch({ primaryCta: v })}
+            />
+            <LocalizedTextField
+              {...localizedFieldProps}
+              label={t("secondaryCta")}
+              value={form.secondaryCta}
+              onChange={(v) => patch({ secondaryCta: v })}
+            />
+          </div>
+        ) : null}
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/60 bg-muted/20 p-3">
           <p className="max-w-2xl text-xs leading-5 text-muted-foreground">
             {t("restoreSavedHeroHint")}
@@ -334,12 +353,12 @@ export default function HomeEditorTab({ lang }: { lang: AdminLang }) {
     selectedPage === "home"
       ? collectRequiredHomeIssues(form, contentLang, selectedPageLabel)
       : collectRequiredPageIssues(pageForm, contentLang, selectedPageLabel);
-  const validationIssues = Array.from(
-    new Set([
-      ...requiredIssues,
-      ...collectLocaleIssues(activeDraft, contentLang, selectedPageLabel),
-    ]),
-  );
+  const localizedIssues = collectLocaleIssues(activeDraft, contentLang, selectedPageLabel);
+  const visibleLocalizedIssues =
+    selectedPage === "home"
+      ? localizedIssues
+      : filterDisabledPageCtaIssues(localizedIssues, pageForm.ctaEnabled);
+  const validationIssues = Array.from(new Set([...requiredIssues, ...visibleLocalizedIssues]));
 
   const load = useCallback(async () => {
     setLoading(true);
