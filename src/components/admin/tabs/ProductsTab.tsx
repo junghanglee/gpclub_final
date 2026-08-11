@@ -1,4 +1,4 @@
-import { CheckCircle2, Pencil, Plus, RefreshCw, Trash2, X } from "lucide-react";
+import { ArrowUpDown, CheckCircle2, Pencil, Plus, RefreshCw, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { type ADMIN_I18N, type AdminLang, tx } from "@/components/admin/admin-i18n";
@@ -10,6 +10,7 @@ import {
   type ProductDetailEditorHandle,
 } from "@/components/admin/product-detail-editor";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -49,6 +50,7 @@ import type {
   ProductMedia,
   ProductTranslations,
 } from "@/lib/catalog-products";
+import { getCoverImage } from "@/lib/catalog-products";
 import { productDetailTextFromHtml, sanitizeProductDetailHtml } from "@/lib/product-detail-html";
 
 type AdminProductUpdate = Database["public"]["Tables"]["admin_products"]["Update"];
@@ -173,6 +175,10 @@ export default function ProductsAdminTab({ lang }: { lang: AdminLang }) {
   const [brands, setBrands] = useState<BrandOption[]>([]);
   const [page, setPage] = useState(0);
   const [totalRows, setTotalRows] = useState(0);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const [publishedProducts, setPublishedProducts] = useState(0);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [sort, setSort] = useState<"newest" | "name" | "brand">("newest");
   const [saving, setSaving] = useState(false);
   const [productLocale, setProductLocale] = useState<ProductLocale>("vi");
   const detailEditorRefs = useRef<Record<ProductLocale, ProductDetailEditorHandle | null>>({
@@ -192,11 +198,18 @@ export default function ProductsAdminTab({ lang }: { lang: AdminLang }) {
     let query = supabase
       .from("admin_products")
       .select("*,brands(id,key,slug,name,sort_order,published)", {
-        count: "estimated",
+        count: "exact",
       })
-      .order("sort_order", { ascending: false })
-      .order("created_at", { ascending: false })
       .range(from, to);
+    if (sort === "name") query = query.order("product_name", { ascending: true });
+    else if (sort === "brand")
+      query = query
+        .order("brand_name", { ascending: true })
+        .order("product_name", { ascending: true });
+    else
+      query = query
+        .order("sort_order", { ascending: false })
+        .order("created_at", { ascending: false });
     if (brandFilter !== "All") {
       query = query.eq("brand_id", brandFilter);
     }
@@ -204,9 +217,20 @@ export default function ProductsAdminTab({ lang }: { lang: AdminLang }) {
       query = query.eq("published", true);
     }
     if (trimmedSearch) {
-      query = query.ilike("product_name", `%${trimmedSearch}%`);
+      const safeSearch = trimmedSearch.replace(/[,%()]/g, " ").trim();
+      query = query.or(
+        `product_name.ilike.%${safeSearch}%,product_type.ilike.%${safeSearch}%,brand_name.ilike.%${safeSearch}%`,
+      );
     }
-    const [brandResult, productResult] = await Promise.all([brandPromise, query]);
+    const [brandResult, productResult, totalResult, publishedResult] = await Promise.all([
+      brandPromise,
+      query,
+      supabase.from("admin_products").select("id", { count: "exact", head: true }),
+      supabase
+        .from("admin_products")
+        .select("id", { count: "exact", head: true })
+        .eq("published", true),
+    ]);
     if (brandResult.error) toast.error(brandResult.error.message);
     else setBrands((brandResult.data || []) as BrandOption[]);
     if (productResult.error) toast.error(productResult.error.message);
@@ -214,8 +238,10 @@ export default function ProductsAdminTab({ lang }: { lang: AdminLang }) {
       setRows((productResult.data || []) as unknown as CatalogProduct[]);
       setTotalRows(productResult.count ?? productResult.data?.length ?? 0);
     }
+    setTotalProducts(totalResult.count ?? 0);
+    setPublishedProducts(publishedResult.count ?? 0);
     setLoading(false);
-  }, [brandFilter, page, publicationFilter, search]);
+  }, [brandFilter, page, publicationFilter, search, sort]);
 
   useEffect(() => {
     void load();
@@ -224,6 +250,22 @@ export default function ProductsAdminTab({ lang }: { lang: AdminLang }) {
   useEffect(() => {
     setPage(0);
   }, [search, brandFilter, publicationFilter]);
+
+  useEffect(() => setSelectedIds([]), [page, search, brandFilter, publicationFilter, sort]);
+
+  const bulkSetPublished = async (published: boolean) => {
+    if (selectedIds.length === 0) return;
+    const { error } = await supabase
+      .from("admin_products")
+      .update({ published })
+      .in("id", selectedIds);
+    if (error) toast.error(error.message);
+    else {
+      toast.success(`${selectedIds.length} products updated.`);
+      setSelectedIds([]);
+      await load();
+    }
+  };
 
   const startNew = () => {
     const primaryBrand = brands.find((brand) => brand.published) ?? brands[0];
@@ -406,7 +448,21 @@ export default function ProductsAdminTab({ lang }: { lang: AdminLang }) {
         </div>
       </div>
 
-      <div className="mb-4 grid gap-3 rounded-2xl border border-border/60 bg-muted/20 p-3 md:grid-cols-[minmax(240px,1fr)_180px_auto_140px]">
+      <div className="mb-4 grid gap-3 sm:grid-cols-3">
+        <div className="rounded-lg border p-3">
+          <div className="text-xs text-muted-foreground">{t("totalProducts")}</div>
+          <div className="mt-1 text-2xl font-black">{totalProducts}</div>
+        </div>
+        <div className="rounded-lg border p-3">
+          <div className="text-xs text-muted-foreground">{t("publishedProducts")}</div>
+          <div className="mt-1 text-2xl font-black">{publishedProducts}</div>
+        </div>
+        <div className="rounded-lg border p-3">
+          <div className="text-xs text-muted-foreground">{t("searchResults")}</div>
+          <div className="mt-1 text-2xl font-black">{totalRows}</div>
+        </div>
+      </div>
+      <div className="mb-4 grid gap-3 rounded-2xl border border-border/60 bg-muted/20 p-3 md:grid-cols-[minmax(240px,1fr)_180px_auto_180px]">
         <Input
           placeholder="Search product name, brand, type"
           value={search}
@@ -452,10 +508,34 @@ export default function ProductsAdminTab({ lang }: { lang: AdminLang }) {
             {t("published")}
           </Button>
         </div>
-        <div className="flex items-center justify-center rounded-md border bg-card px-3 text-sm font-bold">
-          {rows.length} / {totalRows}
-        </div>
+        <Select value={sort} onValueChange={(value) => setSort(value as typeof sort)}>
+          <SelectTrigger>
+            <ArrowUpDown className="mr-2 h-4 w-4" />
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="newest">{t("sortNewest")}</SelectItem>
+            <SelectItem value="name">{t("sortName")}</SelectItem>
+            <SelectItem value="brand">{t("sortBrand")}</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
+      {selectedIds.length > 0 ? (
+        <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 p-3">
+          <Badge>
+            {selectedIds.length} {t("selected")}
+          </Badge>
+          <Button size="sm" variant="outline" onClick={() => void bulkSetPublished(true)}>
+            {t("publishSelected")}
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => void bulkSetPublished(false)}>
+            {t("unpublishSelected")}
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setSelectedIds([])}>
+            {t("clearSelected")}
+          </Button>
+        </div>
+      ) : null}
 
       {loading ? (
         <p className="text-sm text-muted-foreground">{t("loading")}</p>
@@ -466,6 +546,17 @@ export default function ProductsAdminTab({ lang }: { lang: AdminLang }) {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-10">
+                  <Checkbox
+                    checked={rows.length > 0 && rows.every((row) => selectedIds.includes(row.id))}
+                    onCheckedChange={(checked) =>
+                      setSelectedIds(checked ? rows.map((row) => row.id) : [])
+                    }
+                    aria-label={t("selectAll")}
+                  />
+                </TableHead>
+                <TableHead className="w-16">#</TableHead>
+                <TableHead className="w-20">{t("thumbnail")}</TableHead>
                 <TableHead className="w-[90px]">{t("published")}</TableHead>
                 <TableHead>{t("brandName")}</TableHead>
                 <TableHead className="min-w-[300px]">{t("productName")}</TableHead>
@@ -475,8 +566,33 @@ export default function ProductsAdminTab({ lang }: { lang: AdminLang }) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rows.map((row) => (
+              {rows.map((row, index) => (
                 <TableRow key={row.id}>
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedIds.includes(row.id)}
+                      onCheckedChange={(checked) =>
+                        setSelectedIds((ids) =>
+                          checked ? [...ids, row.id] : ids.filter((id) => id !== row.id),
+                        )
+                      }
+                      aria-label={`Select ${row.product_name}`}
+                    />
+                  </TableCell>
+                  <TableCell className="font-mono text-xs text-muted-foreground">
+                    {page * ADMIN_PAGE_SIZE + index + 1}
+                  </TableCell>
+                  <TableCell>
+                    <div className="h-14 w-14 overflow-hidden rounded-md border bg-muted">
+                      {getCoverImage(row) ? (
+                        <img
+                          src={getCoverImage(row)}
+                          alt=""
+                          className="h-full w-full object-cover"
+                        />
+                      ) : null}
+                    </div>
+                  </TableCell>
                   <TableCell>
                     <Switch
                       checked={row.published}

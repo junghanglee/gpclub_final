@@ -1,8 +1,9 @@
-import { Download, Eye, Pencil, Plus, RefreshCw, Star, Trash2 } from "lucide-react";
+import { Download, Eye, ImagePlus, Pencil, Plus, RefreshCw, Star, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { type ADMIN_I18N, type AdminLang, tx } from "@/components/admin/admin-i18n";
 import { Badge } from "@/components/ui/badge";
+import { AdminImageUploader } from "@/components/admin/admin-image-uploader";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -32,6 +33,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { type CatalogProduct, getCoverImage, normalizedSearchText } from "@/lib/catalog-products";
+import { resolveCatalogCoverImage } from "@/lib/catalog-cover";
 import {
   createCatalogId,
   fetchProductCatalogs,
@@ -63,6 +65,8 @@ function emptyCatalog(rows: CatalogProduct[]): ProductCatalog {
     description: "A printable catalog generated from products registered in Product Management.",
     template: "premium",
     product_ids: [],
+    cover_image_url: "",
+    cover_product_id: null,
     is_representative: false,
     created_at: now,
     updated_at: now,
@@ -79,6 +83,8 @@ export default function ProductCatalogsAdminTab({ lang }: { lang: AdminLang }) {
   const [productSearch, setProductSearch] = useState("");
   const [brandFilter, setBrandFilter] = useState("All");
   const [typeFilter, setTypeFilter] = useState("All");
+  const [coverSource, setCoverSource] = useState<"product" | "upload">("product");
+  const [coverSearch, setCoverSearch] = useState("");
 
   const load = async () => {
     setLoading(true);
@@ -148,6 +154,8 @@ export default function ProductCatalogsAdminTab({ lang }: { lang: AdminLang }) {
     setProductSearch("");
     setBrandFilter("All");
     setTypeFilter("All");
+    setCoverSource("product");
+    setCoverSearch("");
     setEditing(emptyCatalog(products));
     setOpen(true);
   };
@@ -377,6 +385,89 @@ export default function ProductCatalogsAdminTab({ lang }: { lang: AdminLang }) {
                   onChange={(e) => setEditing({ ...editing, description: e.target.value })}
                 />
               </div>
+              <div className="rounded-2xl border border-border p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <Label>{t("catalogCoverImage")}</Label>
+                    <p className="mt-1 text-xs text-muted-foreground">{t("catalogCoverHint")}</p>
+                  </div>
+                  <div className="inline-flex rounded-md border p-1">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={coverSource === "product" ? "secondary" : "ghost"}
+                      onClick={() => setCoverSource("product")}
+                    >
+                      <ImagePlus className="mr-1 h-4 w-4" />
+                      {t("chooseProductImage")}
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={coverSource === "upload" ? "secondary" : "ghost"}
+                      onClick={() => setCoverSource("upload")}
+                    >
+                      {t("uploadCoverImage")}
+                    </Button>
+                  </div>
+                </div>
+                {coverSource === "upload" ? (
+                  <div className="mt-3">
+                    <AdminImageUploader
+                      label={t("uploadCoverImage")}
+                      value={editing.cover_image_url}
+                      onChange={(value) =>
+                        setEditing({ ...editing, cover_image_url: value, cover_product_id: null })
+                      }
+                      uploadPrefix={`catalogs/${editing.id}/cover`}
+                      previewAlt={editing.title}
+                      hint="JPG, PNG, or WebP"
+                    />
+                  </div>
+                ) : (
+                  <div className="mt-3 space-y-2">
+                    <Input
+                      value={coverSearch}
+                      onChange={(event) => setCoverSearch(event.target.value)}
+                      placeholder={t("searchProducts")}
+                    />
+                    <div className="grid max-h-48 grid-cols-3 gap-2 overflow-y-auto">
+                      {products
+                        .filter((product) =>
+                          normalizedSearchText(
+                            `${product.product_name} ${displayBrandName(product)}`,
+                          ).includes(normalizedSearchText(coverSearch)),
+                        )
+                        .map((product) => {
+                          const image = getCoverImage(product);
+                          return (
+                            <button
+                              type="button"
+                              key={product.id}
+                              className={`overflow-hidden rounded-lg border text-left ${editing.cover_product_id === product.id ? "border-primary ring-2 ring-primary/30" : "border-border"}`}
+                              onClick={() =>
+                                setEditing({
+                                  ...editing,
+                                  cover_product_id: product.id,
+                                  cover_image_url: image,
+                                })
+                              }
+                            >
+                              {image ? (
+                                <img src={image} alt="" className="h-20 w-full object-cover" />
+                              ) : (
+                                <div className="h-20 bg-muted" />
+                              )}
+                              <span className="block truncate p-1 text-[10px]">
+                                {product.product_name}
+                              </span>
+                            </button>
+                          );
+                        })}
+                    </div>
+                  </div>
+                )}
+              </div>
               <div>
                 <Label>{t("catalogTemplate")}</Label>
                 <Select
@@ -516,6 +607,39 @@ export default function ProductCatalogsAdminTab({ lang }: { lang: AdminLang }) {
                       </label>
                     );
                   })}
+                </div>
+              </div>
+              <div className="grid gap-4 rounded-2xl border border-border bg-[#171017] p-4 text-white md:grid-cols-[220px_1fr]">
+                <div className="aspect-[4/5] overflow-hidden rounded-lg bg-white/10">
+                  {resolveCatalogCoverImage(editing, products) ? (
+                    <img
+                      src={resolveCatalogCoverImage(editing, products)}
+                      alt=""
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center text-xs text-white/60">
+                      {t("noProductImages")}
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <Label className="text-white">{t("catalogPreview")}</Label>
+                  <div className="mt-3 grid grid-cols-3 gap-2">
+                    {(["premium", "compact", "lineup"] as const).map((template) => (
+                      <Button
+                        key={template}
+                        type="button"
+                        size="sm"
+                        variant={editing.template === template ? "secondary" : "outline"}
+                        onClick={() => setEditing({ ...editing, template })}
+                      >
+                        {templateLabel(template)}
+                      </Button>
+                    ))}
+                  </div>
+                  <h3 className="mt-6 font-display text-2xl font-black">{editing.title}</h3>
+                  <p className="mt-2 text-sm text-white/70">{editing.subtitle}</p>
                 </div>
               </div>
               <DialogFooter>

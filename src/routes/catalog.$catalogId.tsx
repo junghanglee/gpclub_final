@@ -9,6 +9,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { type CatalogProduct, getCoverImage, useCatalogProducts } from "@/lib/catalog-products";
+import { resolveCatalogCoverImage } from "@/lib/catalog-cover";
 import { fetchCatalogById, type ProductCatalog, sortCatalogProducts } from "@/lib/product-catalogs";
 
 export const Route = createFileRoute("/catalog/$catalogId")({
@@ -181,7 +182,7 @@ function CatalogCover({
   productsLoading?: boolean;
 }) {
   const heroProduct = products[0];
-  const heroImage = heroProduct ? getCoverImage(heroProduct) : "";
+  const heroImage = resolveCatalogCoverImage(catalog, products);
 
   return (
     <section className="catalog-cover relative isolate grid min-h-[820px] overflow-hidden bg-[#151014] text-white md:grid-cols-2 print:min-h-[980px] print:grid-cols-2">
@@ -239,7 +240,7 @@ function CatalogCover({
         {heroImage ? (
           <img
             src={heroImage}
-            alt={heroProduct.product_name}
+            alt={heroProduct?.product_name || catalog.title}
             className="relative h-full min-h-[620px] w-full rounded-[2.5rem] object-cover shadow-2xl print:min-h-[760px]"
           />
         ) : (

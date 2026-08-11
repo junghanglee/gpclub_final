@@ -10,6 +10,8 @@ export type ProductCatalog = {
   description: string;
   template: "premium" | "compact" | "lineup";
   product_ids: string[];
+  cover_image_url: string;
+  cover_product_id: string | null;
   is_representative: boolean;
   created_at: string;
   updated_at: string;
@@ -32,6 +34,8 @@ function normalizeCatalog(value: Partial<ProductCatalog>): ProductCatalog {
     template:
       value.template === "compact" || value.template === "lineup" ? value.template : "premium",
     product_ids: Array.isArray(value.product_ids) ? value.product_ids.map(String) : [],
+    cover_image_url: String(value.cover_image_url || ""),
+    cover_product_id: value.cover_product_id ? String(value.cover_product_id) : null,
     is_representative: Boolean(value.is_representative),
     created_at: String(value.created_at || now),
     updated_at: String(value.updated_at || now),
