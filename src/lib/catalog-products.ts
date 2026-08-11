@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { batchCatalogProductIds } from "@/lib/catalog-product-batches";
 import { productDetailTextFromHtml } from "@/lib/product-detail-html";
 import { withPublicDataTimeout } from "@/lib/public-data-timeout";
 
@@ -277,6 +278,50 @@ export async function fetchPublishedCatalogProducts(
   }
 }
 
+export async function fetchCatalogProductsByIds(productIds: string[]) {
+  const batches = batchCatalogProductIds(productIds);
+  if (batches.length === 0) return EMPTY_CATALOG_PRODUCTS;
+
+  try {
+    const rows = await Promise.all(
+      batches.map(async (ids) => {
+        const query = supabase
+          .from("admin_products")
+          .select(CATALOG_PRODUCT_LIST_COLUMNS)
+          .in("id", ids);
+        const { data, error } = await withPublicDataTimeout(query, "selected catalog products");
+        if (error) throw error;
+        return (data || []).map((row) => normalizeCatalogProductRow(row as CatalogProductRow));
+      }),
+    );
+    return rows.flat();
+  } catch (error) {
+    if (!isMissingBrandSchemaError(error)) return EMPTY_CATALOG_PRODUCTS;
+
+    try {
+      const rows = await Promise.all(
+        batches.map(async (ids) => {
+          const query = supabase
+            .from("admin_products")
+            .select(LEGACY_CATALOG_PRODUCT_LIST_COLUMNS)
+            .in("id", ids);
+          const { data, error: legacyError } = await withPublicDataTimeout(
+            query,
+            "selected legacy catalog products",
+          );
+          if (legacyError) throw legacyError;
+          return (data || []).map((row) =>
+            normalizeLegacyCatalogProductRow(row as CatalogProductRow),
+          );
+        }),
+      );
+      return rows.flat();
+    } catch {
+      return EMPTY_CATALOG_PRODUCTS;
+    }
+  }
+}
+
 export async function fetchPublishedCatalogBrandSummaries() {
   const query = supabase
     .from("admin_products")
@@ -429,6 +474,23 @@ export function useCatalogProducts(
   );
 
   return { rows, loading, error: query.error, source, types, brands };
+}
+
+export function useCatalogProductsByIds(productIds: string[], options: { enabled?: boolean } = {}) {
+  const query = useQuery({
+    queryKey: [...catalogProductsQueryKey, "selected-ids", ...productIds],
+    queryFn: () => fetchCatalogProductsByIds(productIds),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    retry: 1,
+    enabled: (options.enabled ?? true) && productIds.length > 0,
+  });
+
+  return {
+    rows: query.data ?? EMPTY_CATALOG_PRODUCTS,
+    loading: query.isLoading,
+    error: query.error,
+  };
 }
 
 export function usePublishedCatalogBrandSummaries(options: { enabled?: boolean } = {}) {

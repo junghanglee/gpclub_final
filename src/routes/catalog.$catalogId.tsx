@@ -8,7 +8,18 @@ import {
 } from "@/components/site/SectionSkeletons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { type CatalogProduct, getCoverImage, useCatalogProducts } from "@/lib/catalog-products";
+import {
+  type CatalogProduct,
+  getCoverImage,
+  useCatalogProductsByIds,
+} from "@/lib/catalog-products";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { resolveCatalogCoverImage } from "@/lib/catalog-cover";
 import { fetchCatalogById, type ProductCatalog, sortCatalogProducts } from "@/lib/product-catalogs";
 
@@ -27,9 +38,13 @@ export const Route = createFileRoute("/catalog/$catalogId")({
 
 function CatalogPdfPage() {
   const { catalogId } = Route.useParams();
-  const { rows: products, loading: productsLoading } = useCatalogProducts();
   const [catalog, setCatalog] = useState<ProductCatalog | null>(null);
   const [loading, setLoading] = useState(true);
+  const [displayCount, setDisplayCount] = useState<"all" | "10" | "25" | "50">("all");
+  const selectedProductIds = useMemo(() => catalog?.product_ids ?? [], [catalog]);
+  const { rows: products, loading: productsLoading } = useCatalogProductsByIds(selectedProductIds, {
+    enabled: Boolean(catalog),
+  });
 
   useEffect(() => {
     let alive = true;
@@ -45,6 +60,11 @@ function CatalogPdfPage() {
   const catalogProducts = useMemo(
     () => sortCatalogProducts(catalog, products),
     [catalog, products],
+  );
+  const visibleCatalogProducts = useMemo(
+    () =>
+      displayCount === "all" ? catalogProducts : catalogProducts.slice(0, Number(displayCount)),
+    [catalogProducts, displayCount],
   );
 
   if (loading) {
@@ -81,7 +101,11 @@ function CatalogPdfPage() {
   return (
     <main className="min-h-screen bg-[#f6efe9] text-slate-950 print:bg-white">
       <style>{printStyles}</style>
-      <CatalogPrintToolbar />
+      <CatalogPrintToolbar
+        totalProducts={catalogProducts.length}
+        displayCount={displayCount}
+        onDisplayCountChange={setDisplayCount}
+      />
 
       <section className="catalog-page mx-auto max-w-6xl bg-white shadow-2xl print:shadow-none">
         <CatalogCover
@@ -91,7 +115,7 @@ function CatalogPdfPage() {
         />
         <CatalogProductsSection
           catalog={catalog}
-          products={catalogProducts}
+          products={visibleCatalogProducts}
           loading={productsLoading}
         />
       </section>
@@ -99,7 +123,15 @@ function CatalogPdfPage() {
   );
 }
 
-function CatalogPrintToolbar() {
+function CatalogPrintToolbar({
+  totalProducts,
+  displayCount,
+  onDisplayCountChange,
+}: {
+  totalProducts?: number;
+  displayCount?: "all" | "10" | "25" | "50";
+  onDisplayCountChange?: (value: "all" | "10" | "25" | "50") => void;
+}) {
   return (
     <div className="no-print sticky top-0 z-20 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3">
@@ -109,12 +141,30 @@ function CatalogPrintToolbar() {
           </div>
           <div className="text-sm text-slate-500">Click download, then choose Save as PDF.</div>
         </div>
-        <Button
-          onClick={() => window.print()}
-          className="rounded-none bg-slate-950 text-white hover:bg-pink-600"
-        >
-          <Download className="mr-2 h-4 w-4" /> Download PDF
-        </Button>
+        <div className="flex flex-wrap items-center gap-3">
+          {displayCount && onDisplayCountChange ? (
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-slate-500">Products shown</span>
+              <Select value={displayCount} onValueChange={onDisplayCountChange}>
+                <SelectTrigger className="h-9 w-[110px] bg-white" aria-label="Products shown">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="all">All ({totalProducts ?? 0})</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          ) : null}
+          <Button
+            onClick={() => window.print()}
+            className="rounded-none bg-slate-950 text-white hover:bg-pink-600"
+          >
+            <Download className="mr-2 h-4 w-4" /> Download PDF
+          </Button>
+        </div>
       </div>
     </div>
   );
