@@ -1,5 +1,5 @@
 import { RotateCcw } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import gippyB2BHero from "@/assets/gippy-b2b-hero.png";
 import gippyBrandHero from "@/assets/gippy-brand-hero.png";
@@ -36,6 +36,7 @@ import { jsonValuesEqual } from "@/lib/json-value-equality";
 import { recordAdminAudit } from "@/lib/admin-audit";
 import { collectPageCtaIssues, filterDisabledPageCtaIssues } from "@/lib/page-cta";
 import { pageHeroTitleStyle } from "@/lib/page-hero-style";
+import { CMS_PREVIEW_SOURCE } from "@/lib/cms-live-preview";
 import { invalidatePublicDataCache } from "@/lib/public-data-timeout";
 import {
   DEFAULT_PAGE_CONTENT,
@@ -638,6 +639,8 @@ export default function HomeEditorTab({ lang }: { lang: AdminLang }) {
   const [revisions, setRevisions] = useState<ContentRevision[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const previewRef = useRef<HTMLIFrameElement>(null);
+  const [previewWidth, setPreviewWidth] = useState<"desktop" | "mobile">("desktop");
   const selectedPageLabel =
     selectedPage === "home"
       ? "HOME"
@@ -712,6 +715,34 @@ export default function HomeEditorTab({ lang }: { lang: AdminLang }) {
   const patchCta = (next: Partial<HomeAdminContent["cta"]>) =>
     patch({ cta: { ...form.cta, ...next } });
   const localizedFieldProps = { activeLang: contentLang, compareMode };
+
+  const sendDraftToPreview = useCallback(() => {
+    previewRef.current?.contentWindow?.postMessage(
+      {
+        source: CMS_PREVIEW_SOURCE,
+        page: selectedPage,
+        content: selectedPage === "home" ? form : pageForm,
+      },
+      window.location.origin,
+    );
+  }, [form, pageForm, selectedPage]);
+
+  useEffect(() => {
+    sendDraftToPreview();
+  }, [contentLang, sendDraftToPreview]);
+
+  useEffect(() => {
+    const receiveReady = (event: MessageEvent) => {
+      if (
+        event.origin === window.location.origin &&
+        event.data?.source === "gpclub-cms-preview-ready"
+      ) {
+        sendDraftToPreview();
+      }
+    };
+    window.addEventListener("message", receiveReady);
+    return () => window.removeEventListener("message", receiveReady);
+  }, [sendDraftToPreview]);
 
   const openPreview = (langToPreview: ContentLang) => {
     const path = PAGE_PREVIEW_PATHS[selectedPage];
@@ -881,40 +912,82 @@ export default function HomeEditorTab({ lang }: { lang: AdminLang }) {
         </details>
       ) : null}
 
-      {selectedPage !== "home" ? (
-        <PageTextEditor
-          form={pageForm}
-          onChange={setPageForm}
-          pageKey={selectedPage}
-          contentLang={contentLang}
-          compareMode={compareMode}
-          validationIssues={validationIssues}
-          t={t}
-          onRestoreSavedHero={() => {
-            setPageForm((current) => ({
-              ...current,
-              heroImage: savedPageForm.heroImage,
-              heroBackground: savedPageForm.heroBackground,
-            }));
-            toast.success(t("restoredSavedHero"));
-          }}
-        />
-      ) : (
-        <HomeContentSections
-          form={form}
-          patch={patch}
-          patchHero={patchHero}
-          patchStats={patchStats}
-          patchPartner={patchPartner}
-          patchTrust={patchTrust}
-          patchProcess={patchProcess}
-          patchImages={patchImages}
-          patchCta={patchCta}
-          localizedFieldProps={localizedFieldProps}
-          validationIssues={validationIssues}
-          t={t}
-        />
-      )}
+      <div className="grid items-start gap-5 2xl:grid-cols-[minmax(0,1fr)_minmax(480px,0.9fr)]">
+        <div className="min-w-0">
+          {selectedPage !== "home" ? (
+            <PageTextEditor
+              form={pageForm}
+              onChange={setPageForm}
+              pageKey={selectedPage}
+              contentLang={contentLang}
+              compareMode={compareMode}
+              validationIssues={validationIssues}
+              t={t}
+              onRestoreSavedHero={() => {
+                setPageForm((current) => ({
+                  ...current,
+                  heroImage: savedPageForm.heroImage,
+                  heroBackground: savedPageForm.heroBackground,
+                }));
+                toast.success(t("restoredSavedHero"));
+              }}
+            />
+          ) : (
+            <HomeContentSections
+              form={form}
+              patch={patch}
+              patchHero={patchHero}
+              patchStats={patchStats}
+              patchPartner={patchPartner}
+              patchTrust={patchTrust}
+              patchProcess={patchProcess}
+              patchImages={patchImages}
+              patchCta={patchCta}
+              localizedFieldProps={localizedFieldProps}
+              validationIssues={validationIssues}
+              t={t}
+            />
+          )}
+        </div>
+        <aside className="sticky top-4 overflow-hidden rounded-xl border border-border/70 bg-card shadow-soft">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 p-3">
+            <div>
+              <p className="text-sm font-semibold">Full-page live preview</p>
+              <p className="text-xs text-muted-foreground">
+                Unsaved changes appear here immediately.
+              </p>
+            </div>
+            <div className="flex gap-1" aria-label="Preview width">
+              <Button
+                type="button"
+                size="sm"
+                variant={previewWidth === "desktop" ? "default" : "outline"}
+                onClick={() => setPreviewWidth("desktop")}
+              >
+                Desktop
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={previewWidth === "mobile" ? "default" : "outline"}
+                onClick={() => setPreviewWidth("mobile")}
+              >
+                Mobile
+              </Button>
+            </div>
+          </div>
+          <div className="overflow-auto bg-muted/30 p-2">
+            <iframe
+              key={`${selectedPage}-${contentLang}`}
+              ref={previewRef}
+              title={`${selectedPageLabel} live preview`}
+              src={`${PAGE_PREVIEW_PATHS[selectedPage]}?lang=${contentLang}&cmsPreview=1`}
+              onLoad={sendDraftToPreview}
+              className={`mx-auto block h-[72vh] min-h-[620px] border-0 bg-background transition-[width] duration-200 ${previewWidth === "mobile" ? "w-[390px] max-w-full" : "w-full"}`}
+            />
+          </div>
+        </aside>
+      </div>
     </div>
   );
 }

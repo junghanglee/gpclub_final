@@ -1,5 +1,6 @@
 ﻿import { createContext, type ReactNode, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { isCmsPreviewWindow, readCmsPreviewMessage } from "@/lib/cms-live-preview";
 import {
   fetchCachedPublicData,
   readPublicDataCache,
@@ -261,6 +262,24 @@ export function HomeContentProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
+  }, []);
+
+  useEffect(() => {
+    if (!isCmsPreviewWindow()) return;
+    const receiveDraft = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      const draft = readCmsPreviewMessage(event.data, "home");
+      if (draft) {
+        setContent(mergeHomeContent(draft));
+        setLoading(false);
+      }
+    };
+    window.addEventListener("message", receiveDraft);
+    window.parent.postMessage(
+      { source: "gpclub-cms-preview-ready", page: "home" },
+      window.location.origin,
+    );
+    return () => window.removeEventListener("message", receiveDraft);
   }, []);
 
   return <Ctx.Provider value={{ content, loading }}>{children}</Ctx.Provider>;

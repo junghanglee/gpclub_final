@@ -8,6 +8,7 @@ import {
 import type { BrandCoreValuesHeading } from "@/lib/brand-core-values-heading";
 import { resolvePageCtaEnabled } from "@/lib/page-cta";
 import { normalizeHeroColor } from "@/lib/page-hero-style";
+import { isCmsPreviewWindow, readCmsPreviewMessage } from "@/lib/cms-live-preview";
 
 export type SiteLang = "vi" | "en";
 export type PageContentKey = "brand" | "products" | "gippy-ai" | "events" | "b2b" | "contact";
@@ -1053,6 +1054,24 @@ export function usePageContent(key: PageContentKey) {
     return () => {
       cancelled = true;
     };
+  }, [key]);
+
+  useEffect(() => {
+    if (!isCmsPreviewWindow()) return;
+    const receiveDraft = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      const draft = readCmsPreviewMessage(event.data, key);
+      if (draft) {
+        setContent(mergePageContent(key, draft));
+        setLoading(false);
+      }
+    };
+    window.addEventListener("message", receiveDraft);
+    window.parent.postMessage(
+      { source: "gpclub-cms-preview-ready", page: key },
+      window.location.origin,
+    );
+    return () => window.removeEventListener("message", receiveDraft);
   }, [key]);
 
   return { content, loading };
