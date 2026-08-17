@@ -381,20 +381,17 @@ function GippyHeroSection({
           {page.ctaEnabled ? (
             <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center lg:justify-start">
               <Button
+                asChild
                 size="lg"
                 className="group h-12 rounded-none bg-foreground px-7 text-sm font-bold uppercase tracking-[0.16em] text-background hover:bg-primary"
-                onClick={() =>
-                  openGippy(
-                    lang === "vi"
-                      ? "Xin chào Gippy, tôi muốn được tư vấn sản phẩm và hợp tác với GPCLUB."
-                      : "Hi Gippy, I want product and partnership guidance from GPCLUB.",
-                  )
-                }
               >
-                <span className="inline-flex items-center">
-                  {lang === "vi" ? "Hỏi Gippy AI" : "Ask Gippy AI"}{" "}
+                <a
+                  href={page.primaryCtaUrl[lang] || "/contact"}
+                  className="inline-flex items-center"
+                >
+                  {page.primaryCta[lang]}
                   <ArrowRight className="ml-2 h-4 w-4 transition group-hover:translate-x-1" />
-                </span>
+                </a>
               </Button>
               <Button
                 asChild
