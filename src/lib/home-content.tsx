@@ -1,6 +1,11 @@
 ﻿import { createContext, type ReactNode, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { isCmsPreviewWindow, readCmsPreviewMessage } from "@/lib/cms-live-preview";
+import {
+  installCmsPreviewBindings,
+  isCmsPreviewWindow,
+  readCmsPreviewMessage,
+  type CmsVisualStyle,
+} from "@/lib/cms-live-preview";
 import {
   fetchCachedPublicData,
   readPublicDataCache,
@@ -10,6 +15,7 @@ import {
 export type LocalizedText = { vi: string; en: string };
 
 export type HomeAdminContent = {
+  visualStyles: Record<string, CmsVisualStyle>;
   hero: {
     kicker: LocalizedText;
     title: LocalizedText;
@@ -68,6 +74,7 @@ export type HomeAdminContent = {
 };
 
 export const DEFAULT_HOME_CONTENT: HomeAdminContent = {
+  visualStyles: {},
   hero: {
     kicker: {
       vi: "CHƯƠNG TRÌNH ĐỐI TÁC GPCLUB VIETNAM",
@@ -263,6 +270,23 @@ export function HomeContentProvider({ children }: { children: ReactNode }) {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    const preview = isCmsPreviewWindow();
+    const lang = preview
+      ? new URLSearchParams(window.location.search).get("lang") === "vi"
+        ? "vi"
+        : "en"
+      : undefined;
+    let cleanup = () => {};
+    const frame = window.requestAnimationFrame(() => {
+      cleanup = installCmsPreviewBindings(content, lang, preview);
+    });
+    return () => {
+      window.cancelAnimationFrame(frame);
+      cleanup();
+    };
+  }, [content]);
 
   useEffect(() => {
     if (!isCmsPreviewWindow()) return;

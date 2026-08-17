@@ -15,12 +15,14 @@ import {
 } from "@/components/admin/cms-form-fields";
 import { CmsFormShell } from "@/components/admin/cms-form-shell";
 import { CmsMediaField } from "@/components/admin/cms-media-field";
+import { AdminImageUploader } from "@/components/admin/admin-image-uploader";
 import { HomeContentSections } from "@/components/admin/home-content-sections";
 import { HeroBackgroundEditor } from "@/components/admin/hero-background-editor";
 import { PageSectionEditor } from "@/components/admin/page-section-editor";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import {
   Select,
@@ -36,7 +38,12 @@ import { jsonValuesEqual } from "@/lib/json-value-equality";
 import { recordAdminAudit } from "@/lib/admin-audit";
 import { collectPageCtaIssues, filterDisabledPageCtaIssues } from "@/lib/page-cta";
 import { pageHeroTitleStyle } from "@/lib/page-hero-style";
-import { CMS_PREVIEW_SOURCE } from "@/lib/cms-live-preview";
+import {
+  CMS_PREVIEW_SELECT_SOURCE,
+  CMS_PREVIEW_SOURCE,
+  getDraftValue,
+  setDraftValue,
+} from "@/lib/cms-live-preview";
 import { invalidatePublicDataCache } from "@/lib/public-data-timeout";
 import {
   DEFAULT_PAGE_CONTENT,
@@ -641,6 +648,10 @@ export default function HomeEditorTab({ lang }: { lang: AdminLang }) {
   const [saving, setSaving] = useState(false);
   const previewRef = useRef<HTMLIFrameElement>(null);
   const [previewWidth, setPreviewWidth] = useState<"desktop" | "mobile">("desktop");
+  const [previewSelection, setPreviewSelection] = useState<{
+    path: string;
+    kind: "text" | "image";
+  } | null>(null);
   const selectedPageLabel =
     selectedPage === "home"
       ? "HOME"
@@ -715,6 +726,36 @@ export default function HomeEditorTab({ lang }: { lang: AdminLang }) {
   const patchCta = (next: Partial<HomeAdminContent["cta"]>) =>
     patch({ cta: { ...form.cta, ...next } });
   const localizedFieldProps = { activeLang: contentLang, compareMode };
+  const selectedPreviewValue = previewSelection
+    ? getDraftValue(activeDraft, previewSelection.path)
+    : undefined;
+  const selectedVisualStyle = previewSelection
+    ? ((
+        getDraftValue(activeDraft, "visualStyles") as
+          | Record<string, { fontSize?: number; color?: string }>
+          | undefined
+      )?.[previewSelection.path] ?? {})
+    : {};
+
+  const updatePreviewPath = (path: string, value: unknown) => {
+    if (selectedPage === "home") {
+      setForm((current) => setDraftValue(current, path, value) as HomeAdminContent);
+    } else {
+      setPageForm((current) => setDraftValue(current, path, value) as PageEditableContent);
+    }
+  };
+
+  const updateSelectedVisualStyle = (next: { fontSize?: number; color?: string }) => {
+    if (!previewSelection) return;
+    const visualStyles = (getDraftValue(activeDraft, "visualStyles") ?? {}) as Record<
+      string,
+      { fontSize?: number; color?: string }
+    >;
+    updatePreviewPath("visualStyles", {
+      ...visualStyles,
+      [previewSelection.path]: { ...visualStyles[previewSelection.path], ...next },
+    });
+  };
 
   const sendDraftToPreview = useCallback(() => {
     previewRef.current?.contentWindow?.postMessage(
@@ -739,10 +780,22 @@ export default function HomeEditorTab({ lang }: { lang: AdminLang }) {
       ) {
         sendDraftToPreview();
       }
+      if (
+        event.origin === window.location.origin &&
+        event.data?.source === CMS_PREVIEW_SELECT_SOURCE &&
+        typeof event.data.path === "string"
+      ) {
+        setPreviewSelection({
+          path: event.data.path,
+          kind: event.data.kind === "image" ? "image" : "text",
+        });
+      }
     };
     window.addEventListener("message", receiveReady);
     return () => window.removeEventListener("message", receiveReady);
   }, [sendDraftToPreview]);
+
+  useEffect(() => setPreviewSelection(null), [selectedPage, contentLang]);
 
   const openPreview = (langToPreview: ContentLang) => {
     const path = PAGE_PREVIEW_PATHS[selectedPage];
@@ -977,6 +1030,78 @@ export default function HomeEditorTab({ lang }: { lang: AdminLang }) {
             </div>
           </div>
           <div className="overflow-auto bg-muted/30 p-2">
+            {previewSelection ? (
+              <div className="mb-2 space-y-3 rounded-lg border border-primary/30 bg-background p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div>
+                    <p className="text-sm font-semibold">Selected {previewSelection.kind}</p>
+                    <p className="break-all text-xs text-muted-foreground">
+                      {previewSelection.path}
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setPreviewSelection(null)}
+                  >
+                    Close
+                  </Button>
+                </div>
+                {previewSelection.kind === "image" ? (
+                  <AdminImageUploader
+                    label="Selected image"
+                    value={typeof selectedPreviewValue === "string" ? selectedPreviewValue : ""}
+                    onChange={(value) => updatePreviewPath(previewSelection.path, value)}
+                    uploadPrefix={`page-content/inline/${selectedPage}`}
+                    previewAlt="Selected section image"
+                    hint="Upload from this PC or paste a public image URL. Save content to publish."
+                  />
+                ) : (
+                  <>
+                    <div className="space-y-1">
+                      <Label>Text and line breaks</Label>
+                      <Textarea
+                        value={typeof selectedPreviewValue === "string" ? selectedPreviewValue : ""}
+                        onChange={(event) =>
+                          updatePreviewPath(previewSelection.path, event.target.value)
+                        }
+                        rows={4}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <Label>Font size (px)</Label>
+                        <Input
+                          type="number"
+                          min="10"
+                          max="160"
+                          value={selectedVisualStyle.fontSize ?? ""}
+                          placeholder="Current"
+                          onChange={(event) =>
+                            updateSelectedVisualStyle({ fontSize: Number(event.target.value) })
+                          }
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label>Text color</Label>
+                        <Input
+                          type="color"
+                          value={selectedVisualStyle.color ?? "#171717"}
+                          onChange={(event) =>
+                            updateSelectedVisualStyle({ color: event.target.value })
+                          }
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            ) : (
+              <p className="mb-2 rounded-lg border border-dashed border-border p-3 text-center text-xs text-muted-foreground">
+                Click editable text or an uploaded image in the preview.
+              </p>
+            )}
             <iframe
               key={`${selectedPage}-${contentLang}`}
               ref={previewRef}

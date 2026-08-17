@@ -8,7 +8,12 @@ import {
 import type { BrandCoreValuesHeading } from "@/lib/brand-core-values-heading";
 import { resolvePageCtaEnabled } from "@/lib/page-cta";
 import { normalizeHeroColor } from "@/lib/page-hero-style";
-import { isCmsPreviewWindow, readCmsPreviewMessage } from "@/lib/cms-live-preview";
+import {
+  installCmsPreviewBindings,
+  isCmsPreviewWindow,
+  readCmsPreviewMessage,
+  type CmsVisualStyle,
+} from "@/lib/cms-live-preview";
 
 export type SiteLang = "vi" | "en";
 export type PageContentKey = "brand" | "products" | "gippy-ai" | "events" | "b2b" | "contact";
@@ -163,6 +168,7 @@ export type PageSections = {
 };
 
 export type PageEditableContent = {
+  visualStyles: Record<string, CmsVisualStyle>;
   kicker: PageLocalizedText;
   title: PageLocalizedText;
   highlight: PageLocalizedText;
@@ -618,6 +624,7 @@ export const PAGE_CONTENT_OPTIONS: {
 
 export const DEFAULT_PAGE_CONTENT: Record<PageContentKey, PageEditableContent> = {
   brand: {
+    visualStyles: {},
     kicker: text("GPCLUB VIETNAM", "GPCLUB VIETNAM"),
     title: text("Kiến tạo vẻ đẹp vượt trội từ", "Building partner growth through"),
     highlight: text("sự cải tiến không ngừng.", "proven K-Beauty brands."),
@@ -636,6 +643,7 @@ export const DEFAULT_PAGE_CONTENT: Record<PageContentKey, PageEditableContent> =
     sections: { brand: DEFAULT_BRAND_SECTIONS },
   },
   products: {
+    visualStyles: {},
     kicker: text("SẢN PHẨM", "Products"),
     title: text("Sản phẩm,", "Products,"),
     highlight: text("sẵn sàng bán.", "ready to sell."),
@@ -654,6 +662,7 @@ export const DEFAULT_PAGE_CONTENT: Record<PageContentKey, PageEditableContent> =
     sections: {},
   },
   "gippy-ai": {
+    visualStyles: {},
     kicker: text("GIPPY PARTNER AI", "GIPPY PARTNER AI"),
     title: text("Tư vấn đối tác K-Beauty", "K-Beauty partner sourcing, made"),
     highlight: text("dễ triển khai.", "business-ready."),
@@ -672,6 +681,7 @@ export const DEFAULT_PAGE_CONTENT: Record<PageContentKey, PageEditableContent> =
     sections: { gippyAi: DEFAULT_GIPPY_AI_SECTIONS },
   },
   events: {
+    visualStyles: {},
     kicker: text("GPCLUB EVENT", "GPCLUB EVENT"),
     title: text("Tin tức, sự kiện và", "Events, campaigns and"),
     highlight: text("khoảnh khắc thương hiệu.", "brand moments."),
@@ -690,6 +700,7 @@ export const DEFAULT_PAGE_CONTENT: Record<PageContentKey, PageEditableContent> =
     sections: {},
   },
   b2b: {
+    visualStyles: {},
     kicker: text("B2B PARTNERSHIP", "B2B PARTNERSHIP"),
     title: text("Đưa K-Beauty có sức bán thật vào", "Bring proven K-Beauty into"),
     highlight: text("kênh tăng trưởng của bạn.", "your growth channel."),
@@ -708,6 +719,7 @@ export const DEFAULT_PAGE_CONTENT: Record<PageContentKey, PageEditableContent> =
     sections: { b2b: DEFAULT_B2B_SECTIONS },
   },
   contact: {
+    visualStyles: {},
     kicker: text("CONTACT US", "CONTACT US"),
     title: text("Cùng xây dựng", "Let's build Vietnam's"),
     highlight: text(
@@ -993,6 +1005,9 @@ export function mergePageContent(key: PageContentKey, value: unknown): PageEdita
     ctaEnabled: typeof src.ctaEnabled === "boolean" ? src.ctaEnabled : undefined,
   };
   return {
+    visualStyles: isObj(src.visualStyles)
+      ? (src.visualStyles as Record<string, CmsVisualStyle>)
+      : base.visualStyles,
     kicker: mergeLocalized(base.kicker, src.kicker),
     title: mergeLocalized(base.title, src.title),
     highlight: mergeLocalized(base.highlight, src.highlight),
@@ -1055,6 +1070,23 @@ export function usePageContent(key: PageContentKey) {
       cancelled = true;
     };
   }, [key]);
+
+  useEffect(() => {
+    const preview = isCmsPreviewWindow();
+    const lang = preview
+      ? new URLSearchParams(window.location.search).get("lang") === "vi"
+        ? "vi"
+        : "en"
+      : undefined;
+    let cleanup = () => {};
+    const frame = window.requestAnimationFrame(() => {
+      cleanup = installCmsPreviewBindings(content, lang, preview);
+    });
+    return () => {
+      window.cancelAnimationFrame(frame);
+      cleanup();
+    };
+  }, [content]);
 
   useEffect(() => {
     if (!isCmsPreviewWindow()) return;
