@@ -284,7 +284,10 @@ function ContactPage() {
               <HeroCopySkeleton />
             ) : (
               <>
-                <div className="text-[11px] font-bold uppercase tracking-[0.32em] text-primary">
+                <div
+                  style={{ color: page.heroStyle.kickerColor }}
+                  className="text-[11px] font-bold uppercase tracking-[0.32em]"
+                >
                   {page.kicker[lang]}
                 </div>
                 <h1
@@ -292,11 +295,14 @@ function ContactPage() {
                   className="mt-5 max-w-3xl whitespace-pre-line font-display leading-[1.05] tracking-tight"
                 >
                   {page.title[lang]}{" "}
-                  <span className="bg-gradient-pink bg-clip-text text-transparent">
+                  <span style={{ color: page.heroStyle.highlightColor }}>
                     {page.highlight[lang]}
                   </span>
                 </h1>
-                <p className="mx-auto mt-7 max-w-2xl text-[15px] leading-relaxed text-foreground/75 lg:mx-0">
+                <p
+                  style={{ color: page.heroStyle.descriptionColor }}
+                  className="mx-auto mt-7 max-w-2xl whitespace-pre-line text-[15px] leading-relaxed lg:mx-0"
+                >
                   {page.description[lang]}
                 </p>
               </>

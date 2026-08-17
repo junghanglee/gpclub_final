@@ -363,7 +363,10 @@ function GippyHeroSection({
         <div
           className={`text-center lg:text-left ${showHeroImage ? "lg:col-span-7" : "lg:col-span-12 lg:max-w-4xl"}`}
         >
-          <div className="inline-flex items-center gap-2 border-b border-primary/40 pb-1 text-[11px] font-bold uppercase tracking-[0.28em] text-primary">
+          <div
+            style={{ color: page.heroStyle.kickerColor }}
+            className="inline-flex items-center gap-2 border-b border-primary/40 pb-1 text-[11px] font-bold uppercase tracking-[0.28em]"
+          >
             <Sparkles className="h-3 w-3" /> {page.kicker[lang]}
           </div>
           <h1
@@ -371,11 +374,12 @@ function GippyHeroSection({
             className="mt-6 whitespace-pre-line font-display leading-[1.04] tracking-tight text-foreground"
           >
             {page.title[lang]}{" "}
-            <span className="bg-gradient-pink bg-clip-text text-transparent">
-              {page.highlight[lang]}
-            </span>
+            <span style={{ color: page.heroStyle.highlightColor }}>{page.highlight[lang]}</span>
           </h1>
-          <p className="mx-auto mt-5 max-w-2xl text-[15px] font-semibold leading-relaxed text-foreground/75 md:text-lg lg:mx-0">
+          <p
+            style={{ color: page.heroStyle.descriptionColor }}
+            className="mx-auto mt-5 max-w-2xl whitespace-pre-line text-[15px] font-semibold leading-relaxed md:text-lg lg:mx-0"
+          >
             {page.description[lang]}
           </p>
           {page.ctaEnabled ? (

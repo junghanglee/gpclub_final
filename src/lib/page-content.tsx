@@ -7,6 +7,7 @@ import {
 } from "@/lib/public-data-timeout";
 import type { BrandCoreValuesHeading } from "@/lib/brand-core-values-heading";
 import { resolvePageCtaEnabled } from "@/lib/page-cta";
+import { normalizeHeroColor } from "@/lib/page-hero-style";
 
 export type SiteLang = "vi" | "en";
 export type PageContentKey = "brand" | "products" | "gippy-ai" | "events" | "b2b" | "contact";
@@ -16,6 +17,10 @@ export type PageHeroStyle = {
   titleSize: "compact" | "standard" | "display";
   titleWeight: "semibold" | "bold" | "black";
   align: "left" | "center";
+  kickerColor: string;
+  titleColor: string;
+  highlightColor: string;
+  descriptionColor: string;
 };
 
 export type PageHeroImage = {
@@ -179,6 +184,10 @@ const defaultHeroStyle = (): PageHeroStyle => ({
   titleSize: "display",
   titleWeight: "black",
   align: "left",
+  kickerColor: "#ec4899",
+  titleColor: "#171717",
+  highlightColor: "#ec4899",
+  descriptionColor: "#525252",
 });
 const emptyImageAsset = (): PageImageAsset => ({ url: "", alt: text("", "") });
 
@@ -753,6 +762,10 @@ function mergeHeroStyle(base: PageHeroStyle, extra: unknown): PageHeroStyle {
         ? src.titleWeight
         : base.titleWeight,
     align: src.align === "left" || src.align === "center" ? src.align : base.align,
+    kickerColor: normalizeHeroColor(src.kickerColor, base.kickerColor),
+    titleColor: normalizeHeroColor(src.titleColor, base.titleColor),
+    highlightColor: normalizeHeroColor(src.highlightColor, base.highlightColor),
+    descriptionColor: normalizeHeroColor(src.descriptionColor, base.descriptionColor),
   };
 }
 

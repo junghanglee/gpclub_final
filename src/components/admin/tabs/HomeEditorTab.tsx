@@ -20,6 +20,7 @@ import { HeroBackgroundEditor } from "@/components/admin/hero-background-editor"
 import { PageSectionEditor } from "@/components/admin/page-section-editor";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import {
   Select,
@@ -376,6 +377,100 @@ function PageTextEditor({
             <Label>Live hero preview ({contentLang.toUpperCase()})</Label>
             <span className="text-xs text-muted-foreground">Line breaks are preserved</span>
           </div>
+          <div className="mb-3 grid gap-3 border-y border-border/60 py-3 sm:grid-cols-3 lg:grid-cols-7">
+            <div className="space-y-1">
+              <Label className="text-xs">Title size</Label>
+              <Select
+                value={form.heroStyle.titleSize}
+                onValueChange={(titleSize) =>
+                  patch({
+                    heroStyle: {
+                      ...form.heroStyle,
+                      titleSize: titleSize as PageEditableContent["heroStyle"]["titleSize"],
+                    },
+                  })
+                }
+              >
+                <SelectTrigger className="h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="compact">Compact</SelectItem>
+                  <SelectItem value="standard">Standard</SelectItem>
+                  <SelectItem value="display">Display</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Weight</Label>
+              <Select
+                value={form.heroStyle.titleWeight}
+                onValueChange={(titleWeight) =>
+                  patch({
+                    heroStyle: {
+                      ...form.heroStyle,
+                      titleWeight: titleWeight as PageEditableContent["heroStyle"]["titleWeight"],
+                    },
+                  })
+                }
+              >
+                <SelectTrigger className="h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="semibold">Semibold</SelectItem>
+                  <SelectItem value="bold">Bold</SelectItem>
+                  <SelectItem value="black">Black</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Align</Label>
+              <Select
+                value={form.heroStyle.align}
+                onValueChange={(align) =>
+                  patch({
+                    heroStyle: {
+                      ...form.heroStyle,
+                      align: align as PageEditableContent["heroStyle"]["align"],
+                    },
+                  })
+                }
+              >
+                <SelectTrigger className="h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="left">Left</SelectItem>
+                  <SelectItem value="center">Center</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {(
+              [
+                ["kickerColor", "Kicker"],
+                ["titleColor", "Title"],
+                ["highlightColor", "Highlight"],
+                ["descriptionColor", "Body"],
+              ] as const
+            ).map(([field, label]) => (
+              <div key={field} className="space-y-1">
+                <Label className="text-xs">{label}</Label>
+                <Input
+                  type="color"
+                  value={form.heroStyle[field]}
+                  onChange={(event) =>
+                    patch({ heroStyle: { ...form.heroStyle, [field]: event.target.value } })
+                  }
+                  className="h-9 cursor-pointer p-1"
+                  aria-label={`${label} color`}
+                />
+              </div>
+            ))}
+          </div>
+          <p className="mb-3 text-xs text-muted-foreground">
+            Click any text in the preview to edit it directly. Press Enter to add a line break.
+          </p>
           <div className="relative isolate min-h-[220px] overflow-hidden rounded-lg bg-gradient-luxe p-6 md:p-10">
             {form.heroBackground.desktopUrl ? (
               <img
@@ -387,18 +482,70 @@ function PageTextEditor({
             <div
               className={`relative max-w-2xl ${form.heroStyle.align === "center" ? "mx-auto text-center" : "text-left"}`}
             >
-              <div className="text-[10px] font-bold uppercase tracking-[0.28em] text-primary">
+              <div
+                key={`kicker-${contentLang}`}
+                contentEditable
+                suppressContentEditableWarning
+                onBlur={(event) =>
+                  patch({
+                    kicker: { ...form.kicker, [contentLang]: event.currentTarget.innerText },
+                  })
+                }
+                style={{ color: form.heroStyle.kickerColor }}
+                className="rounded-sm text-[10px] font-bold uppercase tracking-[0.28em] outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+              >
                 {form.kicker[contentLang]}
               </div>
               <h3
+                style={{ color: form.heroStyle.titleColor }}
                 className={`mt-3 whitespace-pre-line font-display leading-[1.05] ${form.heroStyle.titleSize === "compact" ? "text-3xl" : form.heroStyle.titleSize === "standard" ? "text-4xl" : "text-5xl"} ${form.heroStyle.titleWeight === "semibold" ? "font-semibold" : form.heroStyle.titleWeight === "bold" ? "font-bold" : "font-black"}`}
               >
-                {form.title[contentLang]}{" "}
-                <span className="bg-gradient-pink bg-clip-text text-transparent">
+                <span
+                  key={`title-${contentLang}`}
+                  contentEditable
+                  suppressContentEditableWarning
+                  onBlur={(event) =>
+                    patch({
+                      title: { ...form.title, [contentLang]: event.currentTarget.innerText },
+                    })
+                  }
+                  className="rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+                >
+                  {form.title[contentLang]}
+                </span>{" "}
+                <span
+                  key={`highlight-${contentLang}`}
+                  contentEditable
+                  suppressContentEditableWarning
+                  onBlur={(event) =>
+                    patch({
+                      highlight: {
+                        ...form.highlight,
+                        [contentLang]: event.currentTarget.innerText,
+                      },
+                    })
+                  }
+                  style={{ color: form.heroStyle.highlightColor }}
+                  className="rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+                >
                   {form.highlight[contentLang]}
                 </span>
               </h3>
-              <p className="mt-4 whitespace-pre-line text-sm text-foreground/75">
+              <p
+                key={`description-${contentLang}`}
+                contentEditable
+                suppressContentEditableWarning
+                onBlur={(event) =>
+                  patch({
+                    description: {
+                      ...form.description,
+                      [contentLang]: event.currentTarget.innerText,
+                    },
+                  })
+                }
+                style={{ color: form.heroStyle.descriptionColor }}
+                className="mt-4 whitespace-pre-line rounded-sm text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+              >
                 {form.description[contentLang]}
               </p>
               {form.ctaEnabled &&

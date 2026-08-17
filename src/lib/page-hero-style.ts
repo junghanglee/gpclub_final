@@ -1,6 +1,12 @@
 import type { CSSProperties } from "react";
 import type { PageHeroStyle } from "@/lib/page-content";
 
+const HEX_COLOR = /^#[0-9a-f]{6}$/i;
+
+export function normalizeHeroColor(value: unknown, fallback: string) {
+  return typeof value === "string" && HEX_COLOR.test(value) ? value.toLowerCase() : fallback;
+}
+
 export function pageHeroTitleStyle(style: PageHeroStyle): CSSProperties {
   return {
     fontSize:
@@ -11,6 +17,7 @@ export function pageHeroTitleStyle(style: PageHeroStyle): CSSProperties {
           : "clamp(2.5rem, 6vw, 5.5rem)",
     fontWeight: style.titleWeight === "semibold" ? 600 : style.titleWeight === "bold" ? 700 : 900,
     textAlign: style.align,
+    ...(style.titleColor ? { color: style.titleColor } : {}),
   };
 }
 
