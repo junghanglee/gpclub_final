@@ -6,4 +6,7 @@ src/components/admin/.zcode
 test-results
 node_modules
 dist
+backup
+telegram-relay
+.git
 *.log
