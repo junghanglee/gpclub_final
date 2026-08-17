@@ -35,6 +35,7 @@ import { DEFAULT_HOME_CONTENT, type HomeAdminContent, mergeHomeContent } from "@
 import { jsonValuesEqual } from "@/lib/json-value-equality";
 import { recordAdminAudit } from "@/lib/admin-audit";
 import { collectPageCtaIssues, filterDisabledPageCtaIssues } from "@/lib/page-cta";
+import { pageHeroTitleStyle } from "@/lib/page-hero-style";
 import { invalidatePublicDataCache } from "@/lib/public-data-timeout";
 import {
   DEFAULT_PAGE_CONTENT,
@@ -479,88 +480,99 @@ function PageTextEditor({
                 className="absolute inset-0 -z-10 h-full w-full object-cover opacity-35"
               />
             ) : null}
-            <div
-              className={`relative max-w-2xl ${form.heroStyle.align === "center" ? "mx-auto text-center" : "text-left"}`}
-            >
+            <div className="relative grid items-center gap-6 lg:grid-cols-12">
               <div
-                key={`kicker-${contentLang}`}
-                contentEditable
-                suppressContentEditableWarning
-                onBlur={(event) =>
-                  patch({
-                    kicker: { ...form.kicker, [contentLang]: event.currentTarget.innerText },
-                  })
-                }
-                style={{ color: form.heroStyle.kickerColor }}
-                className="rounded-sm text-[10px] font-bold uppercase tracking-[0.28em] outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+                className={`max-w-2xl lg:col-span-7 ${form.heroStyle.align === "center" ? "mx-auto text-center" : "text-left"}`}
               >
-                {form.kicker[contentLang]}
-              </div>
-              <h3
-                style={{ color: form.heroStyle.titleColor }}
-                className={`mt-3 whitespace-pre-line font-display leading-[1.05] ${form.heroStyle.titleSize === "compact" ? "text-3xl" : form.heroStyle.titleSize === "standard" ? "text-4xl" : "text-5xl"} ${form.heroStyle.titleWeight === "semibold" ? "font-semibold" : form.heroStyle.titleWeight === "bold" ? "font-bold" : "font-black"}`}
-              >
-                <span
-                  key={`title-${contentLang}`}
+                <div
+                  key={`kicker-${contentLang}`}
                   contentEditable
                   suppressContentEditableWarning
                   onBlur={(event) =>
                     patch({
-                      title: { ...form.title, [contentLang]: event.currentTarget.innerText },
+                      kicker: { ...form.kicker, [contentLang]: event.currentTarget.innerText },
                     })
                   }
-                  className="rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+                  style={{ color: form.heroStyle.kickerColor }}
+                  className="rounded-sm text-[10px] font-bold uppercase tracking-[0.28em] outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
                 >
-                  {form.title[contentLang]}
-                </span>{" "}
-                <span
-                  key={`highlight-${contentLang}`}
+                  {form.kicker[contentLang]}
+                </div>
+                <h3
+                  style={pageHeroTitleStyle(form.heroStyle)}
+                  className="mt-3 whitespace-pre-line font-display leading-[1.05] tracking-tight"
+                >
+                  <span
+                    key={`title-${contentLang}`}
+                    contentEditable
+                    suppressContentEditableWarning
+                    onBlur={(event) =>
+                      patch({
+                        title: { ...form.title, [contentLang]: event.currentTarget.innerText },
+                      })
+                    }
+                    className="rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+                  >
+                    {form.title[contentLang]}
+                  </span>{" "}
+                  <span
+                    key={`highlight-${contentLang}`}
+                    contentEditable
+                    suppressContentEditableWarning
+                    onBlur={(event) =>
+                      patch({
+                        highlight: {
+                          ...form.highlight,
+                          [contentLang]: event.currentTarget.innerText,
+                        },
+                      })
+                    }
+                    style={{ color: form.heroStyle.highlightColor }}
+                    className="rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+                  >
+                    {form.highlight[contentLang]}
+                  </span>
+                </h3>
+                <p
+                  key={`description-${contentLang}`}
                   contentEditable
                   suppressContentEditableWarning
                   onBlur={(event) =>
                     patch({
-                      highlight: {
-                        ...form.highlight,
+                      description: {
+                        ...form.description,
                         [contentLang]: event.currentTarget.innerText,
                       },
                     })
                   }
-                  style={{ color: form.heroStyle.highlightColor }}
-                  className="rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+                  style={{ color: form.heroStyle.descriptionColor }}
+                  className="mt-4 whitespace-pre-line rounded-sm text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
                 >
-                  {form.highlight[contentLang]}
-                </span>
-              </h3>
-              <p
-                key={`description-${contentLang}`}
-                contentEditable
-                suppressContentEditableWarning
-                onBlur={(event) =>
-                  patch({
-                    description: {
-                      ...form.description,
-                      [contentLang]: event.currentTarget.innerText,
-                    },
-                  })
-                }
-                style={{ color: form.heroStyle.descriptionColor }}
-                className="mt-4 whitespace-pre-line rounded-sm text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
-              >
-                {form.description[contentLang]}
-              </p>
-              {form.ctaEnabled &&
-              (form.primaryCta[contentLang] || form.secondaryCta[contentLang]) ? (
-                <div
-                  className={`mt-5 flex flex-wrap gap-2 ${form.heroStyle.align === "center" ? "justify-center" : ""}`}
-                >
-                  <span className="rounded-full bg-primary px-4 py-2 text-xs font-bold text-primary-foreground">
-                    {form.primaryCta[contentLang] || "Primary CTA"}
-                  </span>
-                  {form.secondaryCta[contentLang] ? (
-                    <span className="rounded-full border border-border bg-background/70 px-4 py-2 text-xs font-bold">
-                      {form.secondaryCta[contentLang]}
+                  {form.description[contentLang]}
+                </p>
+                {form.ctaEnabled &&
+                (form.primaryCta[contentLang] || form.secondaryCta[contentLang]) ? (
+                  <div
+                    className={`mt-5 flex flex-wrap gap-2 ${form.heroStyle.align === "center" ? "justify-center" : ""}`}
+                  >
+                    <span className="rounded-full bg-primary px-4 py-2 text-xs font-bold text-primary-foreground">
+                      {form.primaryCta[contentLang] || "Primary CTA"}
                     </span>
-                  ) : null}
+                    {form.secondaryCta[contentLang] ? (
+                      <span className="rounded-full border border-border bg-background/70 px-4 py-2 text-xs font-bold">
+                        {form.secondaryCta[contentLang]}
+                      </span>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
+              {form.heroImage.enabled !== false ? (
+                <div className="hidden justify-center lg:col-span-5 lg:flex">
+                  <img
+                    src={form.heroImage.url || PAGE_DEFAULT_HERO_IMAGES[pageKey]}
+                    alt={form.heroImage.alt[contentLang]}
+                    className="aspect-[3/4] max-h-[260px] w-full max-w-[195px] object-contain"
+                  />
                 </div>
               ) : null}
             </div>

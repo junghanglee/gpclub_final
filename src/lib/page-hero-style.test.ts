@@ -14,7 +14,7 @@ test("hero style maps bounded presets to predictable CSS", () => {
       descriptionColor: "#525252",
     }),
     {
-      fontSize: "clamp(2rem, 4vw, 3rem)",
+      fontSize: "min(2.25rem, 9vw)",
       fontWeight: 600,
       textAlign: "center",
       color: "#171717",
@@ -34,7 +34,7 @@ test("display preset supports multiline editor text without unsafe markup", () =
   });
   assert.equal(style.fontWeight, 900);
   assert.equal(style.textAlign, "left");
-  assert.match(String(style.fontSize), /clamp/);
+  assert.equal(style.fontSize, "min(3rem, 11vw)");
 });
 
 test("hero colors accept hex values and reject unsafe CSS input", () => {
