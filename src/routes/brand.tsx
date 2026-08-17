@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { resolveBrandCardImage } from "@/lib/brand-card-image";
 import { resolveBrandCoreValuesHeading } from "@/lib/brand-core-values-heading";
 import { isHeroImageEnabled } from "@/lib/hero-image-visibility";
+import { pageHeroTitleStyle } from "@/lib/page-hero-style";
 import { useI18n } from "@/lib/i18n";
 import { usePageContent } from "@/lib/page-content";
 
@@ -260,7 +261,10 @@ function BrandPage() {
                 <div className="text-[11px] font-bold uppercase tracking-[0.32em] text-primary">
                   {page.kicker[lang]}
                 </div>
-                <h1 className="mt-5 font-display text-4xl font-black leading-[1.05] tracking-tight md:text-6xl">
+                <h1
+                  style={pageHeroTitleStyle(page.heroStyle)}
+                  className="mt-5 whitespace-pre-line font-display leading-[1.05] tracking-tight"
+                >
                   {page.title[lang]}{" "}
                   <span className="bg-gradient-pink bg-clip-text text-transparent">
                     {page.highlight[lang]}
@@ -276,7 +280,7 @@ function BrandPage() {
                       size="lg"
                       className="h-12 rounded-none bg-primary px-8 text-sm font-bold uppercase tracking-[0.18em] text-primary-foreground hover:bg-primary/90"
                     >
-                      <Link to="/b2b">
+                      <Link to={page.primaryCtaUrl[lang] || "/b2b"}>
                         {page.primaryCta[lang]} <ArrowRight className="ml-2 h-4 w-4" />
                       </Link>
                     </Button>
@@ -286,7 +290,9 @@ function BrandPage() {
                       size="lg"
                       className="h-12 rounded-none px-8 text-sm font-bold uppercase tracking-[0.18em]"
                     >
-                      <Link to="/products">{page.secondaryCta[lang]}</Link>
+                      <Link to={page.secondaryCtaUrl[lang] || "/products"}>
+                        {page.secondaryCta[lang]}
+                      </Link>
                     </Button>
                   </div>
                 ) : null}

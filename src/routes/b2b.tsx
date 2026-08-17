@@ -40,6 +40,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getCoverImage, useCatalogProducts } from "@/lib/catalog-products";
 import { useI18n } from "@/lib/i18n";
 import { isHeroImageEnabled } from "@/lib/hero-image-visibility";
+import { pageHeroTitleStyle } from "@/lib/page-hero-style";
 import { usePageContent } from "@/lib/page-content";
 
 export const Route = createFileRoute("/b2b")({
@@ -531,7 +532,10 @@ function B2BPage() {
                 <div className="text-[11px] font-bold uppercase tracking-[0.32em] text-primary">
                   {page.kicker[lang]}
                 </div>
-                <h1 className="mt-5 max-w-4xl font-display text-4xl font-black leading-[1.05] tracking-tight md:text-6xl">
+                <h1
+                  style={pageHeroTitleStyle(page.heroStyle)}
+                  className="mt-5 max-w-4xl whitespace-pre-line font-display leading-[1.05] tracking-tight"
+                >
                   {page.title[lang]}{" "}
                   <span className="bg-gradient-pink bg-clip-text text-transparent">
                     {page.highlight[lang]}
@@ -546,7 +550,7 @@ function B2BPage() {
                     size="lg"
                     className="mt-9 h-12 rounded-none bg-primary px-8 text-sm font-bold uppercase tracking-[0.18em] text-primary-foreground hover:bg-primary/90"
                   >
-                    <a href="#partner-form">
+                    <a href={page.primaryCtaUrl[lang] || "#partner-form"}>
                       {page.primaryCta[lang] || t.start} <ArrowRight className="ml-2 h-4 w-4" />
                     </a>
                   </Button>

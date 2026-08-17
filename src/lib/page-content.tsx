@@ -12,6 +12,12 @@ export type SiteLang = "vi" | "en";
 export type PageContentKey = "brand" | "products" | "gippy-ai" | "events" | "b2b" | "contact";
 export type PageLocalizedText = Record<SiteLang, string>;
 
+export type PageHeroStyle = {
+  titleSize: "compact" | "standard" | "display";
+  titleWeight: "semibold" | "bold" | "black";
+  align: "left" | "center";
+};
+
 export type PageHeroImage = {
   url: string;
   alt: PageLocalizedText;
@@ -157,7 +163,10 @@ export type PageEditableContent = {
   description: PageLocalizedText;
   primaryCta: PageLocalizedText;
   secondaryCta: PageLocalizedText;
+  primaryCtaUrl: PageLocalizedText;
+  secondaryCtaUrl: PageLocalizedText;
   ctaEnabled: boolean;
+  heroStyle: PageHeroStyle;
   heroImage: PageHeroImage;
   heroBackground: PageHeroBackground;
   sections: PageSections;
@@ -166,6 +175,11 @@ export type PageEditableContent = {
 const text = (vi: string, en: string): PageLocalizedText => ({ vi, en });
 const emptyHeroImage = (): PageHeroImage => ({ url: "", alt: text("", ""), enabled: true });
 const emptyHeroBackground = (): PageHeroBackground => ({ desktopUrl: "", mobileUrl: "" });
+const defaultHeroStyle = (): PageHeroStyle => ({
+  titleSize: "display",
+  titleWeight: "black",
+  align: "left",
+});
 const emptyImageAsset = (): PageImageAsset => ({ url: "", alt: text("", "") });
 
 const DEFAULT_BRAND_SECTIONS: BrandSectionContent = {
@@ -603,7 +617,10 @@ export const DEFAULT_PAGE_CONTENT: Record<PageContentKey, PageEditableContent> =
     ),
     primaryCta: text("Trở thành đối tác", "Become a Partner"),
     secondaryCta: text("Xem sản phẩm", "View Products"),
+    primaryCtaUrl: text("/b2b", "/b2b"),
+    secondaryCtaUrl: text("/products", "/products"),
     ctaEnabled: true,
+    heroStyle: defaultHeroStyle(),
     heroImage: emptyHeroImage(),
     heroBackground: emptyHeroBackground(),
     sections: { brand: DEFAULT_BRAND_SECTIONS },
@@ -618,7 +635,10 @@ export const DEFAULT_PAGE_CONTENT: Record<PageContentKey, PageEditableContent> =
     ),
     primaryCta: text("gửi yêu cầu B2B", "start a B2B inquiry"),
     secondaryCta: text("Brochure", "Brochure"),
+    primaryCtaUrl: text("/b2b", "/b2b"),
+    secondaryCtaUrl: text("/catalog", "/catalog"),
     ctaEnabled: true,
+    heroStyle: defaultHeroStyle(),
     heroImage: emptyHeroImage(),
     heroBackground: emptyHeroBackground(),
     sections: {},
@@ -633,7 +653,10 @@ export const DEFAULT_PAGE_CONTENT: Record<PageContentKey, PageEditableContent> =
     ),
     primaryCta: text("Liên hệ GPCLUB", "Contact GPCLUB"),
     secondaryCta: text("Xem chủ đề", "View topics"),
+    primaryCtaUrl: text("/contact", "/contact"),
+    secondaryCtaUrl: text("#gippy-topics", "#gippy-topics"),
     ctaEnabled: true,
+    heroStyle: defaultHeroStyle(),
     heroImage: emptyHeroImage(),
     heroBackground: emptyHeroBackground(),
     sections: { gippyAi: DEFAULT_GIPPY_AI_SECTIONS },
@@ -648,7 +671,10 @@ export const DEFAULT_PAGE_CONTENT: Record<PageContentKey, PageEditableContent> =
     ),
     primaryCta: text("", ""),
     secondaryCta: text("", ""),
+    primaryCtaUrl: text("", ""),
+    secondaryCtaUrl: text("", ""),
     ctaEnabled: false,
+    heroStyle: defaultHeroStyle(),
     heroImage: emptyHeroImage(),
     heroBackground: emptyHeroBackground(),
     sections: {},
@@ -663,7 +689,10 @@ export const DEFAULT_PAGE_CONTENT: Record<PageContentKey, PageEditableContent> =
     ),
     primaryCta: text("Gửi yêu cầu hợp tác", "Start partnership inquiry"),
     secondaryCta: text("", ""),
+    primaryCtaUrl: text("#partner-form", "#partner-form"),
+    secondaryCtaUrl: text("", ""),
     ctaEnabled: true,
+    heroStyle: defaultHeroStyle(),
     heroImage: emptyHeroImage(),
     heroBackground: emptyHeroBackground(),
     sections: { b2b: DEFAULT_B2B_SECTIONS },
@@ -681,7 +710,10 @@ export const DEFAULT_PAGE_CONTENT: Record<PageContentKey, PageEditableContent> =
     ),
     primaryCta: text("", ""),
     secondaryCta: text("", ""),
+    primaryCtaUrl: text("", ""),
+    secondaryCtaUrl: text("", ""),
     ctaEnabled: false,
+    heroStyle: defaultHeroStyle(),
     heroImage: emptyHeroImage(),
     heroBackground: emptyHeroBackground(),
     sections: {},
@@ -706,6 +738,21 @@ function mergeHeroImage(base: PageHeroImage, extra: unknown): PageHeroImage {
     url: typeof src.url === "string" ? src.url : base.url,
     alt: mergeLocalized(base.alt, src.alt),
     enabled: typeof src.enabled === "boolean" ? src.enabled : true,
+  };
+}
+
+function mergeHeroStyle(base: PageHeroStyle, extra: unknown): PageHeroStyle {
+  const src = isObj(extra) ? extra : {};
+  return {
+    titleSize:
+      src.titleSize === "compact" || src.titleSize === "standard" || src.titleSize === "display"
+        ? src.titleSize
+        : base.titleSize,
+    titleWeight:
+      src.titleWeight === "semibold" || src.titleWeight === "bold" || src.titleWeight === "black"
+        ? src.titleWeight
+        : base.titleWeight,
+    align: src.align === "left" || src.align === "center" ? src.align : base.align,
   };
 }
 
@@ -927,6 +974,8 @@ export function mergePageContent(key: PageContentKey, value: unknown): PageEdita
   const mergedCtas = {
     primaryCta: mergeLocalized(base.primaryCta, src.primaryCta),
     secondaryCta: mergeLocalized(base.secondaryCta, src.secondaryCta),
+    primaryCtaUrl: mergeLocalized(base.primaryCtaUrl, src.primaryCtaUrl),
+    secondaryCtaUrl: mergeLocalized(base.secondaryCtaUrl, src.secondaryCtaUrl),
     ctaEnabled: typeof src.ctaEnabled === "boolean" ? src.ctaEnabled : undefined,
   };
   return {
@@ -936,7 +985,10 @@ export function mergePageContent(key: PageContentKey, value: unknown): PageEdita
     description: mergeLocalized(base.description, src.description),
     primaryCta: mergedCtas.primaryCta,
     secondaryCta: mergedCtas.secondaryCta,
+    primaryCtaUrl: mergeLocalized(base.primaryCtaUrl, src.primaryCtaUrl),
+    secondaryCtaUrl: mergeLocalized(base.secondaryCtaUrl, src.secondaryCtaUrl),
     ctaEnabled: resolvePageCtaEnabled(mergedCtas),
+    heroStyle: mergeHeroStyle(base.heroStyle, src.heroStyle),
     heroImage: mergeHeroImage(base.heroImage, src.heroImage),
     heroBackground: mergeHeroBackground(base.heroBackground, src.heroBackground),
     sections: mergePageSections(base.sections, src.sections),

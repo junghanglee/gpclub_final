@@ -37,6 +37,7 @@ import {
 } from "@/lib/catalog-products";
 import { useI18n } from "@/lib/i18n";
 import { isHeroImageEnabled } from "@/lib/hero-image-visibility";
+import { pageHeroTitleStyle } from "@/lib/page-hero-style";
 import { usePageContent } from "@/lib/page-content";
 import { sanitizeProductDetailHtml } from "@/lib/product-detail-html";
 
@@ -238,7 +239,10 @@ function ProductsPage() {
                 <div className="text-[11px] font-bold uppercase tracking-[0.32em] text-primary">
                   {page.kicker[lang]}
                 </div>
-                <h1 className="mt-5 font-display text-4xl font-black leading-[1.05] tracking-tight md:text-6xl">
+                <h1
+                  style={pageHeroTitleStyle(page.heroStyle)}
+                  className="mt-5 whitespace-pre-line font-display leading-[1.05] tracking-tight"
+                >
                   {page.title[lang]}{" "}
                   <span className="bg-gradient-pink bg-clip-text text-transparent">
                     {page.highlight[lang]}
@@ -250,7 +254,7 @@ function ProductsPage() {
                     <>
                       {" "}
                       <Link
-                        to="/b2b"
+                        to={page.primaryCtaUrl[lang] || "/b2b"}
                         className="font-bold text-primary underline-offset-4 hover:underline"
                       >
                         {page.primaryCta[lang] || t.introLink}

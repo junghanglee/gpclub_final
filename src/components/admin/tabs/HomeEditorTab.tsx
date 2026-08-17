@@ -21,6 +21,13 @@ import { PageSectionEditor } from "@/components/admin/page-section-editor";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database, Json } from "@/integrations/supabase/types";
 import { DEFAULT_HOME_CONTENT, type HomeAdminContent, mergeHomeContent } from "@/lib/home-content";
@@ -278,8 +285,140 @@ function PageTextEditor({
               value={form.secondaryCta}
               onChange={(v) => patch({ secondaryCta: v })}
             />
+            <div className="grid gap-4 rounded-xl border border-border/60 bg-muted/20 p-4 md:grid-cols-2">
+              <LocalizedTextField
+                {...localizedFieldProps}
+                label={`${t("primaryCta")} URL`}
+                value={form.primaryCtaUrl}
+                onChange={(v) => patch({ primaryCtaUrl: v })}
+              />
+              <LocalizedTextField
+                {...localizedFieldProps}
+                label={`${t("secondaryCta")} URL`}
+                value={form.secondaryCtaUrl}
+                onChange={(v) => patch({ secondaryCtaUrl: v })}
+              />
+            </div>
           </div>
         ) : null}
+        <div className="grid gap-4 rounded-xl border border-border/60 bg-muted/20 p-4 md:grid-cols-3">
+          <div className="space-y-2">
+            <Label>Hero title size</Label>
+            <Select
+              value={form.heroStyle.titleSize}
+              onValueChange={(titleSize) =>
+                patch({
+                  heroStyle: {
+                    ...form.heroStyle,
+                    titleSize: titleSize as PageEditableContent["heroStyle"]["titleSize"],
+                  },
+                })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="compact">Compact</SelectItem>
+                <SelectItem value="standard">Standard</SelectItem>
+                <SelectItem value="display">Display</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Hero title weight</Label>
+            <Select
+              value={form.heroStyle.titleWeight}
+              onValueChange={(titleWeight) =>
+                patch({
+                  heroStyle: {
+                    ...form.heroStyle,
+                    titleWeight: titleWeight as PageEditableContent["heroStyle"]["titleWeight"],
+                  },
+                })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="semibold">Semibold</SelectItem>
+                <SelectItem value="bold">Bold</SelectItem>
+                <SelectItem value="black">Black</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Hero text alignment</Label>
+            <Select
+              value={form.heroStyle.align}
+              onValueChange={(align) =>
+                patch({
+                  heroStyle: {
+                    ...form.heroStyle,
+                    align: align as PageEditableContent["heroStyle"]["align"],
+                  },
+                })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="left">Left</SelectItem>
+                <SelectItem value="center">Center</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <div className="rounded-xl border border-border/60 p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <Label>Live hero preview ({contentLang.toUpperCase()})</Label>
+            <span className="text-xs text-muted-foreground">Line breaks are preserved</span>
+          </div>
+          <div className="relative isolate min-h-[220px] overflow-hidden rounded-lg bg-gradient-luxe p-6 md:p-10">
+            {form.heroBackground.desktopUrl ? (
+              <img
+                src={form.heroBackground.desktopUrl}
+                alt=""
+                className="absolute inset-0 -z-10 h-full w-full object-cover opacity-35"
+              />
+            ) : null}
+            <div
+              className={`relative max-w-2xl ${form.heroStyle.align === "center" ? "mx-auto text-center" : "text-left"}`}
+            >
+              <div className="text-[10px] font-bold uppercase tracking-[0.28em] text-primary">
+                {form.kicker[contentLang]}
+              </div>
+              <h3
+                className={`mt-3 whitespace-pre-line font-display leading-[1.05] ${form.heroStyle.titleSize === "compact" ? "text-3xl" : form.heroStyle.titleSize === "standard" ? "text-4xl" : "text-5xl"} ${form.heroStyle.titleWeight === "semibold" ? "font-semibold" : form.heroStyle.titleWeight === "bold" ? "font-bold" : "font-black"}`}
+              >
+                {form.title[contentLang]}{" "}
+                <span className="bg-gradient-pink bg-clip-text text-transparent">
+                  {form.highlight[contentLang]}
+                </span>
+              </h3>
+              <p className="mt-4 whitespace-pre-line text-sm text-foreground/75">
+                {form.description[contentLang]}
+              </p>
+              {form.ctaEnabled &&
+              (form.primaryCta[contentLang] || form.secondaryCta[contentLang]) ? (
+                <div
+                  className={`mt-5 flex flex-wrap gap-2 ${form.heroStyle.align === "center" ? "justify-center" : ""}`}
+                >
+                  <span className="rounded-full bg-primary px-4 py-2 text-xs font-bold text-primary-foreground">
+                    {form.primaryCta[contentLang] || "Primary CTA"}
+                  </span>
+                  {form.secondaryCta[contentLang] ? (
+                    <span className="rounded-full border border-border bg-background/70 px-4 py-2 text-xs font-bold">
+                      {form.secondaryCta[contentLang]}
+                    </span>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </div>
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/60 bg-muted/20 p-3">
           <p className="max-w-2xl text-xs leading-5 text-muted-foreground">
             {t("restoreSavedHeroHint")}

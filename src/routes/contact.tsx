@@ -32,6 +32,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { isHeroImageEnabled } from "@/lib/hero-image-visibility";
+import { pageHeroTitleStyle } from "@/lib/page-hero-style";
 import { usePageContent } from "@/lib/page-content";
 import { fetchCachedPublicData, withPublicDataTimeout } from "@/lib/public-data-timeout";
 import {
@@ -286,7 +287,10 @@ function ContactPage() {
                 <div className="text-[11px] font-bold uppercase tracking-[0.32em] text-primary">
                   {page.kicker[lang]}
                 </div>
-                <h1 className="mt-5 max-w-3xl font-display text-4xl font-black leading-[1.05] tracking-tight md:text-6xl">
+                <h1
+                  style={pageHeroTitleStyle(page.heroStyle)}
+                  className="mt-5 max-w-3xl whitespace-pre-line font-display leading-[1.05] tracking-tight"
+                >
                   {page.title[lang]}{" "}
                   <span className="bg-gradient-pink bg-clip-text text-transparent">
                     {page.highlight[lang]}

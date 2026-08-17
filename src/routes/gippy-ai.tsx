@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { openGippy } from "@/lib/gippy-bus";
 import { useI18n } from "@/lib/i18n";
 import { isHeroImageEnabled } from "@/lib/hero-image-visibility";
+import { pageHeroTitleStyle } from "@/lib/page-hero-style";
 import { usePageContent } from "@/lib/page-content";
 
 export const Route = createFileRoute("/gippy-ai")({
@@ -365,7 +366,10 @@ function GippyHeroSection({
           <div className="inline-flex items-center gap-2 border-b border-primary/40 pb-1 text-[11px] font-bold uppercase tracking-[0.28em] text-primary">
             <Sparkles className="h-3 w-3" /> {page.kicker[lang]}
           </div>
-          <h1 className="mt-6 font-display text-[clamp(2.25rem,5vw,4.75rem)] font-black leading-[1.04] tracking-[-0.025em] text-foreground">
+          <h1
+            style={pageHeroTitleStyle(page.heroStyle)}
+            className="mt-6 whitespace-pre-line font-display leading-[1.04] tracking-tight text-foreground"
+          >
             {page.title[lang]}{" "}
             <span className="bg-gradient-pink bg-clip-text text-transparent">
               {page.highlight[lang]}
@@ -398,7 +402,7 @@ function GippyHeroSection({
                 variant="outline"
                 className="h-12 rounded-none border-foreground px-7 text-sm font-bold uppercase tracking-[0.16em] text-foreground hover:border-primary hover:bg-primary hover:text-primary-foreground"
               >
-                <a href="#gippy-guide">{page.secondaryCta[lang]}</a>
+                <a href={page.secondaryCtaUrl[lang] || "#gippy-guide"}>{page.secondaryCta[lang]}</a>
               </Button>
             </div>
           ) : null}
